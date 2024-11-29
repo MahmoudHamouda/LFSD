@@ -1,0 +1,92 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #f2f2f2;
+  padding: 20px;
+}
+
+.chatContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(180deg, #ffffff 0%, #eef6fe 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  overflow: hidden;
+}
+
+.chatEmptyState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.chatEmptyStateTitle {
+  font-family: 'Lato', sans-serif;
+  font-weight: bold;
+  font-size: 32px;
+  color: #333333;
+  margin-top: 16px;
+}
+
+.chatEmptyStateSubtitle {
+  font-family: 'Lato', sans-serif;
+  font-size: 16px;
+  color: #666666;
+  margin-top: 8px;
+}
+
+.chatIcon {
+  font-size: 64px;
+  color: #ff6a00;
+}
+
+.chatMessageStream {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 20px;
+  padding: 16px;
+}
+
+.chatMessageUser {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.chatMessageUserMessage {
+  background: #ff6a00;
+  color: white;
+  border-radius: 12px;
+  padding: 12px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.chatMessageAssistant {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 12px;
+}
+
+.chatMessageAssistantMessage {
+  background: #ffffff;
+  border: 1px solid #d1d1d1;
+  border-radius: 12px;
+  padding: 12px;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.chatInput {
+  display: flex;
+  justify-content: center;
+  padding: 12px;
+  background: #ffffff;
+  border-top: 1px solid #d1d1d1;
+}

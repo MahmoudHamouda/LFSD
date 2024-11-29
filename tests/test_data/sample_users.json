@@ -1,0 +1,12 @@
+[
+    {
+        "user_id": 1,
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john.doe@example.com",
+        "preferences": {
+            "preferred_categories": ["food", "travel"],
+            "budget_limit": 500
+        }
+    }
+]

@@ -1,0 +1,231 @@
+/* General Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  font-family:
+    'Lato',
+    'Segoe UI',
+    'Segoe UI Web (West European)',
+    -apple-system,
+    BlinkMacSystemFont,
+    Roboto,
+    'Helvetica Neue',
+    sans-serif;
+  background: #f2f2f2;
+  color: #333333;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Section */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #ff6a00;
+  color: white;
+  height: 60px;
+  padding: 0 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header .menu-icon {
+  width: 40px;
+  height: 40px;
+  background-color: white;
+  color: #ff6a00;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+header .title {
+  font-weight: bold;
+  font-size: 20px;
+}
+
+header .profile-icon {
+  width: 40px;
+  height: 40px;
+  border: 2px solid linear-gradient(90deg, #ff6a00, #005bff);
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #333333;
+}
+
+/* Menu Drawer (Left-Side Panel) */
+.menu-drawer {
+  position: fixed;
+  top: 0;
+  left: -300px;
+  width: 300px;
+  height: 100%;
+  background-color: #ffffff;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: left 0.3s ease-in-out;
+}
+
+.menu-drawer.open {
+  left: 0;
+}
+
+.menu-drawer h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+  color: #333333;
+}
+
+.menu-drawer .chat-history,
+.menu-drawer .accounts,
+.menu-drawer .financial-health {
+  margin-bottom: 20px;
+}
+
+.chat-history .history-item {
+  background: linear-gradient(90deg, #ff6a00, #ffd1a1);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.accounts .account-item {
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  margin-right: 10px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  color: #333333;
+}
+
+.accounts .add-account {
+  background: linear-gradient(90deg, #005bff, #ff6a00);
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.financial-health .pie-chart {
+  margin: 0 auto;
+  width: 150px;
+  height: 150px;
+}
+
+.financial-health .cta {
+  text-align: center;
+  margin-top: 10px;
+  color: #005bff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Profile Section (Right-Side Panel) */
+.profile-panel {
+  position: fixed;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100%;
+  background-color: #ffffff;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: right 0.3s ease-in-out;
+}
+
+.profile-panel.open {
+  right: 0;
+}
+
+.profile-panel h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.profile-panel .form-group {
+  margin-bottom: 15px;
+}
+
+.profile-panel label {
+  display: block;
+  font-weight: bold;
+  color: #333333;
+  margin-bottom: 5px;
+}
+
+.profile-panel input,
+.profile-panel select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #cccccc;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+}
+
+.profile-panel .actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.profile-panel .actions .save {
+  background: linear-gradient(90deg, #ff6a00, #005bff);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.profile-panel .actions .cancel {
+  background: none;
+  color: #333333;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+}
+
+/* Transitions and Accessibility */
+button,
+input,
+select {
+  transition: all 0.2s ease-in-out;
+}
+
+button:focus,
+input:focus,
+select:focus {
+  outline: none;
+  box-shadow: 0 0 4px #005bff;
+}

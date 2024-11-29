@@ -1,0 +1,92 @@
+version: "3.9"
+services:
+  api_gateway:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api_gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=development
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=securepassword
+      - DB_NAME=financial_app
+    depends_on:
+      - db
+
+  user_service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.user_service
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=development
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=securepassword
+      - DB_NAME=financial_app
+    depends_on:
+      - db
+
+  financial_service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.financial_service
+    ports:
+      - "5002:5002"
+    environment:
+      - FLASK_ENV=development
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=securepassword
+      - DB_NAME=financial_app
+    depends_on:
+      - db
+
+  chat_service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.chat_service
+    ports:
+      - "5003:5003"
+    environment:
+      - FLASK_ENV=development
+      - OPENAI_API_KEY=your_openai_api_key
+      - OPENAI_MODEL=gpt-4
+    depends_on:
+      - db
+
+  partner_service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.partner_service
+    ports:
+      - "5004:5004"
+    environment:
+      - FLASK_ENV=development
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=securepassword
+      - DB_NAME=financial_app
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: securepassword
+      POSTGRES_DB: financial_app
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

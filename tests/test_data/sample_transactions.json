@@ -1,0 +1,9 @@
+[
+    {
+        "transaction_id": 1,
+        "user_id": 1,
+        "amount": 100.00,
+        "category": "Food",
+        "timestamp": "2024-11-24T12:00:00Z"
+    }
+]

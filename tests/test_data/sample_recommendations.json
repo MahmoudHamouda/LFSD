@@ -1,0 +1,8 @@
+[
+    {
+        "recommendation_id": 1,
+        "user_id": 1,
+        "source": "Dinner Context",
+        "recommendation_content": "Visit Luigi's Trattoria for Italian cuisine."
+    }
+]

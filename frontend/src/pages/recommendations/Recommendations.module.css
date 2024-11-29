@@ -1,0 +1,24 @@
+.recommendations {
+  padding: 20px;
+  background: #eef6fe;
+  border-radius: 8px;
+}
+
+.title {
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  color: #242424;
+}
+
+.list {
+  padding: 0;
+  margin: 0;
+  list-style-type: none;
+}
+
+.listItem {
+  font-family: 'Lato', sans-serif;
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #616161;
+}

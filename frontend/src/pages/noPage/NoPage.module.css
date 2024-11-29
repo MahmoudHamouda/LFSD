@@ -1,0 +1,16 @@
+.noPage {
+  padding: 50px;
+  text-align: center;
+}
+
+.title {
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+  color: #FF6A00;
+}
+
+.message {
+  font-family: 'Lato', sans-serif;
+  color: #616161;
+  margin-top: 20px;
+}

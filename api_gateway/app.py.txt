@@ -1,0 +1,41 @@
+from flask import Flask, jsonify
+from routes.user_routes import user_blueprint
+from routes.financial_routes import financial_blueprint
+from routes.chat_routes import chat_blueprint
+from routes.partner_routes import partner_blueprint
+from routes.recommendation_routes import recommendation_blueprint
+from routes.notification_routes import notification_blueprint
+from routes.activity_feed_routes import activity_feed_blueprint
+from routes.audit_routes import audit_blueprint
+from shared.logging import setup_logging
+from middleware import auth_middleware, rate_limit_middleware
+
+# Initialize Flask application
+app = Flask(__name__)
+
+# Setup logging
+setup_logging(app, service_name="api_gateway")
+
+# Register Blueprints
+app.register_blueprint(user_blueprint, url_prefix="/users")
+app.register_blueprint(financial_blueprint, url_prefix="/financials")
+app.register_blueprint(chat_blueprint, url_prefix="/chat")
+app.register_blueprint(partner_blueprint, url_prefix="/partners")
+app.register_blueprint(recommendation_blueprint, url_prefix="/recommendations")
+app.register_blueprint(notification_blueprint, url_prefix="/notifications")
+app.register_blueprint(activity_feed_blueprint, url_prefix="/activity_feed")
+app.register_blueprint(audit_blueprint, url_prefix="/audit")
+
+# Apply Middleware
+auth_middleware(app)
+rate_limit_middleware(app)
+
+# Health Check Endpoint
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "success", "message": "API Gateway is running"}), 200
+
+# Main entry point
+if __name__ == "__main__":
+    app.logger.info("Starting the Flask API Gateway...")
+    app.run(debug=True, port=5000)

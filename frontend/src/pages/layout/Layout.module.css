@@ -1,0 +1,119 @@
+.layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #f2f2f2;
+}
+
+.header {
+  background-color: #ff6a00; /* Primary orange */
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.headerContainer {
+  display: flex;
+  justify-content: left;
+  align-items: center;
+}
+
+.headerTitleContainer {
+  display: flex;
+  align-items: center;
+  margin-left: 14px;
+  text-decoration: none;
+}
+
+.headerTitle {
+  font-family: 'Lato', sans-serif;
+  font-style: normal;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 28px;
+  color: #ffffff; /* White for text contrast */
+}
+
+.headerIcon {
+  height: 32px;
+  width: auto;
+  margin-left: 16px;
+}
+
+.shareButtonContainer {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  margin-right: 20px;
+  gap: 10px;
+}
+
+.shareButton {
+  color: #ffffff;
+}
+
+.shareButtonText {
+  font-family: 'Lato', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  color: #ffffff;
+}
+
+.urlTextBox {
+  font-family: 'Lato', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 20px;
+  color: #707070;
+  border: 1px solid #d1d1d1;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.copyButtonContainer {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 5px 12px;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #d1d1d1;
+  border-radius: 8px;
+}
+
+.copyButtonContainer:hover {
+  cursor: pointer;
+  background: #ff6a00;
+  border-color: #ff6a00;
+  color: #ffffff;
+}
+
+.copyButton {
+  color: #424242;
+}
+
+.copyButtonText {
+  font-family: 'Lato', sans-serif;
+  font-style: normal;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 20px;
+  color: #242424;
+}
+
+@media (max-width: 480px) {
+  .headerTitleContainer {
+    margin-left: 4px;
+  }
+
+  .headerIcon {
+    margin-left: 10px;
+  }
+}
