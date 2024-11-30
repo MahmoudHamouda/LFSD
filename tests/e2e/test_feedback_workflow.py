@@ -1,5 +1,5 @@
 import unittest
-from services.chat_service.app import app
+from services.chat_service.app.py import app
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
