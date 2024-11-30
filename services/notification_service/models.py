@@ -1,8 +1,17 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, JSON, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    DateTime,
+    JSON,
+    ForeignKey,
+)
 from sqlalchemy.ext.declarative import declarative_base
 import datetime
 
 Base = declarative_base()
+
 
 class Notification(Base):
     __tablename__ = "notifications"
@@ -14,4 +23,8 @@ class Notification(Base):
     metadata = Column(JSON, nullable=True)
     read_status = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    updated_at = Column(
+        DateTime,
+        default=datetime.datetime.utcnow,
+        onupdate=datetime.datetime.utcnow,
+    )

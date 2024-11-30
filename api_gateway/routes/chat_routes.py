@@ -1,15 +1,19 @@
 from flask import Blueprint, request, jsonify
 from shared.openai_client import generate_response
 from shared.db_connection import get_db_connection
-from shared.config import get_config
-from shared.authentication import validate_jwt  # Assuming there's a function for JWT validation
-from shared.nosql_db import save_chat_log  # Assuming NoSQL integration for chat logs
+from shared.authentication import (
+    validate_jwt,
+)  # Assuming there's a function for JWT validation
+from shared.nosql_db import (
+    save_chat_log,
+)  # Assuming NoSQL integration for chat logs
 from shared.logging import get_logger
 from shared.rate_limiting import check_rate_limit
 
 logger = get_logger(__name__)
 
 chat_blueprint = Blueprint("chat_service", __name__)
+
 
 # POST /users/{user_id}/chat
 @chat_blueprint.route("/users/<int:user_id>/chat", methods=["POST"])
@@ -83,7 +87,9 @@ def handle_chat(user_id):
             )
             affordability_data = cursor.fetchone()
         except Exception as e:
-            logger.error(f"Database error for affordability analysis for user_id {user_id}: {str(e)}")
+            logger.error(
+                f"Database error for affordability analysis for user_id {user_id}: {str(e)}"
+            )
             return jsonify({"error": f"Database error: {str(e)}"}), 500
         finally:
             if conn:
@@ -102,15 +108,22 @@ def handle_chat(user_id):
     try:
         response = generate_response(query, formatted_context)
     except Exception as e:
-        logger.error(f"Failed to generate response for user_id {user_id}: {str(e)}")
-        return jsonify({"error": f"Failed to generate response: {str(e)}"}), 500
+        logger.error(
+            f"Failed to generate response for user_id {user_id}: {str(e)}"
+        )
+        return (
+            jsonify({"error": f"Failed to generate response: {str(e)}"}),
+            500,
+        )
 
     # Save chat log to NoSQL database
     try:
         save_chat_log(user_id, {"type": "User", "content": query})
         save_chat_log(user_id, {"type": "Assistant", "content": response})
     except Exception as e:
-        logger.error(f"Failed to save chat log for user_id {user_id}: {str(e)}")
+        logger.error(
+            f"Failed to save chat log for user_id {user_id}: {str(e)}"
+        )
         return jsonify({"error": f"Failed to save chat log: {str(e)}"}), 500
 
     logger.info(f"Chat successfully handled for user_id: {user_id}")

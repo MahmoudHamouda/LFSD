@@ -4,6 +4,7 @@ import datetime
 
 audit_blueprint = Blueprint("audit_service", __name__)
 
+
 # GET /audit-logs
 @audit_blueprint.route("/audit-logs", methods=["GET"])
 def get_audit_logs():
@@ -41,7 +42,7 @@ def get_audit_logs():
             "action": log[3],
             "changed_data": log[4],
             "performed_by": log[5],
-            "created_at": log[6]
+            "created_at": log[6],
         }
         for log in logs
     ]
@@ -59,8 +60,21 @@ def create_audit_log():
     changed_data = data.get("changed_data")
     performed_by = data.get("performed_by")
 
-    if not table_name or not record_id or not action or not changed_data or not performed_by:
-        return jsonify({"error": "All fields are required: table_name, record_id, action, changed_data, performed_by"}), 400
+    if (
+        not table_name
+        or not record_id
+        or not action
+        or not changed_data
+        or not performed_by
+    ):
+        return (
+            jsonify(
+                {
+                    "error": "All fields are required: table_name, record_id, action, changed_data, performed_by"
+                }
+            ),
+            400,
+        )
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -69,7 +83,14 @@ def create_audit_log():
         INSERT INTO AuditLogs (table_name, record_id, action, changed_data, performed_by, created_at)
         VALUES (%s, %s, %s, %s, %s, %s) RETURNING log_id
         """,
-        (table_name, record_id, action, str(changed_data), performed_by, datetime.datetime.utcnow()),
+        (
+            table_name,
+            record_id,
+            action,
+            str(changed_data),
+            performed_by,
+            datetime.datetime.utcnow(),
+        ),
     )
     log_id = cursor.fetchone()[0]
     conn.commit()

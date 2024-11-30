@@ -1,13 +1,15 @@
 import unittest
-from flask import Flask
 from services.chat_service.app import app
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+
 class TestFeedbackWorkflow(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine("sqlite:///:memory:")  # In-memory DB for testing
+        cls.engine = create_engine(
+            "sqlite:///:memory:"
+        )  # In-memory DB for testing
         cls.Session = sessionmaker(bind=cls.engine)
         cls.app = app
         cls.app.testing = True
@@ -30,6 +32,7 @@ class TestFeedbackWorkflow(unittest.TestCase):
         feedback = response.json["feedback"]
         self.assertEqual(len(feedback), 1)
         self.assertEqual(feedback[0]["feedback"], "Needs improvement.")
+
 
 if __name__ == "__main__":
     unittest.main()

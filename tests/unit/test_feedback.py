@@ -1,14 +1,16 @@
 import unittest
-from flask import Flask
 from services.chat_service.app import app
 from services.chat_service.db import init_db
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+
 class TestFeedbackIntegration(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.engine = create_engine("sqlite:///:memory:")  # In-memory DB for testing
+        cls.engine = create_engine(
+            "sqlite:///:memory:"
+        )  # In-memory DB for testing
         cls.Session = sessionmaker(bind=cls.engine)
         init_db(cls.engine)
 
@@ -31,7 +33,10 @@ class TestFeedbackIntegration(unittest.TestCase):
         response = self.client.get("/feedback/123")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json["feedback"]), 1)
-        self.assertEqual(response.json["feedback"][0]["feedback"], "Great response!")
+        self.assertEqual(
+            response.json["feedback"][0]["feedback"], "Great response!"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

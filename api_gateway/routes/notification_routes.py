@@ -4,8 +4,11 @@ import datetime
 
 notification_blueprint = Blueprint("notification_service", __name__)
 
+
 # GET /users/{user_id}/notifications
-@notification_blueprint.route("/users/<int:user_id>/notifications", methods=["GET"])
+@notification_blueprint.route(
+    "/users/<int:user_id>/notifications", methods=["GET"]
+)
 def get_notifications(user_id):
     read_status = request.args.get("read_status")
     start_date = request.args.get("start_date")
@@ -43,7 +46,9 @@ def get_notifications(user_id):
 
 
 # POST /users/{user_id}/notifications
-@notification_blueprint.route("/users/<int:user_id>/notifications", methods=["POST"])
+@notification_blueprint.route(
+    "/users/<int:user_id>/notifications", methods=["POST"]
+)
 def create_notification(user_id):
     data = request.json
     message = data.get("message")
@@ -60,17 +65,29 @@ def create_notification(user_id):
         INSERT INTO Notifications (user_id, message, type, metadata, read_status, created_at)
         VALUES (%s, %s, %s, %s, %s, %s) RETURNING notification_id
         """,
-        (user_id, message, notification_type, str(metadata), False, datetime.datetime.utcnow()),
+        (
+            user_id,
+            message,
+            notification_type,
+            str(metadata),
+            False,
+            datetime.datetime.utcnow(),
+        ),
     )
     notification_id = cursor.fetchone()[0]
     conn.commit()
     conn.close()
 
-    return jsonify({"status": "success", "notification_id": notification_id}), 201
+    return (
+        jsonify({"status": "success", "notification_id": notification_id}),
+        201,
+    )
 
 
 # PUT /users/{user_id}/notifications/{notification_id}
-@notification_blueprint.route("/users/<int:user_id>/notifications/<int:notification_id>", methods=["PUT"])
+@notification_blueprint.route(
+    "/users/<int:user_id>/notifications/<int:notification_id>", methods=["PUT"]
+)
 def update_notification(user_id, notification_id):
     data = request.json
     read_status = data.get("read_status")
@@ -90,4 +107,7 @@ def update_notification(user_id, notification_id):
     conn.commit()
     conn.close()
 
-    return jsonify({"status": "success", "message": "Notification updated."}), 200
+    return (
+        jsonify({"status": "success", "message": "Notification updated."}),
+        200,
+    )

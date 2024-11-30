@@ -4,11 +4,14 @@ from models import Notification
 
 notification_blueprint = Blueprint("notification_service", __name__)
 
+
 # GET /notifications/<user_id>
 @notification_blueprint.route("/<int:user_id>", methods=["GET"])
 def get_notifications(user_id):
     session = get_db_session()
-    notifications = session.query(Notification).filter_by(user_id=user_id).all()
+    notifications = (
+        session.query(Notification).filter_by(user_id=user_id).all()
+    )
     session.close()
 
     notification_list = [
@@ -20,12 +23,13 @@ def get_notifications(user_id):
             "metadata": n.metadata,
             "read_status": n.read_status,
             "created_at": n.created_at,
-            "updated_at": n.updated_at
+            "updated_at": n.updated_at,
         }
         for n in notifications
     ]
 
     return jsonify({"status": "success", "data": notification_list}), 200
+
 
 # POST /notifications/<user_id>
 @notification_blueprint.route("/<int:user_id>", methods=["POST"])
@@ -39,15 +43,28 @@ def create_notification(user_id):
         return jsonify({"error": "Message and type are required"}), 400
 
     session = get_db_session()
-    new_notification = Notification(user_id=user_id, message=message, type=type, metadata=metadata)
+    new_notification = Notification(
+        user_id=user_id, message=message, type=type, metadata=metadata
+    )
     session.add(new_notification)
     session.commit()
     session.close()
 
-    return jsonify({"status": "success", "notification_id": new_notification.notification_id}), 201
+    return (
+        jsonify(
+            {
+                "status": "success",
+                "notification_id": new_notification.notification_id,
+            }
+        ),
+        201,
+    )
+
 
 # PUT /notifications/<user_id>/<notification_id>
-@notification_blueprint.route("/<int:user_id>/<int:notification_id>", methods=["PUT"])
+@notification_blueprint.route(
+    "/<int:user_id>/<int:notification_id>", methods=["PUT"]
+)
 def update_notification(user_id, notification_id):
     data = request.json
     read_status = data.get("read_status")
@@ -56,7 +73,11 @@ def update_notification(user_id, notification_id):
         return jsonify({"error": "read_status is required"}), 400
 
     session = get_db_session()
-    notification = session.query(Notification).filter_by(user_id=user_id, notification_id=notification_id).first()
+    notification = (
+        session.query(Notification)
+        .filter_by(user_id=user_id, notification_id=notification_id)
+        .first()
+    )
 
     if not notification:
         session.close()
@@ -66,4 +87,7 @@ def update_notification(user_id, notification_id):
     session.commit()
     session.close()
 
-    return jsonify({"status": "success", "message": "Notification updated"}), 200
+    return (
+        jsonify({"status": "success", "message": "Notification updated"}),
+        200,
+    )

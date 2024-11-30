@@ -4,6 +4,7 @@ from models import Partner
 
 partner_blueprint = Blueprint("partner_service", __name__)
 
+
 # GET /partners
 @partner_blueprint.route("/", methods=["GET"])
 def get_all_partners():
@@ -17,12 +18,13 @@ def get_all_partners():
             "name": p.name,
             "contact_email": p.contact_email,
             "phone_number": p.phone_number,
-            "services_offered": p.services_offered
+            "services_offered": p.services_offered,
         }
         for p in partners
     ]
 
     return jsonify({"status": "success", "data": partner_list}), 200
+
 
 # POST /partners
 @partner_blueprint.route("/", methods=["POST"])
@@ -38,13 +40,17 @@ def create_partner():
         name=data["name"],
         contact_email=data["contact_email"],
         phone_number=data.get("phone_number"),
-        services_offered=data["services_offered"]
+        services_offered=data["services_offered"],
     )
     session.add(new_partner)
     session.commit()
     session.close()
 
-    return jsonify({"status": "success", "partner_id": new_partner.partner_id}), 201
+    return (
+        jsonify({"status": "success", "partner_id": new_partner.partner_id}),
+        201,
+    )
+
 
 # GET /partners/<partner_id>
 @partner_blueprint.route("/<int:partner_id>", methods=["GET"])
@@ -56,13 +62,19 @@ def get_partner(partner_id):
     if not partner:
         return jsonify({"error": "Partner not found"}), 404
 
-    return jsonify({
-        "partner_id": partner.partner_id,
-        "name": partner.name,
-        "contact_email": partner.contact_email,
-        "phone_number": partner.phone_number,
-        "services_offered": partner.services_offered
-    }), 200
+    return (
+        jsonify(
+            {
+                "partner_id": partner.partner_id,
+                "name": partner.name,
+                "contact_email": partner.contact_email,
+                "phone_number": partner.phone_number,
+                "services_offered": partner.services_offered,
+            }
+        ),
+        200,
+    )
+
 
 # PUT /partners/<partner_id>
 @partner_blueprint.route("/<int:partner_id>", methods=["PUT"])
@@ -82,7 +94,13 @@ def update_partner(partner_id):
     session.commit()
     session.close()
 
-    return jsonify({"status": "success", "message": "Partner updated successfully"}), 200
+    return (
+        jsonify(
+            {"status": "success", "message": "Partner updated successfully"}
+        ),
+        200,
+    )
+
 
 # DELETE /partners/<partner_id>
 @partner_blueprint.route("/<int:partner_id>", methods=["DELETE"])
@@ -98,4 +116,9 @@ def delete_partner(partner_id):
     session.commit()
     session.close()
 
-    return jsonify({"status": "success", "message": "Partner deleted successfully"}), 200
+    return (
+        jsonify(
+            {"status": "success", "message": "Partner deleted successfully"}
+        ),
+        200,
+    )

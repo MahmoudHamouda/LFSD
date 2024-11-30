@@ -11,6 +11,7 @@ openai.api_key = os.getenv("OPENAI_API_KEY", "your_openai_api_key")
 # Model configuration
 DEFAULT_MODEL = os.getenv("OPENAI_MODEL", "gpt-4")
 
+
 def generate_response(user_input, context=None, model=DEFAULT_MODEL):
     """
     Generate a response for a user input using OpenAI's GPT model.
@@ -38,6 +39,7 @@ def generate_response(user_input, context=None, model=DEFAULT_MODEL):
         logger.error(f"Error generating response: {e}")
         return "I'm sorry, I couldn't process your request."
 
+
 def summarize_chat(chat_history, model=DEFAULT_MODEL):
     """
     Summarize a chat session using OpenAI's GPT model.
@@ -46,10 +48,14 @@ def summarize_chat(chat_history, model=DEFAULT_MODEL):
     :return: Summary of the chat session.
     """
     try:
-        logger.info(f"Summarizing chat history with {len(chat_history)} messages")
+        logger.info(
+            f"Summarizing chat history with {len(chat_history)} messages"
+        )
 
         combined_history = "\n".join(chat_history)
-        summary_prompt = f"Summarize the following conversation:\n{combined_history}"
+        summary_prompt = (
+            f"Summarize the following conversation:\n{combined_history}"
+        )
 
         response = openai.ChatCompletion.create(
             model=model,
@@ -63,6 +69,7 @@ def summarize_chat(chat_history, model=DEFAULT_MODEL):
         logger.error(f"Error summarizing chat: {e}")
         return "I couldn't generate a summary for this session."
 
+
 def generate_recommendation(context, preferences, model=DEFAULT_MODEL):
     """
     Generate a recommendation based on context and preferences using OpenAI's GPT model.
@@ -72,9 +79,13 @@ def generate_recommendation(context, preferences, model=DEFAULT_MODEL):
     :return: A personalized recommendation.
     """
     try:
-        logger.info(f"Generating recommendation for context: {context} with preferences: {preferences}")
+        logger.info(
+            f"Generating recommendation for context: {context} with preferences: {preferences}"
+        )
 
-        preferences_str = ", ".join([f"{key}: {value}" for key, value in preferences.items()])
+        preferences_str = ", ".join(
+            [f"{key}: {value}" for key, value in preferences.items()]
+        )
         prompt = f"Based on the context '{context}' and preferences ({preferences_str}), provide a personalized recommendation."
 
         response = openai.ChatCompletion.create(
