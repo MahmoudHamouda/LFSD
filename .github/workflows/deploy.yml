@@ -1,0 +1,25 @@
+name: Deploy to Staging and Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to Staging and Production
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Set Up Kubernetes
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.26.0'
+      - name: Deploy to Staging
+        run: |
+          kubectl apply -f k8s/staging-deployment.yaml
+      - name: Deploy to Production
+        if: success()
+        run: |
+          kubectl apply -f k8s/production-deployment.yaml
