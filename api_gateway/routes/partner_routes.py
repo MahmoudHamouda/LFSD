@@ -6,12 +6,20 @@ import datetime
 
 partner_blueprint = Blueprint("partner_service", __name__)
 
+
 # POST /partners/onboard
 @partner_blueprint.route("/partners/onboard", methods=["POST"])
 @require_authentication
 def onboard_partner():
     data = request.json
-    required_fields = ["partner_name", "contact_person", "email", "service_type", "api_endpoint", "user_id"]
+    required_fields = [
+        "partner_name",
+        "contact_person",
+        "email",
+        "service_type",
+        "api_endpoint",
+        "user_id",
+    ]
 
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing required fields"}), 400
@@ -19,7 +27,9 @@ def onboard_partner():
     # Validate user_id
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT user_id FROM Users WHERE user_id = %s", (data["user_id"],))
+    cursor.execute(
+        "SELECT user_id FROM Users WHERE user_id = %s", (data["user_id"],)
+    )
     user = cursor.fetchone()
     if not user:
         conn.close()
@@ -50,7 +60,16 @@ def onboard_partner():
     conn.close()
 
     log_event("Partner onboarded successfully", level="INFO")
-    return jsonify({"status": "success", "partner_id": partner_id, "message": "Partner onboarded successfully and pending approval."}), 201
+    return (
+        jsonify(
+            {
+                "status": "success",
+                "partner_id": partner_id,
+                "message": "Partner onboarded successfully and pending approval.",
+            }
+        ),
+        201,
+    )
 
 
 # GET /partners
@@ -80,7 +99,8 @@ def get_all_partners():
     conn.close()
 
     partner_list = [
-        {"partner_id": p[0], "partner_name": p[1], "status": p[2]} for p in partners
+        {"partner_id": p[0], "partner_name": p[1], "status": p[2]}
+        for p in partners
     ]
 
     log_event("Retrieved all partners", level="INFO")
@@ -93,7 +113,9 @@ def get_all_partners():
 def get_partner_details(partner_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM Partners WHERE partner_id = %s", (partner_id,))
+    cursor.execute(
+        "SELECT * FROM Partners WHERE partner_id = %s", (partner_id,)
+    )
     partner = cursor.fetchone()
     conn.close()
 
@@ -128,7 +150,12 @@ def approve_partner(partner_id):
     reason = data.get("reason", "")
 
     if action not in ["approve", "reject"]:
-        return jsonify({"error": "Invalid action. Must be 'approve' or 'reject'."}), 400
+        return (
+            jsonify(
+                {"error": "Invalid action. Must be 'approve' or 'reject'."}
+            ),
+            400,
+        )
 
     status = "Approved" if action == "approve" else "Rejected"
     conn = get_db_connection()
@@ -141,7 +168,9 @@ def approve_partner(partner_id):
     conn.close()
 
     message = f"Partner {status.lower()} successfully."
-    log_event(f"Partner {partner_id} {status.lower()} successfully", level="INFO")
+    log_event(
+        f"Partner {partner_id} {status.lower()} successfully", level="INFO"
+    )
     return jsonify({"status": "success", "message": message}), 200
 
 
@@ -158,7 +187,9 @@ def create_order(partner_id):
     # Validate user_id
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT user_id FROM Users WHERE user_id = %s", (data["user_id"],))
+    cursor.execute(
+        "SELECT user_id FROM Users WHERE user_id = %s", (data["user_id"],)
+    )
     user = cursor.fetchone()
     if not user:
         conn.close()
@@ -187,8 +218,20 @@ def create_order(partner_id):
     conn.commit()
     conn.close()
 
-    log_event(f"Order created successfully for partner_id: {partner_id}", level="INFO")
-    return jsonify({"status": "success", "order_id": order_id, "message": "Order created successfully."}), 201
+    log_event(
+        f"Order created successfully for partner_id: {partner_id}",
+        level="INFO",
+    )
+    return (
+        jsonify(
+            {
+                "status": "success",
+                "order_id": order_id,
+                "message": "Order created successfully.",
+            }
+        ),
+        201,
+    )
 
 
 # POST /auth/logout
@@ -212,11 +255,25 @@ def logout():
             data["user_id"],
             data["token"],
             datetime.datetime.utcnow(),
-            data.get("expiry_date", datetime.datetime.utcnow() + datetime.timedelta(hours=1)),
+            data.get(
+                "expiry_date",
+                datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+            ),
         ),
     )
     conn.commit()
     conn.close()
 
-    log_event(f"User {data['user_id']} logged out successfully and token blacklisted", level="INFO")
-    return jsonify({"status": "success", "message": "User logged out successfully and token blacklisted."}), 200
+    log_event(
+        f"User {data['user_id']} logged out successfully and token blacklisted",
+        level="INFO",
+    )
+    return (
+        jsonify(
+            {
+                "status": "success",
+                "message": "User logged out successfully and token blacklisted.",
+            }
+        ),
+        200,
+    )

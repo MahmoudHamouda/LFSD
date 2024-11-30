@@ -2,7 +2,6 @@ from flask import Blueprint, request, jsonify
 from shared.db_connection import get_db_connection
 import datetime
 from api_gateway.middleware.authentication import token_required
-from functools import wraps
 from marshmallow import Schema, fields, ValidationError
 
 financial_blueprint = Blueprint("financial_service", __name__)
@@ -15,6 +14,7 @@ class AffordabilitySchema(Schema):
     loan_term = fields.Int(required=True)
     down_payment = fields.Float(required=True)
 
+
 class TransactionSchema(Schema):
     amount = fields.Float(required=True)
     category = fields.Str(required=True)
@@ -23,6 +23,7 @@ class TransactionSchema(Schema):
     linked_expense_id = fields.Int(missing=None)
     linked_order_id = fields.Int(missing=None)
     linked_debt_id = fields.Int(missing=None)
+
 
 # GET /users/{user_id}/financials
 @financial_blueprint.route("/users/<int:user_id>/financials", methods=["GET"])
@@ -50,8 +51,11 @@ def get_financial_summary(user_id):
     }
     return jsonify({"status": "success", "data": financial_summary}), 200
 
+
 # POST /users/{user_id}/financials/affordability
-@financial_blueprint.route("/users/<int:user_id>/financials/affordability", methods=["POST"])
+@financial_blueprint.route(
+    "/users/<int:user_id>/financials/affordability", methods=["POST"]
+)
 @token_required
 def analyze_affordability(user_id):
     try:
@@ -99,7 +103,18 @@ def analyze_affordability(user_id):
         INSERT INTO AffordabilityAnalysis (user_id, item, price, loan_term, down_payment, monthly_payment, savings_goal, result, created_at, updated_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING analysis_id
         """,
-        (user_id, item, price, loan_term, down_payment, monthly_payment, result["savings_goal"], result, datetime.datetime.utcnow(), datetime.datetime.utcnow()),
+        (
+            user_id,
+            item,
+            price,
+            loan_term,
+            down_payment,
+            monthly_payment,
+            result["savings_goal"],
+            result,
+            datetime.datetime.utcnow(),
+            datetime.datetime.utcnow(),
+        ),
     )
     analysis_id = cursor.fetchone()[0]
     conn.commit()
@@ -108,8 +123,11 @@ def analyze_affordability(user_id):
     result["analysis_id"] = analysis_id
     return jsonify({"status": "success", "data": result}), 200
 
+
 # POST /users/{user_id}/transactions
-@financial_blueprint.route("/users/<int:user_id>/transactions", methods=["POST"])
+@financial_blueprint.route(
+    "/users/<int:user_id>/transactions", methods=["POST"]
+)
 @token_required
 def log_transaction(user_id):
     try:
@@ -133,16 +151,31 @@ def log_transaction(user_id):
         INSERT INTO Transactions (user_id, amount, category, description, transaction_date, linked_expense_id, linked_order_id, linked_debt_id)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s) RETURNING transaction_id
         """,
-        (user_id, amount, category, description, transaction_date, linked_expense_id, linked_order_id, linked_debt_id),
+        (
+            user_id,
+            amount,
+            category,
+            description,
+            transaction_date,
+            linked_expense_id,
+            linked_order_id,
+            linked_debt_id,
+        ),
     )
     transaction_id = cursor.fetchone()[0]
     conn.commit()
     conn.close()
 
-    return jsonify({"status": "success", "transaction_id": transaction_id}), 201
+    return (
+        jsonify({"status": "success", "transaction_id": transaction_id}),
+        201,
+    )
+
 
 # GET /users/{user_id}/transactions
-@financial_blueprint.route("/users/<int:user_id>/transactions", methods=["GET"])
+@financial_blueprint.route(
+    "/users/<int:user_id>/transactions", methods=["GET"]
+)
 @token_required
 def get_transactions(user_id):
     start_date = request.args.get("start_date")

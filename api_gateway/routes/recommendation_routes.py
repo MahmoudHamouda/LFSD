@@ -5,8 +5,11 @@ import datetime
 
 recommendation_blueprint = Blueprint("recommendation_service", __name__)
 
+
 # GET /users/{user_id}/recommendations
-@recommendation_blueprint.route("/users/<int:user_id>/recommendations", methods=["GET"])
+@recommendation_blueprint.route(
+    "/users/<int:user_id>/recommendations", methods=["GET"]
+)
 def get_recommendations(user_id):
     rec_type = request.args.get("type")
 
@@ -30,7 +33,7 @@ def get_recommendations(user_id):
             "type": r[2],
             "source": r[3],
             "content": r[4],
-            "created_at": r[5]
+            "created_at": r[5],
         }
         for r in recommendations
     ]
@@ -39,7 +42,9 @@ def get_recommendations(user_id):
 
 
 # POST /users/{user_id}/recommendations
-@recommendation_blueprint.route("/users/<int:user_id>/recommendations", methods=["POST"])
+@recommendation_blueprint.route(
+    "/users/<int:user_id>/recommendations", methods=["POST"]
+)
 def create_recommendation(user_id):
     data = request.json
     context = data.get("context")
@@ -58,21 +63,41 @@ def create_recommendation(user_id):
         INSERT INTO Recommendations (user_id, type, source, content, created_at)
         VALUES (%s, %s, %s, %s, %s) RETURNING recommendation_id
         """,
-        (user_id, "lifestyle", "context", recommendation_content, datetime.datetime.utcnow()),
+        (
+            user_id,
+            "lifestyle",
+            "context",
+            recommendation_content,
+            datetime.datetime.utcnow(),
+        ),
     )
     recommendation_id = cursor.fetchone()[0]
     conn.commit()
     conn.close()
 
-    return jsonify({"status": "success", "recommendation_id": recommendation_id, "content": recommendation_content}), 201
+    return (
+        jsonify(
+            {
+                "status": "success",
+                "recommendation_id": recommendation_id,
+                "content": recommendation_content,
+            }
+        ),
+        201,
+    )
 
 
 # GET /recommendations/{recommendation_id}
-@recommendation_blueprint.route("/recommendations/<int:recommendation_id>", methods=["GET"])
+@recommendation_blueprint.route(
+    "/recommendations/<int:recommendation_id>", methods=["GET"]
+)
 def get_recommendation(recommendation_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM Recommendations WHERE recommendation_id = %s", (recommendation_id,))
+    cursor.execute(
+        "SELECT * FROM Recommendations WHERE recommendation_id = %s",
+        (recommendation_id,),
+    )
     recommendation = cursor.fetchone()
     conn.close()
 
@@ -85,7 +110,7 @@ def get_recommendation(recommendation_id):
         "type": recommendation[2],
         "source": recommendation[3],
         "content": recommendation[4],
-        "created_at": recommendation[5]
+        "created_at": recommendation[5],
     }
 
     return jsonify({"status": "success", "data": recommendation_details}), 200

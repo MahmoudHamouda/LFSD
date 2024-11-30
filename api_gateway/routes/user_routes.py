@@ -9,21 +9,32 @@ user_blueprint = Blueprint("user_service", __name__)
 
 SECRET_KEY = "your_secret_key"
 
+
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get("Authorization")
         if not token:
-            return jsonify({"status": "error", "message": "Token is missing."}), 401
+            return (
+                jsonify({"status": "error", "message": "Token is missing."}),
+                401,
+            )
 
         try:
             token = token.split()[1]  # Extract token from "Bearer <token>"
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
         except:
-            return jsonify({"status": "error", "message": "Invalid or expired token."}), 401
+            return (
+                jsonify(
+                    {"status": "error", "message": "Invalid or expired token."}
+                ),
+                401,
+            )
 
         return f(*args, **kwargs)
+
     return decorated
+
 
 # POST /auth/login
 @user_blueprint.route("/auth/login", methods=["POST"])
@@ -33,23 +44,48 @@ def login_user():
     password = data.get("password")
 
     if not email or not password:
-        return jsonify({"status": "error", "message": "Email and password are required"}), 400
+        return (
+            jsonify(
+                {
+                    "status": "error",
+                    "message": "Email and password are required",
+                }
+            ),
+            400,
+        )
 
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT user_id, password FROM Users WHERE email = %s", (email,))
+    cursor.execute(
+        "SELECT user_id, password FROM Users WHERE email = %s", (email,)
+    )
     user = cursor.fetchone()
     conn.close()
 
     if not user or not check_password_hash(user[1], password):
-        return jsonify({"status": "error", "message": "Invalid credentials"}), 401
+        return (
+            jsonify({"status": "error", "message": "Invalid credentials"}),
+            401,
+        )
 
     token = jwt.encode(
-        {"user_id": user[0], "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
+        {
+            "user_id": user[0],
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+        },
         SECRET_KEY,
-        algorithm="HS256"
+        algorithm="HS256",
     )
-    return jsonify({"status": "success", "data": {"access_token": token, "expires_in": 3600}}), 200
+    return (
+        jsonify(
+            {
+                "status": "success",
+                "data": {"access_token": token, "expires_in": 3600},
+            }
+        ),
+        200,
+    )
+
 
 # GET /auth/validate
 @user_blueprint.route("/auth/validate", methods=["GET"])
@@ -57,13 +93,26 @@ def login_user():
 def validate_token():
     return jsonify({"status": "success", "message": "Token is valid."}), 200
 
+
 # POST /users
 @user_blueprint.route("/users", methods=["POST"])
 def register_user():
     data = request.json
-    required_fields = ["first_name", "last_name", "email", "password", "gender", "date_of_birth", "phone_number", "address"]
+    required_fields = [
+        "first_name",
+        "last_name",
+        "email",
+        "password",
+        "gender",
+        "date_of_birth",
+        "phone_number",
+        "address",
+    ]
     if not all(field in data for field in required_fields):
-        return jsonify({"status": "error", "message": "Missing required fields"}), 400
+        return (
+            jsonify({"status": "error", "message": "Missing required fields"}),
+            400,
+        )
 
     hashed_password = generate_password_hash(data["password"])
     conn = get_db_connection()
@@ -101,7 +150,19 @@ def register_user():
     conn.commit()
     conn.close()
 
-    return jsonify({"status": "success", "data": {"user_id": user_id, "created_at": datetime.datetime.utcnow()}}), 201
+    return (
+        jsonify(
+            {
+                "status": "success",
+                "data": {
+                    "user_id": user_id,
+                    "created_at": datetime.datetime.utcnow(),
+                },
+            }
+        ),
+        201,
+    )
+
 
 # GET /users/{user_id}
 @user_blueprint.route("/users/<int:user_id>", methods=["GET"])
@@ -141,6 +202,7 @@ def get_user(user_id):
     }
     return jsonify({"status": "success", "data": user_data}), 200
 
+
 # PUT /users/{user_id}
 @user_blueprint.route("/users/<int:user_id>", methods=["PUT"])
 @token_required
@@ -171,7 +233,11 @@ def update_user(user_id):
     conn.commit()
     conn.close()
 
-    return jsonify({"status": "success", "message": "User preferences updated"}), 200
+    return (
+        jsonify({"status": "success", "message": "User preferences updated"}),
+        200,
+    )
+
 
 # DELETE /users/{user_id}
 @user_blueprint.route("/users/<int:user_id>", methods=["DELETE"])
@@ -185,17 +251,23 @@ def delete_user(user_id):
 
     return jsonify({"status": "success", "message": "User deleted"}), 200
 
+
 # GET /users/{user_id}/preferences
 @user_blueprint.route("/users/<int:user_id>/preferences", methods=["GET"])
 @token_required
 def get_user_preferences(user_id):
     conn = get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT preferences FROM Users WHERE user_id = %s", (user_id,))
+    cursor.execute(
+        "SELECT preferences FROM Users WHERE user_id = %s", (user_id,)
+    )
     preferences = cursor.fetchone()
     conn.close()
 
     if not preferences:
-        return jsonify({"status": "error", "message": "Preferences not found"}), 404
+        return (
+            jsonify({"status": "error", "message": "Preferences not found"}),
+            404,
+        )
 
     return jsonify({"status": "success", "data": preferences[0]}), 200

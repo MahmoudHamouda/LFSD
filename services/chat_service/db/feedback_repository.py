@@ -1,6 +1,7 @@
 from services.chat_service.models import Feedback
 from shared.db_connection import db_session
 
+
 class FeedbackRepository:
     @staticmethod
     def save_feedback(feedback_data):

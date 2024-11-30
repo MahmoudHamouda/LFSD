@@ -10,6 +10,7 @@ logger = logging.getLogger("db_connection")
 engine = None
 Session = None
 
+
 def init_db_connection(config):
     """
     Initialize the shared database connection.
@@ -32,14 +33,18 @@ def init_db_connection(config):
         logger.error(f"Error initializing database connection: {e}")
         raise e
 
+
 def get_db_session():
     """
     Provides a database session.
     :return: A new database session.
     """
     if Session is None:
-        raise RuntimeError("Database connection not initialized. Call init_db_connection first.")
+        raise RuntimeError(
+            "Database connection not initialized. Call init_db_connection first."
+        )
     return Session()
+
 
 def initialize_schema(base):
     """
@@ -49,7 +54,9 @@ def initialize_schema(base):
     global engine
 
     if engine is None:
-        raise RuntimeError("Database connection not initialized. Call init_db_connection first.")
+        raise RuntimeError(
+            "Database connection not initialized. Call init_db_connection first."
+        )
 
     try:
         base.metadata.create_all(engine)

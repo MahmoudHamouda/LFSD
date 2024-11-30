@@ -4,6 +4,7 @@ from models import AuditLog
 
 audit_log_blueprint = Blueprint("audit_log_service", __name__)
 
+
 # GET /audit-logs
 @audit_log_blueprint.route("/", methods=["GET"])
 def get_audit_logs():
@@ -33,12 +34,13 @@ def get_audit_logs():
             "action": log.action,
             "changed_data": log.changed_data,
             "performed_by": log.performed_by,
-            "timestamp": log.timestamp
+            "timestamp": log.timestamp,
         }
         for log in logs
     ]
 
     return jsonify({"status": "success", "data": log_list}), 200
+
 
 # POST /audit-logs
 @audit_log_blueprint.route("/", methods=["POST"])
@@ -51,7 +53,14 @@ def create_audit_log():
     performed_by = data.get("performed_by")
 
     if not all([table_name, record_id, action, performed_by]):
-        return jsonify({"error": "All fields are required: table_name, record_id, action, performed_by"}), 400
+        return (
+            jsonify(
+                {
+                    "error": "All fields are required: table_name, record_id, action, performed_by"
+                }
+            ),
+            400,
+        )
 
     session = get_db_session()
     new_log = AuditLog(
@@ -59,7 +68,7 @@ def create_audit_log():
         record_id=record_id,
         action=action,
         changed_data=changed_data,
-        performed_by=performed_by
+        performed_by=performed_by,
     )
     session.add(new_log)
     session.commit()

@@ -4,6 +4,7 @@ import datetime
 
 Base = declarative_base()
 
+
 class Partner(Base):
     __tablename__ = "partners"
 
@@ -13,4 +14,8 @@ class Partner(Base):
     phone_number = Column(String(20), nullable=True)
     services_offered = Column(JSON)  # List of services
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    updated_at = Column(
+        DateTime,
+        default=datetime.datetime.utcnow,
+        onupdate=datetime.datetime.utcnow,
+    )

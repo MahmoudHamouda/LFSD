@@ -4,8 +4,11 @@ import datetime
 
 activity_feed_blueprint = Blueprint("activity_feed_service", __name__)
 
+
 # GET /users/{user_id}/activity-feed
-@activity_feed_blueprint.route("/users/<int:user_id>/activity-feed", methods=["GET"])
+@activity_feed_blueprint.route(
+    "/users/<int:user_id>/activity-feed", methods=["GET"]
+)
 def get_activity_feed(user_id):
     action_type = request.args.get("action_type")
     start_date = request.args.get("start_date")
@@ -34,7 +37,7 @@ def get_activity_feed(user_id):
             "user_id": a[1],
             "action_type": a[2],
             "details": a[3],
-            "created_at": a[4]
+            "created_at": a[4],
         }
         for a in activities
     ]
@@ -43,7 +46,9 @@ def get_activity_feed(user_id):
 
 
 # POST /users/{user_id}/activity-feed
-@activity_feed_blueprint.route("/users/<int:user_id>/activity-feed", methods=["POST"])
+@activity_feed_blueprint.route(
+    "/users/<int:user_id>/activity-feed", methods=["POST"]
+)
 def create_activity_feed_entry(user_id):
     data = request.json
     action_type = data.get("action_type")

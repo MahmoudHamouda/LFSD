@@ -1,8 +1,16 @@
-from sqlalchemy import Column, Integer, String, DateTime, JSON, ForeignKey, Boolean
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    ForeignKey,
+    Boolean,
+)
 from sqlalchemy.ext.declarative import declarative_base
 import datetime
 
 Base = declarative_base()
+
 
 class ChatSession(Base):
     __tablename__ = "chat_sessions"
@@ -39,7 +47,9 @@ class Feedback(Base):
     __tablename__ = "feedback"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    message_id = Column(String(50), nullable=False)  # Message ID for which feedback is provided
+    message_id = Column(
+        String(50), nullable=False
+    )  # Message ID for which feedback is provided
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     feedback = Column(String(500), nullable=False)  # Feedback content
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

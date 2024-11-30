@@ -4,10 +4,12 @@ from dotenv import load_dotenv
 # Load environment variables from a .env file
 load_dotenv()
 
+
 class Config:
     """
     Base configuration class with default settings.
     """
+
     # General Configuration
     APP_NAME = "Financial Wellbeing Platform"
     ENV = os.getenv("FLASK_ENV", "development")
@@ -29,7 +31,9 @@ class Config:
     JWT_EXPIRATION_HOURS = int(os.getenv("JWT_EXPIRATION_HOURS", 24))
 
     # Rate Limiting Configuration
-    RATE_LIMIT_DEFAULT = int(os.getenv("RATE_LIMIT_DEFAULT", 100))  # Requests per minute
+    RATE_LIMIT_DEFAULT = int(
+        os.getenv("RATE_LIMIT_DEFAULT", 100)
+    )  # Requests per minute
     RATE_LIMIT_ENDPOINTS = {
         "/chat": int(os.getenv("RATE_LIMIT_CHAT", 50)),
         "/recommendations": int(os.getenv("RATE_LIMIT_RECOMMENDATIONS", 30)),
@@ -42,18 +46,22 @@ class Config:
     LOG_LEVEL = os.getenv("LOG_LEVEL", "DEBUG")
     LOG_FILE = os.getenv("LOG_FILE", "application.log")
 
+
 # Environment-specific configurations
 class DevelopmentConfig(Config):
     DEBUG = True
+
 
 class TestingConfig(Config):
     DEBUG = True
     TESTING = True
     DB_NAME = os.getenv("TEST_DB_NAME", "test_financial_app")
 
+
 class ProductionConfig(Config):
     DEBUG = False
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
 
 # Factory method to load appropriate configuration
 def get_config():

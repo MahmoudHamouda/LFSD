@@ -1,8 +1,16 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, JSON, ForeignKey
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    Float,
+    ForeignKey,
+)
 from sqlalchemy.ext.declarative import declarative_base
 import datetime
 
 Base = declarative_base()
+
 
 class Transaction(Base):
     __tablename__ = "transactions"
@@ -13,6 +21,7 @@ class Transaction(Base):
     category = Column(String(50))
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     description = Column(String(255))
+
 
 class AffordabilityAnalysis(Base):
     __tablename__ = "affordability_analysis"
@@ -26,6 +35,7 @@ class AffordabilityAnalysis(Base):
     monthly_payment = Column(Float, nullable=True)
     affordable = Column(String(10))  # "Yes" or "No"
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
 
 class RecurringExpense(Base):
     __tablename__ = "recurring_expenses"
