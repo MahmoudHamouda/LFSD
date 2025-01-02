@@ -12,13 +12,22 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
-      - name: Set Up Kubernetes
-        uses: azure/setup-kubectl@v3
+
+      - name: Set Up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
         with:
-          version: 'v1.26.0'
+          project_id: newprojectlfsd
+          service_account_key: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          export_default_credentials: true
+
+      - name: Configure kubectl for GKE
+        run: |
+          gcloud container clusters get-credentials my-cluster-lfsd --region us-central1 --project newprojectlfsd
+
       - name: Deploy to Staging
         run: |
           kubectl apply -f k8s/staging-deployment.yaml
+
       - name: Deploy to Production
         if: success()
         run: |
