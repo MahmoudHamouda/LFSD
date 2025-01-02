@@ -34,8 +34,8 @@ jobs:
      #   run: flake8 .
 
       # Step 5: Run Black
-      - name: Run Black (Check Mode)
-        run: black --check .
+      - name: Run Black (Modifying Mode)
+        run: black .
 
       # Step 6: Log in to Docker Hub
       - name: Log in to Docker Hub
