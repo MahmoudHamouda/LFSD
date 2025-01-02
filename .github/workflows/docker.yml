@@ -21,7 +21,5 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Build and Push Image
         run: |
-          docker build -t hamoum/lfsd:latest .
+          docker build -t hamoum/lfsd:latest -f ./docker/Dockerfile .
           docker push hamoum/lfsd:latest
-          docker build -t hamoum/lfsd:latest -f /Docker .
-
