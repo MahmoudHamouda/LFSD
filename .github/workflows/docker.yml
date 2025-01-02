@@ -23,3 +23,5 @@ jobs:
         run: |
           docker build -t hamoum/lfsd:latest .
           docker push hamoum/lfsd:latest
+          docker build -t hamoum/lfsd:latest -f /Docker .
+
