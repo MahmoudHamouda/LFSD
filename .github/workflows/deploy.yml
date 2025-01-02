@@ -31,16 +31,11 @@ jobs:
         run: |
           gcloud container clusters get-credentials my-cluster-lfsd --region us-central1-a --project newprojectlfsd
 
-      # Deploy to Staging
-      - name: Deploy to Staging
+      # Deploy to Staging and production 
+      - name: Deploy to Staging and Production
         run: |
-          kubectl apply -f k8s/staging-deployment.yaml
+          kubectl apply -f k8s/deployment.yaml
 
-      # Deploy to Production
-      - name: Deploy to Production
-        if: success()
-        run: |
-          kubectl apply -f k8s/production-deployment.yaml
         env:
           USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
 
