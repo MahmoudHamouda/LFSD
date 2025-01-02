@@ -215,8 +215,6 @@ def oauth_callback():
         ),
         200,
     )
-
-
 # POST /auth/logout
 @authentication_blueprint.route("/auth/logout", methods=["POST"])
 def logout():
