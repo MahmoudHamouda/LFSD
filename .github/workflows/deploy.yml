@@ -4,45 +4,39 @@ on:
   push:
     branches:
       - main
+
 jobs:
   deploy:
+    name: Deploy to Staging and Production
     runs-on: ubuntu-latest
-
     steps:
-    # Checkout the code
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    # Authenticate with Google Cloud
-    - name: Authenticate with Google Cloud
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+      # Authenticate with Google Cloud
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-    # Set up gcloud CLI
-    - name: Set up gcloud CLI
-      uses: google-github-actions/setup-gcloud@v1
-      with:
-        project_id: newprojectlfsd
-        export_default_credentials: true
+      # Set up gcloud CLI
+      - name: Set Up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: newprojectlfsd
 
-    # Install the required plugin
-    - name: Install GKE Auth Plugin
-      run: |
-        echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-        sudo apt-get install apt-transport-https ca-certificates gnupg -y
-        curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-        sudo apt-get update
-        sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin -y
+      - name: Install gke-gcloud-auth-plugin
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
-    # Connect to GKE Cluster
-    - name: Connect to GKE Cluster
-      run: |
-        gcloud container clusters get-credentials my-cluster-lfsd \
-          --region us-central1-a \
-          --project newprojectlfsd
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials my-cluster-lfsd --region us-central1-a --project newprojectlfsd
+        env:
+          USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
 
-    # Add your deployment step
-    - name: Deploy Application
-      run: |
-        # Add your deployment commands here
+      # Deploy to Staging and Production
+      - name: Deploy to Staging and Production
+        run: |
+          kubectl apply -f k8s/deployment.yaml
