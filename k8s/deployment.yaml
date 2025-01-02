@@ -16,6 +16,6 @@ spec:
     spec:
       containers:
       - name: my-app
-        image: my-docker-image:latest
+        image: hamoum/lfsd:latest
         ports:
         - containerPort: 5000
