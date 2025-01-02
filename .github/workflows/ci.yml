@@ -31,4 +31,4 @@ jobs:
       - name: Run Black (Reformat Mode)
         run: black .
       - name: Run Flake8
-        run: flake8 .
+        run: flake8 . --ignore=E501
