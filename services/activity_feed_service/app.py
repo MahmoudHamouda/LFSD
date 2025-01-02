@@ -1,13 +1,12 @@
-```python
 from flask import Flask
-from routes import activity_feed_blueprint
-from db import init_db
+from .routes import activity_feed_blueprint  # Use relative import
+from .db import init_db  # Use relative import
 
 # Initialize the Flask app
 app = Flask(__name__)
 
 # Load configuration
-app.config.from_object("config.get_config()")
+app.config.from_object("config.get_config")
 
 # Initialize the database
 init_db(app)
