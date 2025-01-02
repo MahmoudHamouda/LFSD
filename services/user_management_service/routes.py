@@ -1,9 +1,8 @@
-Implements user-related endpoints.
-```python
 from flask import Blueprint, request, jsonify
 from db import get_db_session
 from models import User
 
+# Blueprint for user-related routes
 user_blueprint = Blueprint("user_service", __name__)
 
 # GET /users/<user_id>
