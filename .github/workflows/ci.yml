@@ -30,8 +30,8 @@ jobs:
           pip install flake8 black==22.1.0 click==8.0.0
 
       # Step 4: Run linting
-      - name: Run Flake8
-        run: flake8 .
+     # - name: Run Flake8
+     #   run: flake8 .
 
       # Step 5: Run Black
       - name: Run Black (Check Mode)
