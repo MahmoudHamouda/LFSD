@@ -28,7 +28,7 @@ jobs:
 
       - name: Configure kubectl
         run: |
-          gcloud container clusters get-credentials my-cluster-lfsd --region us-central1 --project newprojectlfsd
+          gcloud container clusters get-credentials my-cluster-lfsd --region us-central1-a --project newprojectlfsd
 
       # Deploy to Staging
       - name: Deploy to Staging
