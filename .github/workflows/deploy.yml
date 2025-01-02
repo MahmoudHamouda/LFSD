@@ -25,11 +25,6 @@ jobs:
         with:
           project_id: newprojectlfsd
 
-      - name: Install gke-gcloud-auth-plugin
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
-
       - name: Configure kubectl
         run: |
           gcloud container clusters get-credentials my-cluster-lfsd --region us-central1-a --project newprojectlfsd
