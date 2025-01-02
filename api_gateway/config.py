@@ -1,48 +1,46 @@
-
-
 import os
 from dotenv import load_dotenv
-
 
 # Load environment variables
 load_dotenv()
 
-
-# App configuration
 class Config:
     DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
     TESTING = os.getenv("TESTING", "False").lower() in ("true", "1", "t")
     SECRET_KEY = os.getenv("SECRET_KEY", "default-secret-key")
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", "sqlite:///default.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # Construct database URI from individual components or fallback to DATABASE_URL
+    @staticmethod
+    def construct_db_uri():
+        db_user = os.getenv("DB_USER")
+        db_password = os.getenv("DB_PASSWORD")
+        db_host = os.getenv("DB_HOST", "localhost")
+        db_port = os.getenv("DB_PORT", "5432")
+        db_name = os.getenv("DB_NAME")
+
+        if db_user and db_password and db_name:
+            return f"postgresql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+        return os.getenv("DATABASE_URL", "sqlite:///default.db")
+
+    SQLALCHEMY_DATABASE_URI = construct_db_uri()
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DEV_DATABASE_URL", "sqlite:///development.db"
-    )
-
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "TEST_DATABASE_URL", "sqlite:///testing.db"
-    )
-
+    SQLALCHEMY_DATABASE_URI = Config.construct_db_uri()
 
 class ProductionConfig(Config):
     DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "PROD_DATABASE_URL", "sqlite:///production.db"
-    )
-
+    SQLALCHEMY_DATABASE_URI = Config.construct_db_uri()
 
 def get_config():
+    config_map = {
+        "production": ProductionConfig,
+        "testing": TestingConfig,
+        "development": DevelopmentConfig,
+    }
     env = os.getenv("FLASK_ENV", "development").lower()
-    if env == "production":
-        return ProductionConfig
-    elif env == "testing":
-        return TestingConfig
-    else:
-        return DevelopmentConfig
+    return config_map.get(env, DevelopmentConfig)
