@@ -12,6 +12,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        
 
       # Authenticate with Google Cloud
       - name: Authenticate with Google Cloud
@@ -40,3 +41,7 @@ jobs:
         if: success()
         run: |
           kubectl apply -f k8s/production-deployment.yaml
+        env:
+          USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
+
+      
