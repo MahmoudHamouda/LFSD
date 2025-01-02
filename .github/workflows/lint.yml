@@ -27,7 +27,7 @@ jobs:
 
       - name: Run Black (Check Mode)
         run: |
-          black .
+          black==22.1.0 .
 
       - name: Run Flake8
         run: |
