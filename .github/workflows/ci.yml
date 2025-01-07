@@ -29,6 +29,7 @@ jobs:
         run: |
           npm install
           npm install --save-dev @vitejs/plugin-react
+          npm install @fluentui/react
 
       # Step 4: Build frontend
       - name: Build Frontend
