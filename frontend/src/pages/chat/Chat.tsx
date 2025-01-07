@@ -46,4 +46,6 @@ const Chat = () => {
         date: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, responseMessage]);
-      setIsLoading(fa
+      setIsLoading(false); // Corrected line
+  }, 1000); // Simulating a delay
+};
