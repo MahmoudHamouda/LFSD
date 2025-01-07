@@ -71,7 +71,7 @@ jobs:
           # Build and push frontend service (lfsd)
           cd frontend
           npm install
-          npm install --save-dev vite-tsconfig-paths
+          npm install --save-dev vite-tsconfig-paths @vitejs/plugin-react
           npm run build
           cd ..
           
