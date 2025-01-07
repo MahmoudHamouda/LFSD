@@ -1,23 +1,18 @@
-# Use an official Node.js image
-FROM node:18-slim
+# Use Node.js for the build process
+FROM node:18-alpine AS build
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY frontend/package*.json ./
+# Copy all frontend files
+COPY frontend/ .
 
-# Install dependencies
-RUN npm install --legacy-peer-deps
+# Install dependencies and build the app
+RUN npm install && npm run build
 
-# Copy the frontend source code
-COPY frontend/ ./
+# Use Nginx for the production environment
+FROM nginx:alpine
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Build the frontend for production
-RUN npm run build
-
-# Use Nginx to serve the frontend
-FROM nginx:stable-alpine
-COPY --from=0 /app/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
