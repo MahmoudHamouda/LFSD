@@ -67,6 +67,13 @@ jobs:
 
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/partner_service:$IMAGE_TAG -f docker/Dockerfile.partner_service .
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/partner_service:$IMAGE_TAG
+
+          # Build and push frontend service (lfsd)
+          cd frontend
+          npm install
+          npm install --save-dev vite-tsconfig-paths
+          npm run build
+          cd ..
           
           docker build -t hamoum/lfsd:latest -f docker/Dockerfile.lfsd .
           docker push hamoum/lfsd:latest
