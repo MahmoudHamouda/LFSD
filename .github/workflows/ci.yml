@@ -28,6 +28,7 @@ jobs:
         working-directory: ./frontend
         run: |
           npm install
+          npm install --save-dev @vitejs/plugin-react
 
       # Step 4: Build frontend
       - name: Build Frontend
