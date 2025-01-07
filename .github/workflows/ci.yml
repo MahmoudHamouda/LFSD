@@ -23,13 +23,12 @@ jobs:
         with:
           node-version: '18'
 
-      # Step 3: Install frontend dependencies
+      # Step 3: Install dependencies
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
           npm install
-          npm install --save-dev @vitejs/plugin-react
-          npm install @fluentui/react-icons @fluentui/react recharts
+          npm install --save react-router-dom
 
       # Step 4: Build frontend
       - name: Build Frontend
