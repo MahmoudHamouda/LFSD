@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react(), tsconfigPaths()],
   build: {
     rollupOptions: {
-      external: ["@fluentui/react-icons"], // Treat as external
+      external: ["react-router-dom"], // Treat as external
     },
   },
   server: {
