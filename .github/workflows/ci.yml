@@ -23,13 +23,12 @@ jobs:
         with:
           node-version: '18'
 
-      # Step 3: Install dependencies
+      # Step 3: Install Frontend Dependencies
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
-          npm install
-          npm install react@^18.2.0 react-dom@^18.2.0 react-router-dom@^6.14.0
-          npm install
+          npm ci
+          npm install --save-dev @vitejs/plugin-react
 
       # Step 4: Build frontend
       - name: Build Frontend
