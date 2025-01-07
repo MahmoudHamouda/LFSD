@@ -67,6 +67,9 @@ jobs:
 
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/partner_service:$IMAGE_TAG -f docker/Dockerfile.partner_service .
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/partner_service:$IMAGE_TAG
+          
+          docker build -t hamoum/lfsd:latest -f docker/Dockerfile.lfsd .
+          docker push hamoum/lfsd:latest
 
       # Optional: Notify on successful completion
       - name: Notify Success
