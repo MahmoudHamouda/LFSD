@@ -18,25 +18,33 @@ jobs:
         uses: actions/checkout@v3
 
       # Step 2: Set up Node.js
-      - name: Set Up Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      # Step 3: Install Frontend Dependencies
+      # Step 3: Install Dependencies and Generate Lock File
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
-          npm ci
           npm install --save-dev @vitejs/plugin-react
+          npm ci --package-lock-only
 
-      # Step 4: Build frontend
+      # Step 4: Cache Dependencies
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # Step 5: Build Frontend
       - name: Build Frontend
         working-directory: ./frontend
-        run: |
-          npm run build
+        run: npm run build
 
-      # Step 5: Authenticate with Google Cloud
+      # Step 6: Authenticate and Build Docker Images
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v1
         with:
@@ -48,31 +56,13 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Log in to GCR
-        run: |
-          gcloud auth configure-docker --quiet
+        run: gcloud auth configure-docker --quiet
 
-      # Step 6: Build and Push Docker Images
       - name: Build and Push Docker Images
         run: |
           IMAGE_TAG=$(echo $GITHUB_SHA | head -c7)
-
-          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/api_gateway:$IMAGE_TAG -f docker/Dockerfile.api_gateway .
-          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/api_gateway:$IMAGE_TAG
-
-          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/user_service:$IMAGE_TAG -f docker/Dockerfile.user_service .
-          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/user_service:$IMAGE_TAG
-
-          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/financial_service:$IMAGE_TAG -f docker/Dockerfile.financial_service .
-          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/financial_service:$IMAGE_TAG
-
-          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/chat_service:$IMAGE_TAG -f docker/Dockerfile.chat_service .
-          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/chat_service:$IMAGE_TAG
-
-          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/partner_service:$IMAGE_TAG -f docker/Dockerfile.partner_service .
-          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/partner_service:$IMAGE_TAG
-          
-          docker build -t hamoum/lfsd:latest -f docker/Dockerfile.lfsd .
-          docker push hamoum/lfsd:latest
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG -f docker/Dockerfile.lfsd .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG
 
       # Optional: Notify Success
       - name: Notify Success
