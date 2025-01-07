@@ -47,5 +47,24 @@ const Chat = () => {
       };
       setMessages((prev) => [...prev, responseMessage]);
       setIsLoading(false); // Corrected line
-  }, 1000); // Simulating a delay
+    }, 1000); // Simulating a delay
+  };
+
+  return (
+    <div className={styles.chatContainer}>
+      <Stack>
+        <div className={styles.chatMessages}>
+          {messages.map((msg) => (
+            <div key={msg.id} className={styles.message}>
+              <strong>{msg.role}:</strong> {msg.content}
+            </div>
+          ))}
+          <div ref={chatMessageStreamEnd} />
+        </div>
+        <QuestionInput onSend={handleSend} isLoading={isLoading} />
+      </Stack>
+    </div>
+  );
 };
+
+export default Chat;
