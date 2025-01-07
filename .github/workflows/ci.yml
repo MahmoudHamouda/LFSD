@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  lint-and-build:
-    name: Lint, Test, and Build Docker Image
+  lint-build-push:
+    name: Lint, Test, Build, and Push Docker Images
     runs-on: ubuntu-latest
     steps:
       # Step 1: Checkout code
@@ -29,35 +29,46 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8 black==22.1.0 click==8.0.0
 
-      # Step 4: Run linting
-     # - name: Run Flake8
-     #   run: flake8 .
-
-      # Step 5: Run Black
+      # Step 4: Run Black for formatting
       - name: Run Black (Modifying Mode)
         run: black .
 
-      # Step 6: Log in to Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+      # Step 5: Log in to Google Container Registry (GCR)
+      - name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v1
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      # Step 7: Build and push Docker images
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Log in to GCR
+        run: |
+          gcloud auth configure-docker --quiet
+
+      # Step 6: Build and push Docker images to GCR
       - name: Build and Push Docker Images
         run: |
-          docker build -t hamoum/api_gateway:latest -f docker/Dockerfile.api_gateway .
-          docker push hamoum/api_gateway:latest
+          IMAGE_TAG=$(echo $GITHUB_SHA | head -c7)
 
-          docker build -t hamoum/user_service:latest -f docker/Dockerfile.user_service .
-          docker push hamoum/user_service:latest
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/api_gateway:$IMAGE_TAG -f docker/Dockerfile.api_gateway .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/api_gateway:$IMAGE_TAG
 
-          docker build -t hamoum/financial_service:latest -f docker/Dockerfile.financial_service .
-          docker push hamoum/financial_service:latest
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/user_service:$IMAGE_TAG -f docker/Dockerfile.user_service .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/user_service:$IMAGE_TAG
 
-          docker build -t hamoum/chat_service:latest -f docker/Dockerfile.chat_service .
-          docker push hamoum/chat_service:latest
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/financial_service:$IMAGE_TAG -f docker/Dockerfile.financial_service .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/financial_service:$IMAGE_TAG
 
-          docker build -t hamoum/partner_service:latest -f docker/Dockerfile.partner_service .
-          docker push hamoum/partner_service:latest
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/chat_service:$IMAGE_TAG -f docker/Dockerfile.chat_service .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/chat_service:$IMAGE_TAG
+
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/partner_service:$IMAGE_TAG -f docker/Dockerfile.partner_service .
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/partner_service:$IMAGE_TAG
+
+      # Optional: Notify on successful completion
+      - name: Notify Success
+        if: success()
+        run: echo "Docker images built and pushed successfully!"
