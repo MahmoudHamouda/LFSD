@@ -27,6 +27,8 @@ jobs:
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
+          npm install
+          npm install vite --save-dev # Ensure vite is installed
           npm install --save-dev @vitejs/plugin-react
           npm ci --package-lock-only
 
