@@ -4,7 +4,6 @@ import {
   ChatHistoryLoadingState,
   Conversation,
   CosmosDBHealth,
-  CosmosDBStatus,
   Feedback,
   FrontendSettings,
   frontendSettings,
@@ -52,4 +51,43 @@ export type Action =
 // Initial state for the application
 const initialState: AppState = {
   isChatHistoryOpen: false,
-  chatHi
+  chatHistoryLoadingState: 'idle',
+  isCosmosDBAvailable: { status: 'unknown' },
+  chatHistory: null,
+  filteredChatHistory: null,
+  currentChat: null,
+  frontendSettings: null,
+  feedbackState: {},
+  isLoading: false,
+  answerExecResult: {},
+};
+
+// Context for the application state
+export const AppStateContext = createContext<{
+  state: AppState;
+  dispatch: React.Dispatch<Action>;
+}>({
+  state: initialState,
+  dispatch: () => undefined,
+});
+
+// Provider for the application state
+export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [state, dispatch] = useReducer(appStateReducer, initialState);
+
+  useEffect(() => {
+    // Example: Fetch frontend settings on app initialization
+    async function fetchSettings() {
+      const settings = await frontendSettings();
+      dispatch({ type: 'FETCH_FRONTEND_SETTINGS', payload: settings });
+    }
+
+    fetchSettings();
+  }, []);
+
+  return (
+    <AppStateContext.Provider value={{ state, dispatch }}>
+      {children}
+    </AppStateContext.Provider>
+  );
+};
