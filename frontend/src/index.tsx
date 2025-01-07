@@ -3,12 +3,12 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { initializeIcons } from '@fluentui/react';
 
-import Chat from './pages/Chat';
-import Dashboard from './pages/Dashboard';
-import Recommendations from './pages/Recommendations';
-import UserProfile from './pages/UserProfile';
-import Layout from './pages/Layout';
-import NoPage from './pages/NoPage';
+import Chat from './pages/chat';
+import Dashboard from './pages/dashboard';
+import Recommendations from './pages/recommendations';
+import UserProfile from './pages/userProfile';
+import Layout from './pages/layout';
+import NoPage from './pages/noPage';
 
 import { AppStateProvider } from './state/AppProvider';
 import './index.css';
