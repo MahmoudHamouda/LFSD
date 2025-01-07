@@ -1,20 +1,26 @@
-# Use an official Python image
-FROM python:3.10-slim
+# Use Node.js as the base image for building
+FROM node:18-alpine AS build
 
 # Set the working directory
 WORKDIR /app
 
-# Copy the requirements file
-COPY requirements.txt .
+# Copy the frontend source code
+COPY frontend/ .
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN npm install
 
-# Copy the application code
-COPY lfsd/ .
+# Build the frontend for production
+RUN npm run build
 
-# Expose the application port
-EXPOSE 5000
+# Use Nginx for serving the frontend
+FROM nginx:alpine
 
-# Run the application
-CMD ["python", "app.py"]
+# Copy the production build to Nginx's HTML directory
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Expose the default Nginx port
+EXPOSE 80
+
+# Start the Nginx server
+CMD ["nginx", "-g", "daemon off;"]
