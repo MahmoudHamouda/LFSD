@@ -64,7 +64,7 @@ jobs:
       - name: Validate gke-gcloud-auth-plugin
         run: |
           ls -la /usr/local/bin/gke-gcloud-auth-plugin
-          gke-gcloud-auth-plugin --version
+          /usr/local/bin/gke-gcloud-auth-plugin --help
 
 
       - name: Configure kubectl
