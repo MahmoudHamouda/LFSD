@@ -1,5 +1,4 @@
 import React, { createContext, ReactNode, useEffect, useReducer } from 'react';
-
 import {
   ChatHistoryLoadingState,
   Conversation,
@@ -7,8 +6,6 @@ import {
   Feedback,
   FrontendSettings,
   frontendSettings,
-  historyEnsure,
-  historyList,
 } from '../api';
 
 import { appStateReducer } from './AppReducer';
@@ -22,9 +19,9 @@ export interface AppState {
   filteredChatHistory: Conversation[] | null;
   currentChat: Conversation | null;
   frontendSettings: FrontendSettings | null;
-  feedbackState: { [answerId: string]: Feedback.Neutral | Feedback.Positive | Feedback.Negative };
+  feedbackState: Record<string, Feedback.Neutral | Feedback.Positive | Feedback.Negative>;
   isLoading: boolean;
-  answerExecResult: { [answerId: string]: [] };
+  answerExecResult: Record<string, []>;
 }
 
 // Define the possible actions for the state
@@ -43,7 +40,7 @@ export type Action =
   | { type: 'FETCH_FRONTEND_SETTINGS'; payload: FrontendSettings | null }
   | {
       type: 'SET_FEEDBACK_STATE';
-      payload: { answerId: string; feedback: Feedback.Positive | Feedback.Negative | Feedback.Neutral };
+      payload: { answerId: string; feedback: Feedback.Neutral | Feedback.Positive | Feedback.Negative };
     }
   | { type: 'GET_FEEDBACK_STATE'; payload: string }
   | { type: 'SET_ANSWER_EXEC_RESULT'; payload: { answerId: string; exec_result: [] } };
@@ -68,21 +65,25 @@ export const AppStateContext = createContext<{
   dispatch: React.Dispatch<Action>;
 }>({
   state: initialState,
-  dispatch: () => undefined,
+  dispatch: () => undefined, // Placeholder dispatch function for initialization
 });
 
-// Provider for the application state
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+// Application state provider
+export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, dispatch] = useReducer(appStateReducer, initialState);
 
   useEffect(() => {
-    // Example: Fetch frontend settings on app initialization
-    async function fetchSettings() {
-      const settings = await frontendSettings();
-      dispatch({ type: 'FETCH_FRONTEND_SETTINGS', payload: settings });
-    }
+    // Fetch frontend settings when the provider is initialized
+    const fetchFrontendSettings = async () => {
+      try {
+        const settings = await frontendSettings();
+        dispatch({ type: 'FETCH_FRONTEND_SETTINGS', payload: settings });
+      } catch (error) {
+        console.error('Failed to fetch frontend settings:', error);
+      }
+    };
 
-    fetchSettings();
+    fetchFrontendSettings();
   }, []);
 
   return (
