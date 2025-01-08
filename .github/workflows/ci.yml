@@ -27,8 +27,8 @@ jobs:
       - name: Install Frontend Dependencies
         working-directory: ./frontend
         run: |
-         npm install --package-lock-only
-         npm ci
+          npm install --package-lock-only
+          npm ci
 
       # Step 4: Cache Node Modules
       - name: Cache Node Modules
@@ -44,7 +44,7 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-      # Step 6: Authenticate and Build Docker Images
+      # Step 6: Authenticate with Google Cloud
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v1
         with:
@@ -58,11 +58,25 @@ jobs:
       - name: Log in to GCR
         run: gcloud auth configure-docker --quiet
 
+      # Step 7: Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 8: Build and Push Docker Images
       - name: Build and Push Docker Images
         run: |
           IMAGE_TAG=$(echo $GITHUB_SHA | head -c7)
+
+          # Build and push to Google Container Registry
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG -f docker/Dockerfile.lfsd .
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG
+
+          # Tag and push to Docker Hub
+          docker tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG hamoum/lfsd:latest
+          docker push hamoum/lfsd:latest
 
       # Optional: Notify Success
       - name: Notify Success
