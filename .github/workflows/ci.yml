@@ -57,9 +57,9 @@ jobs:
 
       - name: Install GKE Auth Plugin
         run: |
-          curl -LO https://storage.googleapis.com/gke-gcloud-auth-plugin/$(curl -s https://api.github.com/repos/kubernetes/cloud-provider-gcp/releases/latest | grep browser_download_url | grep linux | cut -d '"' -f 4)
-          chmod +x gke-gcloud-auth-plugin-linux
-          sudo mv gke-gcloud-auth-plugin-linux /usr/local/bin/gke-gcloud-auth-plugin
+          curl -LO https://storage.googleapis.com/gke-gcloud-auth-plugin/v0.6.0/gke-gcloud-auth-plugin-linux-amd64
+          chmod +x gke-gcloud-auth-plugin-linux-amd64
+          sudo mv gke-gcloud-auth-plugin-linux-amd64 /usr/local/bin/gke-gcloud-auth-plugin
 
       - name: Configure kubectl
         run: |
