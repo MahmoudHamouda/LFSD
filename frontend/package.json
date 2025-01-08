@@ -9,7 +9,8 @@
     "react": "^18.0.0",
     "react-dom": "^18.2.0",
     "@fluentui/react": "^8.0.0",
-    "recharts": "^2.5.0"
+    "recharts": "^2.5.0",
+    "@fluentui/react-icons": "^2.0.0"
   },
   "devDependencies": {
     "vite": "^4.5.0",
