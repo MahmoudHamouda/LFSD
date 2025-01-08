@@ -55,17 +55,32 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Log in to GCR
-        run: gcloud auth configure-docker --quiet
+      - name: Install GKE Auth Plugin
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
 
-      # Step 7: Log in to Docker Hub
+      - name: Configure kubectl
+        run: |
+          gcloud container clusters get-credentials your-cluster-name --zone your-zone --project ${{ secrets.GCP_PROJECT_ID }}
+          kubectl config current-context
+          
+      # Step 7: Deploy Kubernetes Resources
+      - name: Deploy Kubernetes Resources
+        run: |
+          kubectl apply -f k8s/secrets.yaml --validate=false
+          kubectl apply -f k8s/volumes.yaml --validate=false
+          kubectl apply -f k8s/databases.yaml --validate=false
+          kubectl apply -f k8s/deployment.yaml --validate=false
+
+      # Step 8: Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 8: Build and Push Docker Images
+      # Step 9: Build and Push Docker Images
       - name: Build and Push Docker Images
         run: |
           IMAGE_TAG=$(echo $GITHUB_SHA | head -c7)
@@ -77,20 +92,6 @@ jobs:
           # Tag and push to Docker Hub
           docker tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG hamoum/lfsd:latest
           docker push hamoum/lfsd:latest
-
-      # Step 9: Configure kubectl
-      - name: Configure kubectl
-        run: |
-          gcloud container clusters get-credentials my-cluster-lfsd --zone us-central1-a --project ${{ secrets.GCP_PROJECT_ID }}
-          kubectl config current-context
-
-      # Step 10: Apply Kubernetes Configurations
-      - name: Deploy Kubernetes Resources
-        run: |
-          kubectl apply -f k8s/secrets.yaml  --validate=false
-          kubectl apply -f k8s/volumes.yaml  --validate=false
-          kubectl apply -f k8s/databases.yaml  --validate=false
-          kubectl apply -f k8s/deployment.yaml  --validate=false
 
       # Optional: Notify Success
       - name: Notify Success
