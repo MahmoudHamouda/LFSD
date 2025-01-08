@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  lint-build-push:
     name: Lint, Test, Build, Push, and Deploy
     runs-on: ubuntu-latest
     steps:
@@ -26,7 +26,9 @@ jobs:
       # Step 3: Install Frontend Dependencies
       - name: Install Frontend Dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: |
+          npm install --package-lock-only
+          npm ci
 
       # Step 4: Cache Node Modules
       - name: Cache Node Modules
@@ -79,10 +81,10 @@ jobs:
       # Step 9: Apply Kubernetes Configurations
       - name: Deploy Kubernetes Resources
         run: |
-          kubectl apply -f k8s/secrets.yaml --validate=false
-          kubectl apply -f k8s/volumes.yaml --validate=false
-          kubectl apply -f k8s/databases.yaml --validate=false
-          kubectl apply -f k8s/deployment.yaml --validate=false
+          kubectl apply -f k8s/secrets.yaml
+          kubectl apply -f k8s/volumes.yaml
+          kubectl apply -f k8s/databases.yaml
+          kubectl apply -f k8s/deployment.yaml
 
       # Optional: Notify Success
       - name: Notify Success
