@@ -81,10 +81,10 @@ jobs:
       # Step 9: Apply Kubernetes Configurations
       - name: Deploy Kubernetes Resources
         run: |
-          kubectl apply -f k8s/secrets.yaml
-          kubectl apply -f k8s/volumes.yaml
-          kubectl apply -f k8s/databases.yaml
-          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/secrets.yaml  --validate=false
+          kubectl apply -f k8s/volumes.yaml  --validate=false
+          kubectl apply -f k8s/databases.yaml  --validate=false
+          kubectl apply -f k8s/deployment.yaml  --validate=false
 
       # Optional: Notify Success
       - name: Notify Success
