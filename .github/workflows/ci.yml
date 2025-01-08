@@ -63,7 +63,7 @@ jobs:
 
       - name: Configure kubectl
         run: |
-          gcloud container clusters get-credentials your-cluster-name --zone your-zone --project ${{ secrets.GCP_PROJECT_ID }}
+          gcloud container clusters get-credentials my-cluster-lfsd --zone us-central1-a --project ${{ secrets.GCP_PROJECT_ID }}
           kubectl config current-context
           
       # Step 7: Deploy Kubernetes Resources
