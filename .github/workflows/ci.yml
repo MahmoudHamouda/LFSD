@@ -30,14 +30,14 @@ jobs:
           npm install --package-lock-only
           npm ci
 
-        # Step 4: Cache Node Modules
-        - name: Cache Node Modules
-          uses: actions/cache@v3
-          with:
-            path: ~/.npm
-            key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
-            restore-keys: |
-              ${{ runner.os }}-node-
+      # Step 4: Cache Node Modules
+      - name: Cache Node Modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       # Step 5: Build Frontend
       - name: Build Frontend
@@ -78,13 +78,13 @@ jobs:
           docker tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG hamoum/lfsd:latest
           docker push hamoum/lfsd:latest
 
-      # Step 7: Configure kubectl
+      # Step 9: Configure kubectl
       - name: Configure kubectl
         run: |
           gcloud container clusters get-credentials your-cluster-name --zone your-zone --project ${{ secrets.GCP_PROJECT_ID }}
           kubectl config current-context
-          
-      # Step 9: Apply Kubernetes Configurations
+
+      # Step 10: Apply Kubernetes Configurations
       - name: Deploy Kubernetes Resources
         run: |
           kubectl apply -f k8s/secrets.yaml  --validate=false
