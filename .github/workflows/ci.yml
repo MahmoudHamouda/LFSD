@@ -26,8 +26,7 @@ jobs:
       # Step 3: Install Frontend Dependencies
       - name: Install Frontend Dependencies
         working-directory: ./frontend
-          run: |
-            npm install
+        run: npm ci
 
       # Step 4: Cache Node Modules
       - name: Cache Node Modules
