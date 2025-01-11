@@ -58,11 +58,6 @@ jobs:
         run: |
           gcloud components install gke-gcloud-auth-plugin
 
-      - name: Validate GKE Auth Plugin
-        run: |
-          which gke-gcloud-auth-plugin
-          gke-gcloud-auth-plugin --help
-
       - name: Configure kubectl
         run: |
          # Get credentials for the cluster
