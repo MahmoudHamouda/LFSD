@@ -54,18 +54,14 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-
       - name: Install GKE Auth Plugin
         run: |
-         gcloud components install gke-gcloud-auth-plugin
-         chmod +x gke-gcloud-auth-plugin
-         sudo mv gke-gcloud-auth-plugin /usr/local/bin/gke-gcloud-auth-plugin
-         
-      - name: Validate gke-gcloud-auth-plugin
-        run: |
-          ls -la /usr/local/bin/gke-gcloud-auth-plugin
-          /usr/local/bin/gke-gcloud-auth-plugin --help
+          gcloud components install gke-gcloud-auth-plugin
 
+      - name: Validate GKE Auth Plugin
+        run: |
+          which gke-gcloud-auth-plugin
+          gke-gcloud-auth-plugin --help
 
       - name: Configure kubectl
         run: |
