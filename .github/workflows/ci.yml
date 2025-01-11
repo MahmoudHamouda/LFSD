@@ -49,6 +49,8 @@ jobs:
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - name: Configure Docker to use gcloud as a credential helper
+        run: gcloud auth configure-docker --quiet
 
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v1
