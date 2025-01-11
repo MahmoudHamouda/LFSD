@@ -57,7 +57,7 @@ jobs:
 
       - name: Install GKE Auth Plugin
         run: |
-         curl -LO https://storage.googleapis.com/artifacts.k8s.io/releases/gke-gcloud-auth-plugin/linux-amd64/gke-gcloud-auth-pluginth-plugin
+         gcloud components install gke-gcloud-auth-plugin
          chmod +x gke-gcloud-auth-plugin
          sudo mv gke-gcloud-auth-plugin /usr/local/bin/gke-gcloud-auth-plugin
          
