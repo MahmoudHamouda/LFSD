@@ -54,7 +54,7 @@ jobs:
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-      - name: Install GKE Auth Plugin
+      - name: Install GKE Auth Plugina
         run: |
           gcloud components install gke-gcloud-auth-plugin
 
@@ -65,11 +65,13 @@ jobs:
 
       - name: Configure kubectl
         run: |
+         # Get credentials for the cluster
           gcloud container clusters get-credentials my-cluster-lfsd --zone us-central1-a --project ${{ secrets.GCP_PROJECT_ID }}
+          # Set up kubectl to use the gke-gcloud-auth-plugin
           export USE_GKE_GCLOUD_AUTH_PLUGIN=True
-          kubectl config set-credentials ${{ secrets.GCP_CLUSTER_USER }} --exec-command=gke-gcloud-auth-plugin
+          kubectl config set-credentials ${{ secrets.GCP_CLUSTER_USER }} --exec-command=/opt/hostedtoolcache/gcloud/505.0.0/x64/bin/gke-gcloud-auth-plugin
+          # Validate the current kubectl context
           kubectl config current-context
-
           
       # Step 7: Deploy Kubernetes Resources
       - name: Deploy Kubernetes Resources
