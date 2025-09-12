@@ -63,4 +63,22 @@ def initialize_schema(base):
         logger.info("Database schema initialized successfully.")
     except SQLAlchemyError as e:
         logger.error(f"Error initializing database schema: {e}")
-        raise e
+
+        
+
+def get_db_connection():
+    """
+    Compatibility wrapper for existing cursor-based code.
+    Uses psycopg2 if DATABASE_URL is set, otherwise falls back to sqlite3.
+    """
+    import os
+    dsn = os.getenv("DATABASE_URL")
+    if dsn:
+        import psycopg2
+        return psycopg2.connect(dsn)
+    else:
+        import sqlite3
+        path = os.getenv("SQLITE_PATH", "dev.db")
+        conn = sqlite3.connect(path, check_same_thread=False)
+        return conn
+raise e
