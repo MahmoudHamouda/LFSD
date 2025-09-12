@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from db import get_db_connection
+from shared.db_connection import get_db_connection
 import datetime
 
 notification_blueprint = Blueprint("notification_service", __name__)
