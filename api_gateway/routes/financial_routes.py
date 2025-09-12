@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 from shared.db_connection import get_db_connection
 import datetime
-from api_gateway.middleware.authentication import token_required
+from shared.auth import token_required
 from marshmallow import Schema, fields, ValidationError
 
 financial_blueprint = Blueprint("financial_service", __name__)
@@ -140,7 +140,7 @@ def log_transaction(user_id):
     category = data["category"]
     description = data.get("description")
     transaction_date = data.get("transaction_date", datetime.datetime.utcnow())
-    linked_expense_id = data.get("linked_expense_id")
+        linked_expense_id = data.get("linked_expense_id")
     linked_order_id = data.get("linked_order_id")
     linked_debt_id = data.get("linked_debt_id")
 
