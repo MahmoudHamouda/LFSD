@@ -4,6 +4,18 @@ import logging
 from logging.handlers import RotatingFileHandler
 import json
 from flask import request, g
+
+# Set up a default logger for generic events
+logger = logging.getLogger("lfsd")
+logger.setLevel(logging.INFO)
+
+def log_event(event_type: str, details: dict | None = None, level: str = "info"):
+    """
+    Generic event logger. Records an event type and optional details using the specified level.
+    """
+    msg = {"event": event_type, "details": details or {}}
+    # Use getattr to fetch the appropriate logging method; default to logger.info
+    getattr(logger, level, logger.info)(msg)
 from datetime import datetime
 
 
