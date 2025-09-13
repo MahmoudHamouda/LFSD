@@ -60,23 +60,24 @@ jobs:
         run: |
           gcloud components install gke-gcloud-auth-plugin
 
-      - name: Configure kubectl
+      - name: Get credentials for the cluster (disabled)
+        if: ${{ false }}         # ← paste this line under the name (same indentation)
         run: |
-         # Get credentials for the cluster
-          gcloud container clusters get-credentials my-cluster-lfsd --zone us-central1-a --project ${{ secrets.GCP_PROJECT_ID }}
-          # Set up kubectl to use the gke-gcloud-auth-plugin
-          export USE_GKE_GCLOUD_AUTH_PLUGIN=True
-          kubectl config set-credentials ${{ secrets.GCP_CLUSTER_USER }} --exec-command=/opt/hostedtoolcache/gcloud/505.0.0/x64/bin/gke-gcloud-auth-plugin
-          # Validate the current kubectl context
-          kubectl config current-context
+         gcloud container clusters get-credentials my-cluster-lfsd --zone us-central1-a --project ${{ env.PROJECT_ID }}
+         export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+         kubectl config set-credentials "${{ env.PROJECT_ID }}" --exec-command="$(gcloud info --format='value(basic.python_location)')/bin/gke-gcloud-auth-plugin"
+         kubectl config current-context
+
           
       # Step 7: Deploy Kubernetes Resources
       - name: Deploy Kubernetes Resources
+        if: ${{ false }}
         run: |
           kubectl apply -f k8s/secrets.yaml  --validate=false
           kubectl apply -f k8s/volumes.yaml  --validate=false
           kubectl apply -f k8s/databases.yaml  --validate=false
           kubectl apply -f k8s/deployment.yaml  --validate=false
+          
 
       # Step 8: Log in to Docker Hub
       - name: Log in to Docker Hub
