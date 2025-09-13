@@ -16,7 +16,27 @@ from typing import Callable, Optional
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from loguru import logger
+# Try to use loguru for structured logging; fall back to standard logging if not available.
+try:
+    from loguru import logger  # type: ignore
+except Exception:
+    import logging
+
+    class _FallbackLogger(logging.Logger):  # type: ignore
+        """
+        Minimal logger API compatible with loguru. It exposes ``bind`` to mimic
+        loguru's structured logging. The returned logger simply ignores bound
+        context and uses the underlying logging.Logger methods for ``info`` and
+        ``exception``.
+        """
+
+        def bind(self, **kwargs):
+            # Ignore bound context; return the same logger instance
+            return self
+
+    # Configure root logger and get a named logger
+    logging.basicConfig(level=logging.INFO)
+    logger = _FallbackLogger(name="lfsd_app", level=logging.INFO)  # type: ignore
 
 from config import get_settings
 from rate_limiting import RateLimitExceeded, RateLimitMiddleware, limiter

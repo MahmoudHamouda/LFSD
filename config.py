@@ -8,7 +8,41 @@ environment variables and can be optionally overridden by a `.env` file. See
 """
 
 from functools import lru_cache
-from pydantic import BaseSettings, Field
+# Pydantic moved BaseSettings to pydantic-settings in v2. Attempt to import
+# from the new location first, falling back to pydantic if available. If
+# neither is available, provide a minimal fallback implementation so the
+# application can still run in constrained environments.
+try:
+    from pydantic_settings import BaseSettings  # type: ignore
+    from pydantic import Field  # type: ignore
+except Exception:
+    try:
+        from pydantic import BaseSettings, Field  # type: ignore
+    except Exception:
+        # Define minimal fallback implementations for BaseSettings and Field.
+        class BaseSettings:
+            """
+            A minimal stand-in for pydantic BaseSettings used when pydantic is
+            unavailable. It simply stores attributes from keyword arguments and
+            ignores environment variable loading.
+            """
+
+            def __init__(self, **values) -> None:  # type: ignore[override]
+                for key, value in values.items():
+                    setattr(self, key, value)
+
+            class Config:
+                env_file = None
+                env_file_encoding = "utf-8"
+                case_sensitive = False
+
+        def Field(default, description: str = "", **kwargs):  # type: ignore[override]
+            # In fallback mode, Field simply returns the default value. Additional
+            # metadata such as description is ignored.
+            return default
+
+        # Import Any for type annotations in fallback mode
+        from typing import Any  # noqa: E401  # placed here to satisfy mypy
 
 
 class Settings(BaseSettings):
