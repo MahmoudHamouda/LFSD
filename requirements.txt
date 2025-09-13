@@ -1,44 +1,13 @@
-# Flask framework and extensions
-Flask==2.3.2
-Flask-Cors==3.0.10
-Flask-SQLAlchemy==3.0.5
-Flask-JWT-Extended==4.4.4
-
-# Database handling
-SQLAlchemy==1.4.48
-psycopg2-binary==2.9.6
-
-# OpenAI API integration
-openai==0.27.8
-
-# Environment variable management
-python-dotenv==1.0.0
-
-# JSON handling
-simplejson==3.19.1
-
-# Request handling for external APIs
-requests==2.31.0
-
-# Testing dependencies
-pytest==7.4.0
-pytest-cov==4.1.0
-unittest-xml-reporting==3.2.0
-mock==5.0.0
-
-# Linting and code formatting
-flake8==6.1.0
-black==23.9.1
-
-# Logging
-loguru==0.7.0
-
-# Rate limiting
-Flask-Limiter==3.6.0
-
-# Optional dependencies for extensions
-marshmallow==3.19.0
-pydantic==1.10.9
-
-# Async support (optional, if needed)
-aiohttp==3.8.5
+fastapi
+uvicorn[standard]
+pydantic>=2
+python-dotenv
+loguru
+pyjwt
+passlib[bcrypt]
+httpx
+slowapi
+redis
+pytest
+pytest-asyncio
+requests
