@@ -40,6 +40,7 @@ jobs:
 
       # Configure kubectl
       - name: Configure kubectl
+        if: ${{ false }}   # ← add this line
         run: |
           gcloud container clusters get-credentials my-cluster-lfsd --region us-central1-a --project newprojectlfsd
         env:
@@ -47,5 +48,6 @@ jobs:
 
       # Deploy to Staging and Production
       - name: Deploy to Staging and Production
+        if: ${{ false }}   # ← add this line
         run: |
           kubectl apply -f k8s/deployment.yaml
