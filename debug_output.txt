@@ -1,0 +1,5 @@
+User ID: 8c290ce6-4c39-430a-af64-e6e860e44ff5
+VivIndex Found: Fin=60.0, Health=72.5, Time=79.0
+FinancialScore Found: Overall=60.0
+Subscores: Income=15.0, Burn=0.0, Debt=15.0
+Profile keys: ['name']

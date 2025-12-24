@@ -1,0 +1,88 @@
+FAIL src/components/Answer/AnswerParser.test.ts
+  ● Test suite failed to run
+
+    [96msrc/components/Answer/AnswerParser.test.ts[0m:[93m1[0m:[93m27[0m - [91merror[0m[90m TS7016: [0mCould not find a declaration file for module 'lodash'. 'C:/Users/hmahm/OneDrive/Desktop/LFSD Codebase/LFSD/frontend/node_modules/lodash/lodash.js' implicitly has an 'any' type.
+      Try `npm i --save-dev @types/lodash` if it exists or add a new declaration (.d.ts) file containing `declare module 'lodash';`
+
+    [7m1[0m import { cloneDeep } from 'lodash';
+    [7m [0m [91m                          ~~~~~~~~[0m
+    [96msrc/components/Answer/AnswerParser.test.ts[0m:[93m69[0m:[93m7[0m - [91merror[0m[90m TS2322: [0mType 'null' is not assignable to type 'string | []'.
+
+    [7m69[0m       answer: null,
+    [7m  [0m [91m      ~~~~~~[0m
+
+      [96msrc/api/models.ts[0m:[93m2[0m:[93m3[0m
+        [7m2[0m   answer: string | []
+        [7m [0m [96m  ~~~~~~[0m
+        The expected type comes from property 'answer' which is declared here on type 'AskResponse'
+
+FAIL src/hooks/useUser.test.ts
+  ● Test suite failed to run
+
+    [96msrc/hooks/useUser.test.ts[0m:[93m7[0m:[93m37[0m - [91merror[0m[90m TS2307: [0mCannot find module '@testing-library/react' or its corresponding type declarations.
+
+    [7m7[0m import { renderHook, waitFor } from '@testing-library/react';
+    [7m [0m [91m                                    ~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m17[0m:[93m8[0m - [91merror[0m[90m TS2307: [0mCannot find module '../useUser' or its corresponding type declarations.
+
+    [7m17[0m } from '../useUser';
+    [7m  [0m [91m       ~~~~~~~~~~~~[0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m18[0m:[93m22[0m - [91merror[0m[90m TS2307: [0mCannot find module '../../types' or its corresponding type declarations.
+
+    [7m18[0m import { User } from '../../types';
+    [7m  [0m [91m                     ~~~~~~~~~~~~~[0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m33[0m:[93m10[0m - [91merror[0m[90m TS2749: [0m'QueryClientProvider' refers to a value, but is being used as a type here. Did you mean 'typeof QueryClientProvider'?
+
+    [7m33[0m         <QueryClientProvider client= { queryClient } >
+    [7m  [0m [91m         ~~~~~~~~~~~~~~~~~~~[0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m33[0m:[93m30[0m - [91merror[0m[90m TS2304: [0mCannot find name 'client'.
+
+    [7m33[0m         <QueryClientProvider client= { queryClient } >
+    [7m  [0m [91m                             ~~~~~~[0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m33[0m:[93m38[0m - [91merror[0m[90m TS2365: [0mOperator '>' cannot be applied to types '{ queryClient: QueryClient; }' and '{ children: ReactNode; }'.
+
+    [7m33[0m         <QueryClientProvider client= { queryClient } >
+    [7m  [0m [91m                                     ~~~~~~~~~~~~~~~~~[0m
+    [7m34[0m         { children }
+    [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~[0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m33[0m:[93m38[0m - [91merror[0m[90m TS2365: [0mOperator '<' cannot be applied to types 'boolean' and 'RegExp'.
+
+    [7m33[0m         <QueryClientProvider client= { queryClient } >
+    [7m  [0m [91m                                     ~~~~~~~~~~~~~~~~~[0m
+    [7m34[0m         { children }
+    [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~[0m
+    [7m35[0m         </QueryClientProvider>
+    [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m33[0m:[93m30[0m - [91merror[0m[90m TS1005: [0m'>' expected.
+
+    [7m33[0m         <QueryClientProvider client= { queryClient } >
+    [7m  [0m [91m                             ~~~~~~[0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m33[0m:[93m36[0m - [91merror[0m[90m TS1005: [0m')' expected.
+
+    [7m33[0m         <QueryClientProvider client= { queryClient } >
+    [7m  [0m [91m                                   ~[0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m35[0m:[93m11[0m - [91merror[0m[90m TS1161: [0mUnterminated regular expression literal.
+
+    [7m35[0m         </QueryClientProvider>
+    [7m  [0m [91m          [0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m36[0m:[93m3[0m - [91merror[0m[90m TS1128: [0mDeclaration or statement expected.
+
+    [7m36[0m   );
+    [7m  [0m [91m  ~[0m
+    [96msrc/hooks/useUser.test.ts[0m:[93m37[0m:[93m1[0m - [91merror[0m[90m TS1128: [0mDeclaration or statement expected.
+
+    [7m37[0m };
+    [7m  [0m [91m~[0m
+
+
+=============================== Coverage summary ===============================
+Statements   : Unknown% ( 0/0 )
+Branches     : Unknown% ( 0/0 )
+Functions    : Unknown% ( 0/0 )
+Lines        : Unknown% ( 0/0 )
+================================================================================
+Test Suites: 2 failed, 2 total
+Tests:       0 total
+Snapshots:   0 total
+Time:        6.834 s
+Ran all test suites.

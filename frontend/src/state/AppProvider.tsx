@@ -1,11 +1,11 @@
-import React, { createContext, ReactNode, useEffect, useReducer } from 'react';
+import React, { createContext, ReactNode, useReducer } from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   ChatHistoryLoadingState,
   Conversation,
   CosmosDBHealth,
   Feedback,
   FrontendSettings,
-  frontendSettings,
 } from '../api';
 
 import { appStateReducer } from './AppReducer';
@@ -39,9 +39,9 @@ export type Action =
   | { type: 'FETCH_CHAT_HISTORY'; payload: Conversation[] | null }
   | { type: 'FETCH_FRONTEND_SETTINGS'; payload: FrontendSettings | null }
   | {
-      type: 'SET_FEEDBACK_STATE';
-      payload: { answerId: string; feedback: Feedback.Neutral | Feedback.Positive | Feedback.Negative };
-    }
+    type: 'SET_FEEDBACK_STATE';
+    payload: { answerId: string; feedback: Feedback.Neutral | Feedback.Positive | Feedback.Negative };
+  }
   | { type: 'GET_FEEDBACK_STATE'; payload: string }
   | { type: 'SET_ANSWER_EXEC_RESULT'; payload: { answerId: string; exec_result: [] } };
 
@@ -68,27 +68,27 @@ export const AppStateContext = createContext<{
   dispatch: () => undefined, // Placeholder dispatch function for initialization
 });
 
+// Create React Query client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      cacheTime: 10 * 60 * 1000, // 10 minutes
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
+
 // Application state provider
-export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AppStateProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(appStateReducer, initialState);
 
-  useEffect(() => {
-    // Fetch frontend settings when the provider is initialized
-    const fetchFrontendSettings = async () => {
-      try {
-        const settings = await frontendSettings();
-        dispatch({ type: 'FETCH_FRONTEND_SETTINGS', payload: settings });
-      } catch (error) {
-        console.error('Failed to fetch frontend settings:', error);
-      }
-    };
-
-    fetchFrontendSettings();
-  }, []);
-
   return (
-    <AppStateContext.Provider value={{ state, dispatch }}>
-      {children}
-    </AppStateContext.Provider>
+    <QueryClientProvider client={queryClient}>
+      <AppStateContext.Provider value={{ state, dispatch }}>
+        {children}
+      </AppStateContext.Provider>
+    </QueryClientProvider>
   );
 };

@@ -1,0 +1,517 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.0.1, pluggy-1.6.0
+rootdir: C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD
+configfile: pyproject.toml
+plugins: anyio-4.8.0, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 2 items
+
+tests\unit\test_gemini_json.py F                                         [ 50%]
+tests\unit\test_scoring.py F                                             [100%]
+
+================================== FAILURES ===================================
+__________________ test_gemini_json_mobility_recommendation ___________________
+
+self = <services.gemini_service.GeminiService object at 0x0000021F0E3ACE00>
+history = [{'content': 'Check prices for a ride to Dubai Mall', 'role': 'user'}]
+context = {'indices': {'energy': 80, 'financial': 80, 'schedule': 10}, 'location': {'lat': 25.2048, 'lng': 55.2708}, 'user_id': 'test-user'}
+
+    async def generate_response(self, history: List[Dict[str, str]], context: Dict[str, Any]) -> str:
+        """
+        Step 4: The Synthesizer (The Master Prompt)
+        Generate response using the Viv Architecture (Vitals vs Targets).
+        """
+        # Configure logging
+        if not logger.handlers:
+            import sys
+            sh = logging.StreamHandler(sys.stdout)
+            sh.setLevel(logging.INFO)
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            sh.setFormatter(formatter)
+            logger.addHandler(sh)
+            logger.setLevel(logging.INFO)
+    
+        logger.info("generate_response called (Viv Architecture V2)")
+    
+        if not settings.GEMINI_API_KEY:
+            return json.dumps({
+                "type": "error",
+                "text": "I'm sorry, but I'm not fully configured yet. Please add a valid `GEMINI_API_KEY` to the settings."
+            })
+    
+        try:
+            last_message = history[-1]['content']
+            user_id = "user-123" # TODO: Get from context/auth
+    
+            # Step 1: The Gatekeeper
+            print("DEBUG: Calling _load_viv_context")
+            viv_context = self._load_viv_context(user_id)
+            print(f"DEBUG: viv_context loaded: {viv_context.keys()}")
+    
+            intent_data = await self._extract_intent(last_message, history)
+            intent_data['original_text'] = last_message
+            logger.info(f"Detected intent: {intent_data}")
+            print(f"DEBUG: Intent detected: {intent_data}")
+    
+            # Handle Specific Intents via Router
+            response_data = await self._route_intent(intent_data, viv_context, user_id)
+    
+            # Post-Process: Enrich with Viv Analysis if applicable
+            if intent_data.get('intent') in ['financial_report', 'financial_balance']:
+                 # Step 2: Orchestrator (Dual Simulation)
+                impact = self._simulate_impact(intent_data, viv_context)
+                # Step 3: Normalization
+                analysis = self._normalize_facts(impact, viv_context)
+    
+                if response_data:
+                     if 'data' not in response_data: response_data['data'] = {}
+                     response_data['data']['viv_analysis'] = analysis
+    
+            elif intent_data.get('intent') == 'financial_advisory':
+                # Reasoning Bridge
+                # 1. Fetch Raw Data (Income, Spend, Balance)
+                # For now, we mock this data or reuse _handle_financial_request logic
+                # In a real scenario, we'd have a dedicated data fetcher
+    
+                financial_context = {
+                    "total_income": 15000.00, # Mock
+                    "fixed_expenses": 7500.00, # Mock (50%)
+                    "current_balance": 24500.00,
+                    "recent_spending": 4500.00,
+                    "savings_goal_progress": 1200.00,
+                    "savings_goal_target": 5000.00
+                }
+    
+                # 2. Analyst Prompt
+                analyst_prompt = f"""
+                The user asked: "{last_message}"
+    
+                Here is their financial data:
+                {json.dumps(financial_context, indent=2)}
+    
+                Act as a financial advisor. Do not just list the numbers.
+                Analyze the feasibility and give a Yes/No recommendation with a brief reason.
+                Consider their fixed expenses and current balance.
+                """
+    
+                # 3. Call LLM
+                import asyncio
+                response = await asyncio.to_thread(
+                    self.model.generate_content,
+                    analyst_prompt
+                )
+    
+                # Log for monitoring
+                try:
+                    from datetime import datetime
+                    with open("advisory.log", "a", encoding='utf-8') as f:
+                        f.write(f"--- {datetime.now()} ---\n")
+                        f.write(f"Query: {last_message}\n")
+                        f.write(f"Context: {json.dumps(financial_context)}\n")
+                        f.write(f"Advice: {response.text}\n\n")
+                except Exception as e:
+                    logger.error(f"Failed to log advisory: {e}")
+    
+                return json.dumps({
+                    "type": "text",
+                    "text": response.text
+                })
+    
+            elif intent_data.get('intent') == 'set_goal':
+                # Phase 2: Logic Validation
+                amount = intent_data.get('amount', 0.0)
+                goal_type = intent_data.get('goal_type', 'savings')
+    
+                # Mock Financial Data (Same as above, ideally fetched from DB)
+                financial_context = {
+                    "total_income": 15000.00,
+                    "fixed_expenses": 7500.00, # 50%
+                }
+    
+                is_valid, message = validate_financial_goal(amount, financial_context)
+    
+                if not is_valid:
+                    return json.dumps({
+                        "type": "error",
+                        "text": message
+                    })
+    
+                # If valid, proceed to save goal (Mock save)
+                return json.dumps({
+                    "type": "success",
+                    "text": f"Goal set! I've updated your {goal_type} target to {amount}. You're on track."
+                })
+    
+            elif intent_data.get('intent') == 'schedule_event':
+                full_context = {**context, **viv_context}
+                response_data = await self._handle_calendar_request(intent_data, full_context, user_id)
+    
+            if response_data:
+>               return json.dumps(response_data)
+                       ^^^^
+E               NameError: name 'json' is not defined. Did you forget to import 'json'
+
+backend\services\gemini_service.py:991: NameError
+
+During handling of the above exception, another exception occurred:
+
+    @pytest.mark.asyncio
+    async def test_gemini_json_mobility_recommendation():
+        # Setup mock DB
+        db = MagicMock()
+        service = GeminiService(db)
+    
+        # Mock MobilityAggregator
+        service.mobility_aggregator = MagicMock()
+        service.mobility_aggregator.compare_prices = AsyncMock(return_value={
+            "cheapest": {"provider": "careem", "ride_type": "hala", "estimate": "AED 25"},
+            "options": [
+                {"provider": "careem", "ride_type": "hala", "estimate": "AED 25", "eta": "8 mins"},
+                {"provider": "uber", "ride_type": "uberx", "estimate": "AED 30", "eta": "5 mins"}
+            ]
+        })
+    
+        # Mock Gemini model response
+        service.model = MagicMock()
+        service.model.generate_content_async = AsyncMock()
+    
+        # Test 1: Busy Schedule -> Mocking Gemini response that follows the expected schema
+        mock_response = MagicMock()
+        mock_response.text = json.dumps({
+            "type": "mobility_options",
+            "data": {
+                "options": [
+                    {"provider": "uber", "type": "uberx", "recommended": True, "reasoning": "Faster for busy schedule"}
+                ]
+            }
+        })
+        service.model.generate_content_async.return_value = mock_response
+    
+        context = {
+            "user_id": "test-user",
+            "location": {"lat": 25.2048, "lng": 55.2708},
+            "indices": {"financial": 80, "schedule": 10, "energy": 80}
+        }
+        history = [{"role": "user", "content": "Check prices for a ride to Dubai Mall"}]
+    
+>       response = await service.generate_response(history, context)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\unit\test_gemini_json.py:45: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <services.gemini_service.GeminiService object at 0x0000021F0E3ACE00>
+history = [{'content': 'Check prices for a ride to Dubai Mall', 'role': 'user'}]
+context = {'indices': {'energy': 80, 'financial': 80, 'schedule': 10}, 'location': {'lat': 25.2048, 'lng': 55.2708}, 'user_id': 'test-user'}
+
+    async def generate_response(self, history: List[Dict[str, str]], context: Dict[str, Any]) -> str:
+        """
+        Step 4: The Synthesizer (The Master Prompt)
+        Generate response using the Viv Architecture (Vitals vs Targets).
+        """
+        # Configure logging
+        if not logger.handlers:
+            import sys
+            sh = logging.StreamHandler(sys.stdout)
+            sh.setLevel(logging.INFO)
+            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+            sh.setFormatter(formatter)
+            logger.addHandler(sh)
+            logger.setLevel(logging.INFO)
+    
+        logger.info("generate_response called (Viv Architecture V2)")
+    
+        if not settings.GEMINI_API_KEY:
+            return json.dumps({
+                "type": "error",
+                "text": "I'm sorry, but I'm not fully configured yet. Please add a valid `GEMINI_API_KEY` to the settings."
+            })
+    
+        try:
+            last_message = history[-1]['content']
+            user_id = "user-123" # TODO: Get from context/auth
+    
+            # Step 1: The Gatekeeper
+            print("DEBUG: Calling _load_viv_context")
+            viv_context = self._load_viv_context(user_id)
+            print(f"DEBUG: viv_context loaded: {viv_context.keys()}")
+    
+            intent_data = await self._extract_intent(last_message, history)
+            intent_data['original_text'] = last_message
+            logger.info(f"Detected intent: {intent_data}")
+            print(f"DEBUG: Intent detected: {intent_data}")
+    
+            # Handle Specific Intents via Router
+            response_data = await self._route_intent(intent_data, viv_context, user_id)
+    
+            # Post-Process: Enrich with Viv Analysis if applicable
+            if intent_data.get('intent') in ['financial_report', 'financial_balance']:
+                 # Step 2: Orchestrator (Dual Simulation)
+                impact = self._simulate_impact(intent_data, viv_context)
+                # Step 3: Normalization
+                analysis = self._normalize_facts(impact, viv_context)
+    
+                if response_data:
+                     if 'data' not in response_data: response_data['data'] = {}
+                     response_data['data']['viv_analysis'] = analysis
+    
+            elif intent_data.get('intent') == 'financial_advisory':
+                # Reasoning Bridge
+                # 1. Fetch Raw Data (Income, Spend, Balance)
+                # For now, we mock this data or reuse _handle_financial_request logic
+                # In a real scenario, we'd have a dedicated data fetcher
+    
+                financial_context = {
+                    "total_income": 15000.00, # Mock
+                    "fixed_expenses": 7500.00, # Mock (50%)
+                    "current_balance": 24500.00,
+                    "recent_spending": 4500.00,
+                    "savings_goal_progress": 1200.00,
+                    "savings_goal_target": 5000.00
+                }
+    
+                # 2. Analyst Prompt
+                analyst_prompt = f"""
+                The user asked: "{last_message}"
+    
+                Here is their financial data:
+                {json.dumps(financial_context, indent=2)}
+    
+                Act as a financial advisor. Do not just list the numbers.
+                Analyze the feasibility and give a Yes/No recommendation with a brief reason.
+                Consider their fixed expenses and current balance.
+                """
+    
+                # 3. Call LLM
+                import asyncio
+                response = await asyncio.to_thread(
+                    self.model.generate_content,
+                    analyst_prompt
+                )
+    
+                # Log for monitoring
+                try:
+                    from datetime import datetime
+                    with open("advisory.log", "a", encoding='utf-8') as f:
+                        f.write(f"--- {datetime.now()} ---\n")
+                        f.write(f"Query: {last_message}\n")
+                        f.write(f"Context: {json.dumps(financial_context)}\n")
+                        f.write(f"Advice: {response.text}\n\n")
+                except Exception as e:
+                    logger.error(f"Failed to log advisory: {e}")
+    
+                return json.dumps({
+                    "type": "text",
+                    "text": response.text
+                })
+    
+            elif intent_data.get('intent') == 'set_goal':
+                # Phase 2: Logic Validation
+                amount = intent_data.get('amount', 0.0)
+                goal_type = intent_data.get('goal_type', 'savings')
+    
+                # Mock Financial Data (Same as above, ideally fetched from DB)
+                financial_context = {
+                    "total_income": 15000.00,
+                    "fixed_expenses": 7500.00, # 50%
+                }
+    
+                is_valid, message = validate_financial_goal(amount, financial_context)
+    
+                if not is_valid:
+                    return json.dumps({
+                        "type": "error",
+                        "text": message
+                    })
+    
+                # If valid, proceed to save goal (Mock save)
+                return json.dumps({
+                    "type": "success",
+                    "text": f"Goal set! I've updated your {goal_type} target to {amount}. You're on track."
+                })
+    
+            elif intent_data.get('intent') == 'schedule_event':
+                full_context = {**context, **viv_context}
+                response_data = await self._handle_calendar_request(intent_data, full_context, user_id)
+    
+            if response_data:
+                return json.dumps(response_data)
+    
+            # Step 4: The Synthesizer (General Chat / Advice)
+            # Update System Prompt to be "Viv" (Vitals vs Targets)
+            prompt = "You are Viv, a 'Guardian of Wellbeing' AI assistant.\n"
+            prompt += "Your goal is to optimize the user's life by balancing **Current Vitals** (Viv Indexes) and **Future Targets** (Life Goals).\n\n"
+    
+            prompt += "### Viv Context\n"
+            prompt += f"Vitals (Indexes): {json.dumps(viv_context['viv_indexes'])}\n"
+            prompt += f"Targets (Life Goals): {json.dumps(viv_context['life_goals'])}\n"
+            prompt += f"Targets (Life Goals): {json.dumps(viv_context['life_goals'])}\n"
+            prompt += f"Crisis Mode: {viv_context['crisis_mode']}\n"
+            prompt += f"Recent Health Data: {json.dumps(viv_context.get('recent_health_data', {}))}\n\n"
+    
+            # Perform Simulation for General Chat as well if needed, or rely on LLM to hallucinate reasonable advice based on context
+            # Ideally we pass the 'impact' from Step 2 if we ran it.
+            # Let's run simulation for general chat if it looks like an action
+            if not intent_data.get('intent', '').startswith('financial_'):
+                 impact = self._simulate_impact(intent_data, viv_context)
+                 analysis = self._normalize_facts(impact, viv_context)
+                 prompt += f"### Simulation Analysis\n{json.dumps(analysis)}\n\n"
+    
+            prompt += "### Logic\n"
+            prompt += "1. **Crisis Check**: If Crisis Mode is TRUE, prioritize fixing the critical Vital (Index < 30) over any Target (Goal).\n"
+            prompt += "2. **Dual Simulation**: Explain the impact on Vitals (Today) AND Targets (Future).\n"
+            prompt += "3. **Output**: You MUST return a JSON object with this EXACT structure:\n"
+            prompt += """
+            {
+              "summary": "Short summary",
+              "message_body": "Detailed advice explaining the trade-off.",
+              "viv_indexes": {
+                "financial": { "current": 70, "delta": -2, "trend": "stable" },
+                "health": { "current": 40, "delta": +10, "trend": "up" },
+                "time": { "current": 50, "delta": 0, "trend": "stable" }
+              },
+              "goal_impact_analysis": "Explanation of impact on goals.",
+              "suggested_actions": ["Action 1", "Action 2"]
+            }
+            """
+    
+            # Add conversation history
+            prompt += "\n### Conversation\n"
+            for msg in history:
+                role = "User" if msg["role"] == "user" else "Viv"
+                prompt += f"{role}: {msg['content']}\n"
+    
+            prompt += "Viv: "
+    
+            import asyncio
+            response = await asyncio.to_thread(
+                self.model.generate_content,
+                prompt
+            )
+    
+            response_text = response.text.strip()
+    
+            # JSON Extraction
+            try:
+                start_index = response_text.find('{')
+                if start_index != -1:
+                    brace_count = 0
+                    json_str = ""
+                    for i in range(start_index, len(response_text)):
+                        char = response_text[i]
+                        if char == '{':
+                            brace_count += 1
+                        elif char == '}':
+                            brace_count -= 1
+    
+                        if brace_count == 0:
+                            json_str = response_text[start_index:i+1]
+                            break
+    
+                    if json_str:
+                        data = json.loads(json_str)
+                        # Transform to standard chat format
+                        return json.dumps({
+                            "type": "viv_advice",
+                            "text": data.get('message_body', response_text),
+                            "data": data
+                        })
+            except:
+                pass
+    
+            return json.dumps({
+                "type": "text",
+                "text": response.text
+            })
+    
+        except Exception as e:
+            logger.error(f"Gemini API Error: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+>           return json.dumps({
+                   ^^^^
+                "type": "error",
+                "text": "I'm having trouble connecting to my brain right now. Please try again later."
+            })
+E           NameError: name 'json' is not defined. Did you forget to import 'json'
+
+backend\services\gemini_service.py:1084: NameError
+---------------------------- Captured stdout call -----------------------------
+DEBUG: Initializing GeminiService...
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService Initialized Successfully
+2025-12-20 15:03:03,861 - gemini_service - INFO - generate_response called (Viv Architecture V2)
+DEBUG: Calling _load_viv_context
+DEBUG: Querying User for user-123
+DEBUG: User found: <MagicMock name='mock.query().filter().first()' id='2332406604736'>
+ERROR in _load_viv_context: '<' not supported between instances of 'MagicMock' and 'int'
+DEBUG: viv_context loaded: dict_keys(['profile', 'viv_indexes', 'life_goals', 'preferences', 'crisis_mode'])
+2025-12-20 15:03:03,879 - gemini_service - ERROR - Error extracting intent: '"intent"'
+2025-12-20 15:03:03,879 - gemini_service - INFO - Detected intent: {'intent': 'general', 'original_text': 'Check prices for a ride to Dubai Mall'}
+DEBUG: Intent detected: {'intent': 'general', 'original_text': 'Check prices for a ride to Dubai Mall'}
+2025-12-20 15:03:03,880 - gemini_service - ERROR - Gemini API Error: name 'json' is not defined
+2025-12-20 15:03:03,883 - gemini_service - ERROR - Traceback (most recent call last):
+  File "C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD\backend\services\gemini_service.py", line 991, in generate_response
+    return json.dumps(response_data)
+           ^^^^
+NameError: name 'json' is not defined. Did you forget to import 'json'
+
+---------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD\backend\services\gemini_service.py", line 709, in _load_viv_context
+    crisis_mode = any(score < 30 for score in indexes.values())
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD\backend\services\gemini_service.py", line 709, in <genexpr>
+    crisis_mode = any(score < 30 for score in indexes.values())
+                      ^^^^^^^^^^
+TypeError: '<' not supported between instances of 'MagicMock' and 'int'
+------------------------------ Captured log call ------------------------------
+INFO     gemini_service:gemini_service.py:875 generate_response called (Viv Architecture V2)
+ERROR    gemini_service:gemini_service.py:161 Error extracting intent: '"intent"'
+INFO     gemini_service:gemini_service.py:894 Detected intent: {'intent': 'general', 'original_text': 'Check prices for a ride to Dubai Mall'}
+ERROR    gemini_service:gemini_service.py:1081 Gemini API Error: name 'json' is not defined
+ERROR    gemini_service:gemini_service.py:1083 Traceback (most recent call last):
+  File "C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD\backend\services\gemini_service.py", line 991, in generate_response
+    return json.dumps(response_data)
+           ^^^^
+NameError: name 'json' is not defined. Did you forget to import 'json'
+___________________________ test_onboarding_scores ____________________________
+
+client = <starlette.testclient.TestClient object at 0x0000021F111284D0>
+
+    def test_onboarding_scores(client):
+        """Test the onboarding scores endpoint using TestClient."""
+        url = "/api/scores/onboarding"
+    
+        payload = {
+            "monthly_income": 5000,
+            "monthly_expenses": 3000,
+            "total_savings": 10000,
+            "total_debt": 0,
+            "monthly_debt_payments": 0,
+            "activity_level": "Active",
+            "sleep_hours": 8,
+            "eating_behavior": "Healthy",
+            "work_hours_per_week": 40,
+            "errands_per_week": 5,
+            "services_usage": 2
+        }
+    
+        response = client.post(url, json=payload)
+>       assert response.status_code in [200, 201]
+E       assert 422 in [200, 201]
+E        +  where 422 = <Response [422 Unprocessable Entity]>.status_code
+
+tests\unit\test_scoring.py:22: AssertionError
+---------------------------- Captured stdout setup ----------------------------
+2025-12-20 15:03:08 | DEBUG    | logging:callHandlers:1762 - Looking up time zone info from registry | {}
+---------------------------- Captured stdout call -----------------------------
+2025-12-20 15:03:08 | DEBUG    | logging:callHandlers:1762 - Using proactor: IocpProactor | {}
+2025-12-20 15:03:08 | INFO     | logging:callHandlers:1762 - HTTP Request: POST http://testserver/api/scores/onboarding "HTTP/1.1 422 Unprocessable Entity" | {}
+------------------------------ Captured log call ------------------------------
+DEBUG    asyncio:proactor_events.py:634 Using proactor: IocpProactor
+INFO     httpx:_client.py:1025 HTTP Request: POST http://testserver/api/scores/onboarding "HTTP/1.1 422 Unprocessable Entity"
+=========================== short test summary info ===========================
+FAILED tests/unit/test_gemini_json.py::test_gemini_json_mobility_recommendation
+FAILED tests/unit/test_scoring.py::test_onboarding_scores - assert 422 in [20...
+============================= 2 failed in 21.29s ==============================

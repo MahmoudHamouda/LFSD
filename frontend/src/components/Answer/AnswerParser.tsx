@@ -35,7 +35,7 @@ export function parseAnswer(answer: AskResponse): ParsedAnswer {
     const citationIndex = link.slice(lengthDocN, link.length - 1);
     const citation = cloneDeep(answer.citations[Number(citationIndex) - 1]) as Citation;
     if (!filteredCitations.find(c => c.id === citationIndex) && citation) {
-      answerText = answerText.replaceAll(link, ` ^${++citationReindex}^ `);
+      answerText = answerText.replace(new RegExp(link.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'), ` ^${++citationReindex}^ `);
       citation.id = citationIndex; // original doc index to de-duplicate
       citation.reindex_id = citationReindex.toString(); // reindex from 1 for display
       filteredCitations.push(citation);

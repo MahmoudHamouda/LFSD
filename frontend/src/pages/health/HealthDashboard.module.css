@@ -1,0 +1,320 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 500px;
+    text-align: center;
+    padding: 40px;
+}
+
+.emptyIcon {
+    font-size: 80px;
+    margin-bottom: 24px;
+}
+
+.emptyTitle {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 16px 0;
+}
+
+.emptyText {
+    font-size: 16px;
+    color: var(--text-secondary);
+    max-width: 500px;
+    line-height: 1.6;
+    margin: 0 0 32px 0;
+}
+
+.connectButton {
+    padding: 14px 28px;
+    background: linear-gradient(135deg, var(--color-accent-orange) 0%, #FF8A33 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.connectButton:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.3);
+}
+
+/* Sections */
+.connectionsSection,
+.metricsSection,
+.insightsSection {
+    margin-bottom: 40px;
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.sectionTitle {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.manageButton {
+    padding: 8px 16px;
+    background: transparent;
+    border: 2px solid var(--color-accent-orange);
+    border-radius: 6px;
+    color: var(--color-accent-orange);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.manageButton:hover {
+    background: var(--color-accent-orange);
+    color: white;
+}
+
+/* Connections */
+.connectionsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.connectionCard {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.connectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.providerName {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.statusBadge {
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.statusBadge.connected {
+    background: var(--bg-badge-success);
+    color: var(--color-accent-green);
+}
+
+.statusBadge.connecting {
+    background: var(--bg-badge-warning);
+    color: var(--color-accent-orange);
+}
+
+.statusBadge.error {
+    background: var(--bg-badge-error);
+    color: var(--color-accent-red);
+}
+
+.lastSync {
+    font-size: 13px;
+    color: var(--text-tertiary);
+}
+
+/* Metrics */
+.metricsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.metricCard {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+}
+
+.metricIcon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.metricLabel {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.metricValue {
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--color-accent-orange);
+    margin-bottom: 12px;
+}
+
+.metricBar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.metricFill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-accent-orange) 0%, #FF8A33 100%);
+    transition: width 0.3s ease;
+}
+
+/* Insights */
+.insightsList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.insightCard {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--status-success);
+}
+
+.insightBadge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--status-success);
+    color: white;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+}
+
+.insightTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.insightText {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Sleep & Workout Lists */
+.listSection {
+    margin-top: 32px;
+}
+
+.listGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+}
+
+.listCard {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.listHeader {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.listItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.listItem:last-child {
+    border-bottom: none;
+}
+
+.itemMain {
+    display: flex;
+    flex-direction: column;
+}
+
+.itemTitle {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.itemSub {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.itemValue {
+    font-weight: 600;
+    color: var(--status-success);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .emptyIcon {
+        font-size: 60px;
+    }
+
+    .emptyTitle {
+        font-size: 22px;
+    }
+
+    .sectionTitle {
+        font-size: 20px;
+    }
+
+    .connectionsGrid,
+    .metricsGrid,
+    .listGrid {
+        grid-template-columns: 1fr;
+    }
+}

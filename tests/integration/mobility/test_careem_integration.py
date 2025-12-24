@@ -1,0 +1,77 @@
+"""
+Test script for Careem integration.
+
+This script tests the Careem service and aggregator integration.
+"""
+
+import asyncio
+import sys
+sys.path.append('.')
+
+from services.mobility.mobility_aggregator import MobilityAggregator
+
+
+async def test_careem_integration():
+    """Test the Careem integration."""
+    print("🚗 Testing Careem Integration\n")
+    print("=" * 60)
+    
+    # Initialize aggregator
+    aggregator = MobilityAggregator()
+    
+    # Test 1: List available providers
+    print("\n1. Available Providers:")
+    print(f"   {list(aggregator.providers.keys())}")
+    
+    # Test 2: Compare prices (Dubai Downtown to Marina)
+    print("\n2. Comparing Prices (Downtown to Marina):")
+    comparison = await aggregator.compare_prices(
+        user_id="test-user",
+        start_lat=25.2048,
+        start_lng=55.2708,
+        end_lat=25.1972,
+        end_lng=55.2744
+    )
+    
+    print(f"   Found {len(comparison['options'])} options from {comparison['provider_count']} provider(s)")
+    
+    # List all options
+    print("\n   All Options:")
+    for opt in comparison['options']:
+        print(f"   - {opt['provider'].title()} {opt['ride_type']}: {opt['estimate']}")
+    
+    if comparison['cheapest']:
+        cheapest = comparison['cheapest']
+        print(f"\n   💰 Cheapest Option:")
+        print(f"      Provider: {cheapest['provider'].title()}")
+        print(f"      Type: {cheapest['ride_type']}")
+        print(f"      Price: {cheapest['estimate']}")
+    
+    # Test 3: Test booking Careem (mock)
+    print("\n3. Testing Careem Booking (Mock):")
+    booking = await aggregator.book_ride(
+        user_id="test-user",
+        provider="careem",
+        ride_type="Careem GO",
+        start_location={"lat": 25.2048, "lng": 55.2708, "address": "Downtown Dubai"},
+        end_location={"lat": 25.1972, "lng": 55.2744, "address": "Dubai Marina"}
+    )
+    
+    if booking.get("success"):
+        print(f"   ✅ Booking successful!")
+        print(f"      Ride ID: {booking.get('ride_id')}")
+        print(f"      Status: {booking.get('status')}")
+        if booking.get('driver'):
+            driver = booking['driver']
+            print(f"      Driver: {driver.get('name')} ({driver.get('rating')}★)")
+            print(f"      Vehicle: {driver.get('vehicle')}")
+        print(f"      ETA: {booking.get('eta')} minutes")
+    else:
+        print(f"   ❌ Booking failed: {booking.get('error')}")
+    
+    print("\n" + "=" * 60)
+    print("✅ Careem Integration Test Complete!\n")
+
+
+if __name__ == "__main__":
+    asyncio.run(test_careem_integration())

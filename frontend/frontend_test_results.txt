@@ -1,0 +1,7 @@
+● Validation Error:
+
+  Preset ts-jest not found relative to rootDir C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD\frontend.
+
+  Configuration Documentation:
+  https://jestjs.io/docs/configuration
+

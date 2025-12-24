@@ -1,0 +1,14 @@
+<svg width="200" height="50" viewBox="0 0 200 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon -->
+  <defs>
+    <linearGradient id="viv-gradient" x1="0" y1="0" x2="50" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6387A6" />
+      <stop offset="100%" stop-color="#7DA9CE" />
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="50" height="50" rx="12" fill="url(#viv-gradient)" />
+  <path d="M25 12L29 21L38 25L29 29L25 38L21 29L12 25L21 21L25 12Z" fill="#FFFFFF" />
+  
+  <!-- Text -->
+  <text x="65" y="35" font-family="'Inter', sans-serif" font-weight="bold" font-size="28" fill="#5D6050">Viv</text>
+</svg>

@@ -1,0 +1,337 @@
+.sidebar {
+    width: 320px;
+    width: 320px;
+    height: 100vh;
+    background-color: var(--bg-sidebar);
+    color: #FFFFFF;
+    /* Sidebar is always dark, so text is always white */
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    transition: width 0.3s ease;
+    border-right: 1px solid var(--border-default);
+}
+
+.sidebar.collapsed {
+    width: 72px;
+}
+
+.header {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-medium);
+    height: 64px;
+}
+
+.header.collapsed {
+    justify-content: center;
+    padding: 16px 8px;
+}
+
+.newChatButton {
+    flex: 1;
+    padding: 10px 16px;
+    background-color: transparent;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.newChatButton:hover {
+    background-color: #2D2D2D;
+}
+
+.toggleButton {
+    background: none;
+    border: none;
+    color: #888;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+}
+
+.toggleButton:hover {
+    background-color: #2D2D2D;
+    color: white;
+}
+
+.content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 8px;
+}
+
+/* Top Level Items (Conversations, Connections) */
+.topLevelItem {
+    margin-bottom: 8px;
+}
+
+.topLevelHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    color: #E0E0E0;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.topLevelHeader:hover {
+    background-color: #2D2D2D;
+    color: white;
+}
+
+.topLevelHeader.active {
+    color: white;
+}
+
+.topLevelContent {
+    padding-left: 0;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease-out;
+}
+
+.topLevelContent.expanded {
+    max-height: 2000px;
+    /* Large enough for nested content */
+    transition: max-height 0.3s ease-in;
+}
+
+/* Nested Category Styles */
+.categoryItem {
+    margin-bottom: 2px;
+    padding-left: 12px;
+}
+
+.categoryHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 12px;
+    background: transparent;
+    border: none;
+    color: #AAA;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.categoryHeader:hover {
+    background-color: #2D2D2D;
+    color: white;
+}
+
+.categoryHeader.active {
+    color: #FF6A00;
+}
+
+.expandIcon {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    margin-left: 8px;
+}
+
+.expandIcon.expanded {
+    transform: rotate(180deg);
+}
+
+.connectorList {
+    padding-left: 12px;
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.3s ease-out;
+}
+
+.connectorList.expanded {
+    max-height: 500px;
+    transition: max-height 0.3s ease-in;
+}
+
+.connectorItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    color: #888;
+    text-decoration: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 13px;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.connectorItem:hover {
+    background-color: #2D2D2D;
+    color: white;
+}
+
+.connectorStatus {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.statusActive {
+    background-color: #00C853;
+}
+
+.statusPending {
+    background-color: #FFAB00;
+}
+
+.statusPlanned {
+    background-color: #666;
+}
+
+.statusFailed {
+    background-color: #D32F2F;
+}
+
+/* Footer */
+.footer {
+    padding: 16px 8px;
+    border-top: 1px solid var(--border-medium);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.divider {
+    height: 1px;
+    background-color: var(--border-medium);
+    margin: 8px 12px;
+}
+
+.menuItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    color: #E0E0E0;
+    text-decoration: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.menuItem:hover {
+    background-color: #2D2D2D;
+}
+
+.icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Collapsed State Overrides */
+.sidebar.collapsed .newChatButton span:not(.icon),
+.sidebar.collapsed .categoryHeader,
+.sidebar.collapsed .connectorItem,
+.sidebar.collapsed .menuItem span:not(.icon),
+.sidebar.collapsed .topLevelHeader span:not(.icon),
+.sidebar.collapsed .topLevelContent,
+.sidebar.collapsed .divider {
+    display: none;
+}
+
+.sidebar.collapsed .newChatButton {
+    justify-content: center;
+    padding: 10px;
+}
+
+.sidebar.collapsed .menuItem {
+    justify-content: center;
+}
+
+.sidebar.collapsed .header {
+    flex-direction: column;
+    gap: 8px;
+    height: auto;
+}
+
+.sidebar.collapsed .topLevelHeader {
+    justify-content: center;
+    padding: 12px;
+}
+
+/* Scrollbar styling */
+.content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: #000000;
+}
+
+.content::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .sidebar.collapsed {
+        width: 0;
+        padding: 0;
+        border: none;
+    }
+}

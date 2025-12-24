@@ -1,0 +1,73 @@
+.container {
+    display: flex;
+    height: 400px;
+    border-top: 1px solid var(--border-default);
+}
+
+.sidebar {
+    width: 150px;
+    border-right: 1px solid var(--border-default);
+    padding: 10px 0;
+}
+
+.tab {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-primary);
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+.tab:hover {
+    background-color: var(--bg-hover);
+}
+
+.tab.active {
+    background-color: var(--bg-active);
+    font-weight: bold;
+}
+
+.content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.section h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: var(--text-primary);
+}
+
+.description {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.settingRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border-default);
+}
+
+.settingRow:last-child {
+    border-bottom: none;
+}
+
+.dangerButton {
+    color: var(--status-error) !important;
+    border-color: var(--status-error) !important;
+}
+
+.dangerButton:hover {
+    background-color: var(--bg-badge-error) !important;
+}

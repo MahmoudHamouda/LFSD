@@ -1,0 +1,94 @@
+.container {
+    background-color: white;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 8px;
+    width: 100%;
+    max-width: 350px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.title {
+    font-weight: 600;
+    color: #495057;
+    font-size: 14px;
+}
+
+.period {
+    font-size: 12px;
+    color: #adb5bd;
+    background-color: #f8f9fa;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.totalSection {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.currency {
+    font-size: 14px;
+    color: #868e96;
+    margin-bottom: 4px;
+}
+
+.amount {
+    font-size: 32px;
+    font-weight: 700;
+    color: #212529;
+    line-height: 1;
+}
+
+.categoryLabel {
+    font-size: 14px;
+    color: #868e96;
+    margin-top: 4px;
+}
+
+.breakdownList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.breakdownItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.itemHeader {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.itemCategory {
+    color: #495057;
+}
+
+.itemAmount {
+    font-weight: 600;
+    color: #212529;
+}
+
+.progressBarBg {
+    height: 6px;
+    background-color: #f1f3f5;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progressBarFill {
+    height: 100%;
+    border-radius: 3px;
+}
