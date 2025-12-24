@@ -1,0 +1,422 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    font-size: 18px;
+    color: #666;
+}
+
+/* Hero Section */
+.heroSection {
+    margin-bottom: 40px;
+    text-align: center;
+}
+
+.welcomeTitle {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.welcomeSubtitle {
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin: 0 0 32px 0;
+}
+
+/* Chat Prompt */
+.chatPromptContainer {
+    max-width: 700px;
+    margin: 0 auto 40px auto;
+}
+
+.chatInputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background-color: var(--bg-input);
+    border-radius: 24px;
+    padding: 8px 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.chatInputWrapper:focus-within {
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-accent-blue);
+    background-color: var(--bg-surface);
+}
+
+.chatInput {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 12px;
+    font-size: 16px;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.chatInput::placeholder {
+    color: var(--text-secondary);
+}
+
+.chatSendButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease;
+}
+
+.chatSendButton:hover {
+    transform: scale(1.1);
+}
+
+.disclaimer {
+    font-size: 12px;
+    color: #999;
+    margin-top: 12px;
+    text-align: center;
+}
+
+/* Highlights Section */
+.highlightsSection {
+    margin-bottom: 40px;
+}
+
+.sectionTitle {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    /* Removing bottom margin to handle in sectionHeader */
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.toggleContainer {
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.toggleOption {
+    cursor: pointer;
+    padding: 4px 0;
+    position: relative;
+    transition: color 0.2s ease;
+}
+
+.toggleOption:hover {
+    color: var(--text-primary);
+}
+
+.toggleOption.active {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.toggleOption.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--color-accent-blue);
+    border-radius: 2px;
+}
+
+.highlightGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.highlightCard {
+    background: var(--bg-surface);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border-color);
+}
+
+.highlightCard:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.highlightCard.clickable {
+    cursor: pointer;
+}
+
+.highlightCard.clickable:hover {
+    border-color: var(--color-accent-blue);
+}
+
+.highlightIcon {
+    /* Legacy - kept for safety, but mostly replaced by containers below */
+    font-size: 32px;
+    margin-bottom: 16px;
+}
+
+.iconContainer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    transition: transform 0.2s ease;
+}
+
+.iconContainer:hover {
+    transform: scale(1.05);
+}
+
+.iconFinancial {
+    background-color: rgba(0, 200, 83, 0.1);
+    color: var(--color-accent-green);
+}
+
+.iconTime {
+    background-color: rgba(55, 147, 209, 0.1);
+    color: var(--color-accent-blue);
+}
+
+.iconHealth {
+    background-color: rgba(226, 56, 53, 0.1);
+    color: var(--color-accent-red);
+}
+
+.highlightTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.highlightText {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Quick Actions */
+.quickActionsSection {
+    margin-bottom: 40px;
+}
+
+.quickActionsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 16px;
+}
+
+.quickActionButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quickActionButton:hover {
+    background: var(--bg-input);
+    border-color: var(--text-secondary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.quickActionIcon {
+    font-size: 28px;
+    margin-bottom: 12px;
+}
+
+.quickActionLabel {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Recommendations */
+.recommendationsSection {
+    margin-bottom: 40px;
+}
+
+.recommendationsList {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.recommendationCard {
+    background: var(--bg-surface);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--color-accent-blue);
+}
+
+.recommendationHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.recommendationBadge {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--color-accent-blue);
+    background: rgba(55, 147, 209, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.recommendationTime {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.recommendationTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.recommendationDescription {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+}
+
+.recommendationAction {
+    padding: 8px 16px;
+    background: var(--color-accent-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.recommendationAction:hover {
+    background: #2B7AB0;
+}
+
+/* Streaks */
+.streaksSection {
+    margin-bottom: 40px;
+}
+
+.streaksGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.streakCard {
+    background: linear-gradient(135deg, #FF6A00 0%, #FF8A33 100%);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 16px rgba(255, 106, 0, 0.2);
+}
+
+.streakNumber {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.streakLabel {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .welcomeTitle {
+        font-size: 24px;
+    }
+
+
+    .highlightGrid,
+    .quickActionsGrid,
+    .streaksGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Dashboard Desktop Layout */
+@media (min-width: 1024px) {
+    .dashboardGrid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 32px;
+        align-items: start;
+    }
+
+    .dashboardMain {
+        min-width: 0;
+        /* Prevent grid blowout */
+    }
+
+    .dashboardSidebar {
+        min-width: 0;
+        position: sticky;
+        top: 24px;
+    }
+
+    /* Adjust spacing within grid */
+    .heroSection {
+        margin-bottom: 32px;
+    }
+
+    .highlightsSection,
+    .streaksSection,
+    .quickActionsSection,
+    .recommendationsSection {
+        margin-bottom: 32px;
+    }
+}

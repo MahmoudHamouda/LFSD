@@ -1,0 +1,110 @@
+.container {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.header {
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 12px;
+}
+
+.optionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.optionCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  /* Add margin bottom to accommodate reasoning text */
+  margin-bottom: 15px;
+}
+
+.optionCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border-color: #ced4da;
+}
+
+.cheapest {
+  border-color: #28a745;
+  background-color: #f0fff4;
+}
+
+.recommended {
+  border-color: #667eea;
+  background-color: #f8f9fa;
+  box-shadow: 0 0 0 1px #667eea;
+}
+
+.providerInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.providerName {
+  font-weight: 600;
+  font-size: 16px;
+  color: #212529;
+}
+
+.rideType {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.rideDetails {
+  text-align: right;
+}
+
+.price {
+  font-weight: 700;
+  font-size: 16px;
+  color: #212529;
+}
+
+.eta {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.badge {
+  position: absolute;
+  top: -8px;
+  right: 12px;
+  background-color: #667eea;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+}
+
+.reasoning {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  width: 100%;
+  font-size: 11px;
+  color: #667eea;
+  padding: 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}

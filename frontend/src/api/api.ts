@@ -118,16 +118,16 @@ export const historyGenerate = async (
   convId?: string
 ): Promise<Response> => {
   let body;
+  const payload: any = {
+    messages: options.messages,
+    context: options.context
+  };
+
   if (convId) {
-    body = JSON.stringify({
-      conversation_id: convId,
-      messages: options.messages,
-    });
-  } else {
-    body = JSON.stringify({
-      messages: options.messages,
-    });
+    payload.conversation_id = convId;
   }
+
+  body = JSON.stringify(payload);
   const response = await fetch('/history/generate', {
     method: 'POST',
     headers: {
@@ -328,28 +328,86 @@ export const frontendSettings = async (): Promise<Response | null> => {
   return response;
 };
 
-export const historyMessageFeedback = async (messageId: string, feedback: string): Promise<Response> => {
-  const response = await fetch('/history/message_feedback', {
+export const connectPartner = async (partnerId: string): Promise<Response> => {
+  const response = await fetch(`/partners/${partnerId}/connect`, {
     method: 'POST',
-    body: JSON.stringify({
-      message_id: messageId,
-      message_feedback: feedback,
-    }),
     headers: {
       'Content-Type': 'application/json',
     },
   })
-    .then((res) => {
-      return res;
+    .then((res) => res)
+    .catch((_err) => {
+      console.error('Error connecting partner');
+      return new Response(JSON.stringify({ success: false }), { status: 500 });
+    });
+  return response;
+};
+
+export const disconnectPartner = async (partnerId: string): Promise<Response> => {
+  const response = await fetch(`/partners/${partnerId}/disconnect`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((res) => res)
+    .catch((_err) => {
+      console.error('Error disconnecting partner');
+      return new Response(JSON.stringify({ success: false }), { status: 500 });
+    });
+  return response;
+};
+
+export const updatePartnerPermissions = async (partnerId: string, permissions: any): Promise<Response> => {
+  const response = await fetch(`/partners/${partnerId}/permissions`, {
+    method: 'PUT',
+    body: JSON.stringify(permissions),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((res) => res)
+    .catch((_err) => {
+      console.error('Error updating permissions');
+      return new Response(JSON.stringify({ success: false }), { status: 500 });
+    });
+  return response;
+};
+
+export const bookRide = async (bookingRequest: any): Promise<Response> => {
+  const response = await fetch('/mobility/book-ride', {
+    method: 'POST',
+    body: JSON.stringify(bookingRequest),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  })
+    .then((res) => res)
+    .catch((_err) => {
+      console.error('Error booking ride');
+      return new Response(JSON.stringify({ success: false }), { status: 500 });
+    });
+  return response;
+};
+
+
+export const getTimeEvents = async (): Promise<any[]> => {
+  const response = await fetch('/api/time/events', {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    }
+  })
+    .then(async (res) => {
+      if (!res.ok) {
+        console.error('Failed to fetch time events');
+        return [];
+      }
+      return await res.json();
     })
     .catch((_err) => {
-      console.error('There was an issue logging feedback.');
-      const errRes: Response = {
-        ...new Response(),
-        ok: false,
-        status: 500,
-      };
-      return errRes;
+      console.error('Error fetching time events');
+      return [];
     });
   return response;
 };

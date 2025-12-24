@@ -1,0 +1,50 @@
+INFO:root:User created.
+INFO:root:Calling generate_response
+DEBUG:asyncio:Using proactor: IocpProactor
+INFO:gemini_service:generate_response called (Viv Architecture V2)
+INFO:gemini_service:Detected intent: {'intent': 'set_goal', 'amount': 100.0, 'goal_type': 'savings', 'original_text': 'save 100'}
+ERROR:gemini_service:Gemini API Error: too many values to unpack (expected 2)
+ERROR:gemini_service:Traceback (most recent call last):
+  File "C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD\backend\services\gemini_service.py", line 1024, in generate_response
+    is_valid, message = validate_financial_goal(amount, financial_context)
+    ^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 2)
+
+INFO:root:Response: {"type": "error", "text": "I'm having trouble connecting to my brain right now. Please try again later."}
+ERROR:root:FAILURE: No goal found.
+INFO:root:User created.
+INFO:root:Calling generate_response
+DEBUG:asyncio:Using proactor: IocpProactor
+INFO:gemini_service:generate_response called (Viv Architecture V2)
+INFO:gemini_service:Detected intent: {'intent': 'set_goal', 'amount': 100.0, 'goal_type': 'savings', 'original_text': 'save 100'}
+INFO:root:Response: {"type": "error", "text": "Unrealistic Goal: You cannot allocate 100.0 when your fixed costs are 7500.0 and income is 5000.0 (Disposable: -2500.0)."}
+ERROR:root:FAILURE: No goal found.
+INFO:root:User created.
+INFO:root:Calling generate_response
+DEBUG:asyncio:Using proactor: IocpProactor
+INFO:gemini_service:generate_response called (Viv Architecture V2)
+INFO:gemini_service:Detected intent: {'intent': 'set_goal', 'amount': 100.0, 'goal_type': 'savings', 'original_text': 'save 100'}
+INFO:root:Response: {"type": "success", "text": "Goal set! I've saved a new target of 100.0 for savings. You can view this in your dashboard."}
+INFO:root:SUCCESS: Goal da085c89-c449-41a6-b40b-781d7327ad5c found.
+INFO:root:User created.
+INFO:root:Calling generate_response
+DEBUG:asyncio:Using proactor: IocpProactor
+INFO:gemini_service:generate_response called (Viv Architecture V2)
+INFO:gemini_service:Detected intent: {'intent': 'set_goal', 'amount': 100.0, 'goal_type': 'savings', 'original_text': 'save 100'}
+INFO:root:Response: {"type": "success", "text": "Goal set! I've saved a new target of 100.0 for savings. You can view this in your dashboard."}
+INFO:root:SUCCESS: Goal 423f2892-e725-4582-8e4a-452f5a029eca found.
+ERROR:root:Test Exception: name 'VivLog' is not defined
+Traceback (most recent call last):
+  File "C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD\backend\tests\reproduce_final.py", line 60, in verify_goal
+    viv_log = db.query(VivLog).filter(VivLog.user_id == user_id).first()
+                       ^^^^^^
+NameError: name 'VivLog' is not defined
+INFO:root:User created.
+INFO:root:Calling generate_response
+DEBUG:asyncio:Using proactor: IocpProactor
+INFO:gemini_service:generate_response called (Viv Architecture V2)
+INFO:gemini_service:Detected intent: {'intent': 'set_goal', 'amount': 100.0, 'goal_type': 'savings', 'original_text': 'save 100'}
+INFO:gemini_service:Logged interaction: 92427392-9a35-4961-b500-2ecaa69b43a0
+INFO:root:Response: {"type": "success", "text": "Goal set! I've saved a new target of 100.0 for savings. You can view this in your dashboard."}
+INFO:root:SUCCESS: Goal 13d7c081-97aa-4c00-87ee-4ebd3086a75f found.
+INFO:root:SUCCESS: Log 92427392-9a35-4961-b500-2ecaa69b43a0 found. Intent: set_goal

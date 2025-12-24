@@ -1,0 +1,134 @@
+:root {
+  /* =========================================
+     HELM STRICT BRAND PALETTE
+     Usage: var(--color-name)
+     Only these colors are allowed.
+     ========================================= */
+
+  /* Core Accents */
+  --color-accent-blue: #3793D1;
+  --color-accent-red: #E23835;
+  --color-accent-orange: #FF6A00;
+  /* Added missing accent */
+  --color-accent-green: #00C853;
+  /* Added missing accent */
+
+  /* Backgrounds */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F4F4F5;
+  --bg-card: #FFFFFF;
+  --bg-input: #FFFFFF;
+  /* distinct from card in dark mode usually */
+  --bg-surface: #FFFFFF;
+  /* Alias for card/surface generic */
+  --bg-sidebar: #0F0F10;
+  /* Always dark sidebar */
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  /* Text */
+  --text-primary: #0B0B0C;
+  --text-secondary: rgba(0, 0, 0, 0.6);
+  --text-tertiary: rgba(0, 0, 0, 0.4);
+  --text-inverse: #FFFFFF;
+
+  /* Borders */
+  --border-light: rgba(0, 0, 0, 0.1);
+  --border-medium: rgba(0, 0, 0, 0.2);
+  --border-active: var(--color-accent-blue);
+
+  /* Status Colors */
+  --status-success: var(--color-accent-green);
+  --status-warning: var(--color-accent-orange);
+  --status-error: var(--color-accent-red);
+
+  /* Badge Backgrounds */
+  --bg-badge-success: rgba(0, 200, 83, 0.1);
+  --bg-badge-warning: rgba(255, 106, 0, 0.1);
+  --bg-badge-error: rgba(226, 56, 53, 0.1);
+  --bg-badge-neutral: rgba(0, 0, 0, 0.05);
+
+  /* Semantic Aliases */
+  --border-default: var(--border-light);
+  --text-muted: var(--text-secondary);
+
+  /* Interactive Backgrounds */
+  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-active: rgba(0, 0, 0, 0.1);
+
+  /* Subtle Status Backgrounds */
+  --bg-success-subtle: #E8F5E9;
+  --bg-warning-subtle: #FFF3E0;
+  --bg-error-subtle: #FEF2F2;
+
+  /* Status Text on Subtle Backgrounds (Darker for contrast) */
+  --text-success-on-subtle: #2E7D32;
+  --text-warning-on-subtle: #E65100;
+  --text-error-on-subtle: #C62828;
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Mode Overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Backgrounds */
+    --bg-primary: #000000;
+    /* Deepest black */
+    --bg-secondary: #0F0F10;
+    /* Sidebar / secondary areas */
+    --bg-card: #1C1C1E;
+    /* Cards (Apple System Gray 6ish) */
+    --bg-surface: #1C1C1E;
+    --bg-input: #2C2C2E;
+    /* Lighter than card for inputs to stand out */
+
+    /* Text */
+    --text-primary: #FFFFFF;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-tertiary: rgba(255, 255, 255, 0.5);
+    --text-inverse: #000000;
+
+    /* Interactive Backgrounds */
+    --bg-hover: rgba(255, 255, 255, 0.1);
+    --bg-active: rgba(255, 255, 255, 0.15);
+
+    /* Subtle Status Backgrounds (Low opacity of accent colors) */
+    --bg-success-subtle: rgba(0, 200, 83, 0.15);
+    --bg-warning-subtle: rgba(255, 106, 0, 0.15);
+    --bg-error-subtle: rgba(226, 56, 53, 0.15);
+
+    /* Status Text on Subtle Backgrounds (Light or Accent) */
+    --text-success-on-subtle: #69F0AE;
+    --text-warning-on-subtle: #FFB74D;
+    --text-error-on-subtle: #FF8A80;
+
+    /* Borders */
+    --border-light: rgba(255, 255, 255, 0.15);
+    --border-medium: rgba(255, 255, 255, 0.25);
+
+    /* Badge Backgrounds */
+    --bg-badge-success: rgba(0, 200, 83, 0.2);
+    --bg-badge-warning: rgba(255, 106, 0, 0.2);
+    --bg-badge-error: rgba(226, 56, 53, 0.2);
+    --bg-badge-neutral: rgba(255, 255, 255, 0.1);
+  }
+}

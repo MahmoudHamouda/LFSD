@@ -86,6 +86,12 @@ export type ChatResponse = {
 
 export type ConversationRequest = {
   messages: ChatMessage[]
+  context?: {
+    location?: {
+      lat: number
+      lng: number
+    }
+  }
 }
 
 export type UserInfo = {

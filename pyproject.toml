@@ -1,20 +1,19 @@
-[tool.black]
-line-length = 100
-target-version = ["py310"]
-
-[tool.ruff]
-select = ["E", "F", "I"]
-line-length = 100
-
-[tool.isort]
-profile = "black"
-
-[tool.mypy]
-strict = false
-warn_redundant_casts = true
-warn_unused_ignores = true
-ignore_missing_imports = true
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-addopts = "-q"
-testpaths = ["tests"]
+minversion = "6.0"
+asyncio_mode = "auto"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+pythonpath = [
+    "backend",
+    ".",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]

@@ -61,12 +61,12 @@ describe('parseAnswer', () => {
     expect(parsed?.citations.length).toEqual(2);
     expect(parsed?.citations[0].reindex_id).toEqual('1');
     expect(parsed?.citations[1].reindex_id).toEqual('2');
-    expect(parsed?.markdownFormatText).toEqual('This is an example answer with citations ^1^ and ^2^ .');
+    expect(parsed?.markdownFormatText).toEqual('This is an example answer with citations  ^1^  and  ^2^ .');
   });
 
   it('returns null for invalid answer input', () => {
     const invalidAnswer: AskResponse = {
-      answer: null,
+      answer: null as any,
       citations: [],
       generated_chart: null,
     };

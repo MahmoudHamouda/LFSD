@@ -1,0 +1,202 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* Filter Bar */
+.filterBar {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 24px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.typeFilters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.filterChip {
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border: 2px solid transparent;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filterChip:hover {
+    background: #e0e0e0;
+}
+
+.filterChip.active {
+    background: #FF6A00;
+    color: white;
+    border-color: #FF6A00;
+}
+
+.dateFilters {
+    display: flex;
+    gap: 8px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.dateButton {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dateButton:hover {
+    background: #f5f5f5;
+}
+
+.dateButton.active {
+    background: #005BFF;
+    color: white;
+    border-color: #005BFF;
+}
+
+/* Timeline */
+.timeline {
+    margin-top: 24px;
+}
+
+.dayGroup {
+    margin-bottom: 32px;
+}
+
+.dayLabel {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+    padding-left: 8px;
+}
+
+.itemsList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.historyItem {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.historyItem:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.itemIcon {
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.itemContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.itemTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.itemSubtitle {
+    font-size: 14px;
+    color: #666;
+}
+
+.itemMeta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.itemAmount {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.itemAmount.negative {
+    color: #D32F2F;
+}
+
+.itemAmount.positive {
+    color: #00C853;
+}
+
+.itemMetric {
+    font-size: 24px;
+    font-weight: 700;
+    color: #FF6A00;
+}
+
+.itemTime {
+    font-size: 12px;
+    color: #999;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .typeFilters {
+        gap: 8px;
+    }
+
+    .filterChip {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    .dateFilters {
+        flex-wrap: wrap;
+    }
+
+    .historyItem {
+        gap: 12px;
+        padding: 12px;
+    }
+
+    .itemIcon {
+        font-size: 24px;
+    }
+
+    .itemTitle {
+        font-size: 14px;
+    }
+
+    .itemSubtitle {
+        font-size: 12px;
+    }
+}

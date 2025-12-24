@@ -1,13 +1,40 @@
+# Core Framework
 fastapi
 uvicorn[standard]
 pydantic>=2
+pydantic-settings
+sqlalchemy
+alembic
+psycopg2-binary
+
+# Utilities
 python-dotenv
 loguru
+httpx
+requests
+python-dateutil
+dateparser
+python-multipart
+apscheduler
+
+# Security & Auth
 pyjwt
 passlib[bcrypt]
-httpx
 slowapi
 redis
+
+# AI & Google Integration
+google-generativeai
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+
+# File Processing
+pymupdf
+pdf2image
+pytesseract
+Pillow
+
+# Testing
 pytest
 pytest-asyncio
-requests

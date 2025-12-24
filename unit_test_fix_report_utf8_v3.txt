@@ -1,0 +1,92 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.0.1, pluggy-1.6.0
+rootdir: C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD
+configfile: pyproject.toml
+plugins: anyio-4.8.0, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 2 items
+
+tests\unit\test_gemini_json.py F                                         [ 50%]
+tests\unit\test_scoring.py .                                             [100%]
+
+================================== FAILURES ===================================
+__________________ test_gemini_json_mobility_recommendation ___________________
+
+    @pytest.mark.asyncio
+    async def test_gemini_json_mobility_recommendation():
+        # Setup mock DB
+        db = MagicMock()
+        service = GeminiService(db)
+    
+        # Mock MobilityAggregator
+        service.mobility_aggregator = MagicMock()
+        service.mobility_aggregator.compare_prices = AsyncMock(return_value={
+            "cheapest": {"provider": "careem", "ride_type": "hala", "estimate": "AED 25"},
+            "options": [
+                {"provider": "careem", "ride_type": "hala", "estimate": "AED 25", "eta": "8 mins"},
+                {"provider": "uber", "ride_type": "uberx", "estimate": "AED 30", "eta": "5 mins"}
+            ]
+        })
+    
+        # Mock Gemini model response
+        service.model = MagicMock()
+        service.model.generate_content_async = AsyncMock()
+    
+        # Test 1: Busy Schedule -> Mocking Gemini response that follows the expected schema
+        mock_response = MagicMock()
+        mock_response.text = json.dumps({
+            "type": "mobility_options",
+            "data": {
+                "options": [
+                    {"provider": "uber", "type": "uberx", "recommended": True, "reasoning": "Faster for busy schedule"}
+                ]
+            }
+        })
+        service.model.generate_content_async.return_value = mock_response
+    
+        context = {
+            "user_id": "test-user",
+            "location": {"lat": 25.2048, "lng": 55.2708},
+            "indices": {"financial": 80, "schedule": 10, "energy": 80}
+        }
+        history = [{"role": "user", "content": "Check prices for a ride to Dubai Mall"}]
+    
+        response = await service.generate_response(history, context)
+        data = json.loads(response)
+    
+>       assert data.get("type") == "mobility_options"
+E       AssertionError: assert 'text' == 'mobility_options'
+E         
+E         - mobility_options
+E         + text
+
+tests\unit\test_gemini_json.py:48: AssertionError
+---------------------------- Captured stdout call -----------------------------
+DEBUG: Initializing GeminiService...
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService Initialized Successfully
+2025-12-20 15:12:15,271 - gemini_service - INFO - generate_response called (Viv Architecture V2)
+DEBUG: Calling _load_viv_context
+DEBUG: Querying User for user-123
+DEBUG: User found: <MagicMock name='mock.query().filter().first()' id='2735066080144'>
+ERROR in _load_viv_context: '<' not supported between instances of 'MagicMock' and 'int'
+DEBUG: viv_context loaded: dict_keys(['profile', 'viv_indexes', 'life_goals', 'preferences', 'crisis_mode'])
+2025-12-20 15:12:15,282 - gemini_service - ERROR - Error extracting intent: '"intent"'
+2025-12-20 15:12:15,282 - gemini_service - INFO - Detected intent: {'intent': 'general', 'original_text': 'Check prices for a ride to Dubai Mall'}
+DEBUG: Intent detected: {'intent': 'general', 'original_text': 'Check prices for a ride to Dubai Mall'}
+---------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD\backend\services\gemini_service.py", line 710, in _load_viv_context
+    crisis_mode = any(score < 30 for score in indexes.values())
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\hmahm\OneDrive\Desktop\LFSD Codebase\LFSD\backend\services\gemini_service.py", line 710, in <genexpr>
+    crisis_mode = any(score < 30 for score in indexes.values())
+                      ^^^^^^^^^^
+TypeError: '<' not supported between instances of 'MagicMock' and 'int'
+------------------------------ Captured log call ------------------------------
+INFO     gemini_service:gemini_service.py:876 generate_response called (Viv Architecture V2)
+ERROR    gemini_service:gemini_service.py:162 Error extracting intent: '"intent"'
+INFO     gemini_service:gemini_service.py:895 Detected intent: {'intent': 'general', 'original_text': 'Check prices for a ride to Dubai Mall'}
+=========================== short test summary info ===========================
+FAILED tests/unit/test_gemini_json.py::test_gemini_json_mobility_recommendation
+======================== 1 failed, 1 passed in 20.39s =========================

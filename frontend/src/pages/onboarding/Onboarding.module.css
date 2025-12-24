@@ -1,0 +1,246 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    padding: 2rem;
+    font-family: 'Inter', sans-serif;
+    overflow-y: auto;
+    position: relative;
+}
+
+.content {
+    width: 100%;
+    max-width: 500px;
+    background: var(--bg-surface);
+    border-radius: 24px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+    animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    margin: auto;
+}
+
+.stepContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    /* Neutral */
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-left: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+
+.input {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    transition: all 0.2s ease;
+    outline: none;
+    width: 100%;
+}
+
+.input:focus {
+    background: var(--bg-primary);
+    border-color: var(--color-accent-blue);
+    /* Primary */
+    box-shadow: 0 0 0 3px rgba(55, 147, 209, 0.1);
+}
+
+.input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.button {
+    background: var(--color-accent-blue);
+    /* Primary */
+    color: var(--text-inverse);
+    border: none;
+    border-radius: var(--radius-md);
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    margin-top: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(55, 147, 209, 0.2);
+}
+
+.button:hover {
+    background: var(--color-accent-blue);
+    opacity: 0.9;
+    /* Slightly darker primary */
+    transform: translateY(-1px);
+    box-shadow: 0 8px 12px -2px rgba(55, 147, 209, 0.3);
+}
+
+.button:active {
+    transform: translateY(0);
+}
+
+.buttonSecondary {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--color-accent-blue);
+    border-radius: var(--radius-md);
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.buttonSecondary:hover {
+    background: var(--bg-secondary);
+    border-color: var(--color-accent-blue);
+}
+
+.textLink {
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-color: transparent;
+    transition: all 0.2s;
+    padding: 0;
+    margin-top: 0.5rem;
+    align-self: center;
+}
+
+.textLink:hover {
+    color: var(--color-accent-blue);
+    text-decoration-color: var(--color-accent-blue);
+}
+
+.uploadBox {
+    border: 2px dashed var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+.uploadBox:hover {
+    border-color: var(--color-accent-blue);
+    background: var(--bg-secondary);
+    color: var(--color-accent-blue);
+}
+
+.toggleLink {
+    color: var(--color-accent-blue);
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    display: inline-block;
+    font-weight: 500;
+}
+
+.progress {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 4px;
+    background: var(--color-accent-blue);
+    transition: width 0.3s ease;
+}
+
+/* Keep metric cards for results step, but update style */
+.metricCard {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    text-align: center;
+    border: 1px solid var(--border-light);
+}
+
+.metricValue {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0.5rem 0;
+}
+
+.metricLabel {
+    color: var(--text-tertiary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}

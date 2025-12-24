@@ -1,0 +1,574 @@
+.messageRow {
+    display: flex;
+    margin-bottom: 24px;
+    width: 100%;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.userRow {
+    flex-direction: row-reverse;
+}
+
+.assistantRow {
+    flex-direction: row;
+}
+
+.avatar {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    margin: 0 12px;
+}
+
+.userAvatar,
+.assistantAvatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.userAvatar {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.assistantAvatar {
+    background-color: #10a37f;
+    /* ChatGPT green-ish */
+    color: white;
+}
+
+.assistantAvatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fallbackAvatar {
+    display: none;
+}
+
+.assistantAvatar img[style*="display: none"]+.fallbackAvatar {
+    display: block;
+}
+
+.content {
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+}
+
+.userRow .content {
+    align-items: flex-end;
+}
+
+.senderName {
+    font-size: 12px;
+    color: #868e96;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.messageText {
+    background-color: transparent;
+    color: #212529;
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+.userRow .messageText {
+    background-color: #f1f3f5;
+    padding: 10px 16px;
+    border-radius: 12px 12px 0 12px;
+}
+
+.assistantRow .messageText {
+    padding-right: 10px;
+}
+
+.messageText p {
+    margin: 0 0 8px 0;
+}
+
+.messageText p:last-child {
+    margin-bottom: 0;
+}
+
+/* Structured Content Styles */
+.structuredContent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bookingConfirmed {
+    background-color: #f0fff4;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 8px;
+}
+
+.confirmedHeader {
+    font-weight: 700;
+    color: #155724;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.confirmedDetails {
+    font-size: 14px;
+    color: #155724;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.balanceCard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 350px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.balanceTotal h2 {
+    margin: 4px 0 16px 0;
+    font-size: 28px;
+}
+
+.accountList {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.messageRow {
+    display: flex;
+    margin-bottom: 24px;
+    width: 100%;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.userRow {
+    flex-direction: row-reverse;
+}
+
+.assistantRow {
+    flex-direction: row;
+}
+
+.avatar {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    margin: 0 12px;
+}
+
+.userAvatar,
+.assistantAvatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.userAvatar {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.assistantAvatar {
+    background-color: #10a37f;
+    /* ChatGPT green-ish */
+    color: white;
+}
+
+.assistantAvatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fallbackAvatar {
+    display: none;
+}
+
+.assistantAvatar img[style*="display: none"]+.fallbackAvatar {
+    display: block;
+}
+
+.content {
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+}
+
+.userRow .content {
+    align-items: flex-end;
+}
+
+.senderName {
+    font-size: 12px;
+    color: #868e96;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.messageText {
+    background-color: transparent;
+    color: #212529;
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+.userRow .messageText {
+    background-color: #f1f3f5;
+    padding: 10px 16px;
+    border-radius: 12px 12px 0 12px;
+}
+
+.assistantRow .messageText {
+    padding-right: 10px;
+}
+
+.messageText p {
+    margin: 0 0 8px 0;
+}
+
+.messageText p:last-child {
+    margin-bottom: 0;
+}
+
+/* Structured Content Styles */
+.structuredContent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bookingConfirmed {
+    background-color: #f0fff4;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 8px;
+}
+
+.confirmedHeader {
+    font-weight: 700;
+    color: #155724;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.confirmedDetails {
+    font-size: 14px;
+    color: #155724;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.balanceCard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 350px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.balanceTotal h2 {
+    margin: 4px 0 16px 0;
+    font-size: 28px;
+}
+
+.accountList {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.accountItem {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.errorText {
+    color: #dc3545;
+    background-color: #fff5f5;
+    max-width: 350px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.balanceTotal h2 {
+    margin: 4px 0 16px 0;
+    font-size: 28px;
+}
+
+.accountList {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.messageRow {
+    display: flex;
+    margin-bottom: 24px;
+    width: 100%;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.userRow {
+    flex-direction: row-reverse;
+}
+
+.assistantRow {
+    flex-direction: row;
+}
+
+.avatar {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    margin: 0 12px;
+}
+
+.userAvatar,
+.assistantAvatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+    overflow: hidden;
+}
+
+.userAvatar {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+.assistantAvatar {
+    background-color: #10a37f;
+    /* ChatGPT green-ish */
+    color: white;
+}
+
+.assistantAvatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.fallbackAvatar {
+    display: none;
+}
+
+.assistantAvatar img[style*="display: none"]+.fallbackAvatar {
+    display: block;
+}
+
+.content {
+    max-width: 80%;
+    display: flex;
+    flex-direction: column;
+}
+
+.userRow .content {
+    align-items: flex-end;
+}
+
+.senderName {
+    font-size: 12px;
+    color: #868e96;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.messageText {
+    background-color: transparent;
+    color: #212529;
+    line-height: 1.6;
+    font-size: 15px;
+}
+
+.userRow .messageText {
+    background-color: #f1f3f5;
+    padding: 10px 16px;
+    border-radius: 12px 12px 0 12px;
+}
+
+.assistantRow .messageText {
+    padding-right: 10px;
+}
+
+.messageText p {
+    margin: 0 0 8px 0;
+}
+
+.messageText p:last-child {
+    margin-bottom: 0;
+}
+
+/* Structured Content Styles */
+.structuredContent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bookingConfirmed {
+    background-color: #f0fff4;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 8px;
+}
+
+.confirmedHeader {
+    font-weight: 700;
+    color: #155724;
+    margin-bottom: 8px;
+    font-size: 16px;
+}
+
+.confirmedDetails {
+    font-size: 14px;
+    color: #155724;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.balanceCard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 350px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.balanceTotal h2 {
+    margin: 4px 0 16px 0;
+    font-size: 28px;
+}
+
+.accountList {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.accountItem {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+}
+
+.errorText {
+    color: #dc3545;
+    background-color: #fff5f5;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ffc9c9;
+}
+
+.summaryContent {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.suggestedActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.actionButton {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.actionButton:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+}

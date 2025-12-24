@@ -1,0 +1,436 @@
+/* Dashboard Shared Components CSS Module */
+
+/* ScoreCard Styles */
+.scoreCard {
+    position: relative;
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: var(--bg-card);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 160px;
+}
+
+.scoreCard:hover {
+    background-color: #222;
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.scoreCardLocked {
+    opacity: 0.75;
+    filter: grayscale(1);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-4);
+    width: 100%;
+}
+
+.cardTitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.cardStatusBadge {
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
+
+.statusSuccess {
+    background-color: rgba(0, 200, 83, 0.1);
+    color: var(--color-accent-green);
+    border-color: rgba(0, 200, 83, 0.2);
+}
+
+.statusWarning {
+    background-color: rgba(255, 106, 0, 0.1);
+    color: var(--color-accent-orange);
+    border-color: rgba(255, 106, 0, 0.2);
+}
+
+.statusDanger {
+    background-color: rgba(226, 56, 53, 0.1);
+    color: var(--color-accent-red);
+    border-color: rgba(226, 56, 53, 0.2);
+}
+
+.statusNeutral {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.cardValueContainer {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+    margin-bottom: var(--space-2);
+}
+
+.cardValue {
+    font-size: 32px;
+    font-weight: 700;
+    font-family: monospace;
+    color: var(--text-primary);
+}
+
+.cardValueBlurred {
+    color: var(--text-tertiary);
+    filter: blur(4px);
+}
+
+.cardValueRed {
+    color: var(--color-accent-red);
+}
+
+.cardValueYellow {
+    color: var(--color-accent-orange);
+}
+
+.cardValueGreen {
+    color: var(--color-accent-green);
+}
+
+.trendIndicator {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.trendIcon {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+}
+
+.trendUp {
+    color: var(--color-accent-green);
+}
+
+.trendDown {
+    color: var(--color-accent-red);
+}
+
+.trendFlat {
+    color: var(--text-secondary);
+}
+
+.cardDesc {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+/* Goal Card Styles */
+.goalCard {
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background-color: var(--bg-card);
+    transition: background-color 0.2s;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.goalCard:hover {
+    background-color: #222;
+}
+
+.goalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-3);
+}
+
+.goalHeaderLeft {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.goalIconWrapper {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(55, 147, 209, 0.1);
+    color: var(--color-accent-blue);
+    flex-shrink: 0;
+}
+
+.goalIconWrapperCompleted {
+    background-color: rgba(0, 200, 83, 0.1);
+    color: var(--color-accent-green);
+}
+
+.goalIcon {
+    width: 20px;
+    height: 20px;
+}
+
+.goalTitleBlock {
+    display: flex;
+    flex-direction: column;
+}
+
+.goalTitle {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.goalSubtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.goalActions {
+    display: flex;
+    gap: var(--space-2);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.goalCard:hover .goalActions {
+    opacity: 1;
+}
+
+.actionButton {
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.actionButton:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.actionButtonDelete:hover {
+    color: var(--color-accent-red);
+}
+
+.goalBody {
+    margin-top: auto;
+}
+
+.amountRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 4px;
+}
+
+.currentAmount {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.amountInput {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 2px 6px;
+    font-size: 14px;
+    width: 100px;
+}
+
+.editableAmount {
+    cursor: pointer;
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.editableAmount:hover {
+    border-bottom-style: solid;
+}
+
+.targetAmount {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.progressBarBack {
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.1);
+    height: 6px;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+
+.progressBarFill {
+    height: 100%;
+    background-color: var(--color-accent-blue);
+    border-radius: var(--radius-full);
+    transition: width 0.5s ease;
+}
+
+.progressBarComplete {
+    background-color: var(--color-accent-green);
+}
+
+.goalFooter {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+}
+
+/* Goals Section Layout */
+.sectionContainer {
+    margin-bottom: var(--space-8);
+}
+
+.sectionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-4);
+}
+
+.sectionTitle {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.createButton {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.createButton:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.goalsGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+    .goalsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .goalsGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.emptyState {
+    padding: var(--space-8);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.emptyText {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: var(--space-4);
+}
+
+.emptyLink {
+    color: var(--color-accent-blue);
+    font-size: 14px;
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+/* New Goal Form */
+.newGoalForm {
+    padding: var(--space-6);
+    background-color: rgba(55, 147, 209, 0.05);
+    border: 1px solid rgba(55, 147, 209, 0.2);
+    border-radius: var(--radius-lg);
+}
+
+.formInput {
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-size: 14px;
+    margin-bottom: var(--space-3);
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.formActions {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.saveButton {
+    flex: 1;
+    background-color: var(--color-accent-blue);
+    color: #FFF;
+    border: none;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.cancelButton {
+    flex: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    border: none;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}

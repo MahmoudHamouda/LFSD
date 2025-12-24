@@ -1,0 +1,37 @@
+PASS src/components/Answer/AnswerParser.test.ts (6.018 s)
+FAIL src/hooks/useUser.test.tsx
+  ● Test suite failed to run
+
+    [96msrc/hooks/useUser.test.tsx[0m:[93m57[0m:[93m9[0m - [91merror[0m[90m TS2322: [0mType '{ id: string; user_id: string; timestamp: string; financial_score: number; health_score: number; time_score: number; overall_score: number; }' is not assignable to type 'VivIndex'.
+      Object literal may only specify known properties, but 'user_id' does not exist in type 'VivIndex'. Did you mean to write 'userId'?
+
+    [7m57[0m         user_id: 'user-123',
+    [7m  [0m [91m        ~~~~~~~~~~~~~~~~~~~[0m
+
+      [96msrc/types/user.ts[0m:[93m76[0m:[93m5[0m
+        [7m76[0m     vivIndex: VivIndex;
+        [7m  [0m [96m    ~~~~~~~~[0m
+        The expected type comes from property 'vivIndex' which is declared here on type 'User'
+    [96msrc/hooks/useUser.test.tsx[0m:[93m78[0m:[93m9[0m - [91merror[0m[90m TS2322: [0mType '{ date: string; steps: number; sleep_hours: number; calories_burned: number; resting_heart_rate: number; hrv: number; }' is not assignable to type 'HealthDailySummary'.
+      Object literal may only specify known properties, and 'steps' does not exist in type 'HealthDailySummary'.
+
+    [7m78[0m         steps: 8500,
+    [7m  [0m [91m        ~~~~~~~~~~~[0m
+
+      [96msrc/types/user.ts[0m:[93m82[0m:[93m5[0m
+        [7m82[0m     healthSummary?: HealthDailySummary;
+        [7m  [0m [96m    ~~~~~~~~~~~~~[0m
+        The expected type comes from property 'healthSummary' which is declared here on type 'User'
+
+
+=============================== Coverage summary ===============================
+Statements   : 100% ( 31/31 )
+Branches     : 87.5% ( 7/8 )
+Functions    : 100% ( 4/4 )
+Lines        : 100% ( 28/28 )
+================================================================================
+Test Suites: 1 failed, 1 passed, 2 total
+Tests:       4 passed, 4 total
+Snapshots:   0 total
+Time:        8.433 s
+Ran all test suites.

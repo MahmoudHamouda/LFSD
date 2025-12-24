@@ -1,0 +1,117 @@
+2025-12-20 13:59:55,961 - debug_history - INFO - Generate history endpoint called
+2025-12-20 13:59:55,965 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1', 'role': 'user', 'content': 'History Test', 'date': '2023-01-01'}]}
+2025-12-20 13:59:55,967 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-20 13:59:55,969 - debug_history - INFO - Created new conversation: 4985345b-7629-430d-9f22-0861caaa86f8
+2025-12-20 13:59:57,821 - debug_history - INFO - Saved user messages to database
+2025-12-20 13:59:57,828 - debug_history - INFO - Calling Gemini service...
+2025-12-20 13:59:58,350 - debug_history - ERROR - Gemini service error: name 'json' is not defined
+2025-12-20 13:59:58,553 - debug_history - INFO - Saved AI response to database
+2025-12-20 13:59:58,708 - debug_history - INFO - Returning successful response
+2025-12-20 14:40:44,385 - debug_history - INFO - Generate history endpoint called
+2025-12-20 14:40:44,387 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1', 'role': 'user', 'content': 'History Test', 'date': '2023-01-01'}]}
+2025-12-20 14:40:44,387 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-20 14:40:44,389 - debug_history - INFO - Created new conversation: 19af3981-ad08-49c0-b4ee-769466e60bb9
+2025-12-20 14:40:46,261 - debug_history - INFO - Saved user messages to database
+2025-12-20 14:40:46,266 - debug_history - INFO - Calling Gemini service...
+2025-12-20 14:40:46,841 - debug_history - ERROR - Gemini service error: name 'json' is not defined
+2025-12-20 14:40:47,021 - debug_history - INFO - Saved AI response to database
+2025-12-20 14:40:47,181 - debug_history - INFO - Returning successful response
+2025-12-20 14:50:21,488 - debug_history - INFO - Generate history endpoint called
+2025-12-20 14:50:21,490 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1', 'role': 'user', 'content': 'History Test', 'date': '2023-01-01'}]}
+2025-12-20 14:50:21,490 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-20 14:50:21,491 - debug_history - INFO - Created new conversation: 3b532289-9164-4c09-ad9a-188c816ed44b
+2025-12-20 14:50:23,099 - debug_history - INFO - Saved user messages to database
+2025-12-20 14:50:23,101 - debug_history - INFO - Calling Gemini service...
+2025-12-20 14:50:23,593 - debug_history - ERROR - Gemini service error: name 'json' is not defined
+2025-12-20 14:50:23,751 - debug_history - INFO - Saved AI response to database
+2025-12-20 14:50:23,901 - debug_history - INFO - Returning successful response
+2025-12-20 15:55:25,959 - debug_history - INFO - Generate history endpoint called
+2025-12-20 15:55:25,973 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1', 'role': 'user', 'content': 'History Test', 'date': '2023-01-01'}]}
+2025-12-20 15:55:25,975 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-20 15:55:25,981 - debug_history - INFO - Created new conversation: 584f0b4e-b80f-411c-a60c-001f5caaf2ec
+2025-12-20 15:55:27,859 - debug_history - INFO - Saved user messages to database
+2025-12-20 15:55:27,882 - debug_history - INFO - Calling Gemini service...
+2025-12-20 15:55:28,449 - debug_history - INFO - Gemini response received
+2025-12-20 15:55:28,622 - debug_history - INFO - Saved AI response to database
+2025-12-20 15:55:28,792 - debug_history - INFO - Returning successful response
+2025-12-20 17:36:07,293 - debug_history - INFO - Generate history endpoint called
+2025-12-20 17:36:07,296 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1', 'role': 'user', 'content': 'History Test', 'date': '2023-01-01'}]}
+2025-12-20 17:36:07,296 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-20 17:36:07,298 - debug_history - INFO - Created new conversation: b1bfcd90-62d2-47b8-976a-97808b494011
+2025-12-20 17:36:08,949 - debug_history - INFO - Saved user messages to database
+2025-12-20 17:36:08,956 - debug_history - INFO - Calling Gemini service...
+2025-12-20 17:36:09,477 - debug_history - INFO - Gemini response received
+2025-12-20 17:36:09,633 - debug_history - INFO - Saved AI response to database
+2025-12-20 17:36:09,791 - debug_history - INFO - Returning successful response
+2025-12-20 17:48:35,167 - debug_history - INFO - Generate history endpoint called
+2025-12-20 17:48:35,168 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1', 'role': 'user', 'content': 'History Test', 'date': '2023-01-01'}]}
+2025-12-20 17:48:35,168 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-20 17:48:35,172 - debug_history - INFO - Created new conversation: a697df4e-a2e2-4f1d-b87a-fee20b4681ec
+2025-12-20 17:48:36,978 - debug_history - INFO - Saved user messages to database
+2025-12-20 17:48:36,982 - debug_history - INFO - Calling Gemini service...
+2025-12-20 17:48:37,480 - debug_history - INFO - Gemini response received
+2025-12-20 17:48:37,645 - debug_history - INFO - Saved AI response to database
+2025-12-20 17:48:37,808 - debug_history - INFO - Returning successful response
+2025-12-20 20:00:03,075 - debug_history - INFO - Generate history endpoint called
+2025-12-20 20:00:03,078 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1766253603063', 'role': 'user', 'content': 'Show me my health overview.', 'date': '2025-12-20T18:00:03.063Z'}]}
+2025-12-20 20:00:03,079 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-20 20:00:03,081 - debug_history - INFO - Created new conversation: a814f879-f187-441b-b94f-f7b0363fcd42
+2025-12-20 20:00:03,577 - debug_history - INFO - Saved user messages to database
+2025-12-20 20:00:04,592 - debug_history - INFO - Calling Gemini service...
+2025-12-20 20:00:05,104 - debug_history - INFO - Gemini response received
+2025-12-20 20:00:05,260 - debug_history - INFO - Saved AI response to database
+2025-12-20 20:00:05,423 - debug_history - INFO - Returning successful response
+2025-12-20 20:00:11,434 - debug_history - INFO - Generate history endpoint called
+2025-12-20 20:00:11,436 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1766253611421', 'role': 'user', 'content': 'Show me my health overview.', 'date': '2025-12-20T18:00:11.421Z'}]}
+2025-12-20 20:00:11,437 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-20 20:00:11,440 - debug_history - INFO - Created new conversation: 2e652380-df1d-4cc5-827a-0149faa372ad
+2025-12-20 20:00:11,852 - debug_history - INFO - Saved user messages to database
+2025-12-20 20:00:11,858 - debug_history - INFO - Calling Gemini service...
+2025-12-20 20:00:12,352 - debug_history - INFO - Gemini response received
+2025-12-20 20:00:12,515 - debug_history - INFO - Saved AI response to database
+2025-12-20 20:00:12,674 - debug_history - INFO - Returning successful response
+2025-12-20 20:00:21,570 - debug_history - INFO - Generate history endpoint called
+2025-12-20 20:00:21,573 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1766253611421', 'role': 'user', 'content': 'Show me my health overview.'}, {'id': '2e14552b-8924-4ccd-8206-7cec32c2e265', 'role': 'assistant', 'content': '{"type": "text", "text": "I\'m not sure how to help with that yet."}'}, {'id': '1766253621564', 'role': 'user', 'content': 'hi', 'date': '2025-12-20T18:00:21.564Z'}], 'context': {'location': {'lat': 29.9958272, 'lng': 31.064064}}, 'conversation_id': '2e652380-df1d-4cc5-827a-0149faa372ad'}
+2025-12-20 20:00:21,574 - debug_history - INFO - Processing generation for conversation: 2e652380-df1d-4cc5-827a-0149faa372ad, messages: 3
+2025-12-20 20:00:21,727 - debug_history - INFO - Updated existing conversation: 2e652380-df1d-4cc5-827a-0149faa372ad
+2025-12-20 20:00:22,213 - debug_history - INFO - Saved user messages to database
+2025-12-20 20:00:22,217 - debug_history - INFO - Calling Gemini service...
+2025-12-20 20:00:22,706 - debug_history - INFO - Gemini response received
+2025-12-20 20:00:22,865 - debug_history - INFO - Saved AI response to database
+2025-12-20 20:00:23,026 - debug_history - INFO - Returning successful response
+2025-12-21 19:14:51,783 - debug_history - INFO - Generate history endpoint called
+2025-12-21 19:14:51,809 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1766337291457', 'role': 'user', 'content': "Please analyze my current financial status. Show me how much I owe, how much I'm making, my potential savings by month-end, and if I'm on track for my goals.", 'date': '2025-12-21T17:14:51.457Z'}]}
+2025-12-21 19:14:51,823 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-21 19:14:51,884 - debug_history - INFO - Created new conversation: 0ba9c58a-6a32-45ca-b593-1629367ed5ac
+2025-12-21 19:14:52,795 - debug_history - INFO - Saved user messages to database
+2025-12-21 19:14:56,555 - debug_history - INFO - Calling Gemini service...
+2025-12-21 19:15:00,388 - debug_history - INFO - Gemini response received
+2025-12-21 19:15:00,684 - debug_history - INFO - Saved AI response to database
+2025-12-21 19:15:00,930 - debug_history - INFO - Returning successful response
+2025-12-22 20:12:36,155 - debug_history - INFO - Generate history endpoint called
+2025-12-22 20:12:36,163 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1766427156124', 'role': 'user', 'content': "Please analyze my current financial status. Show me how much I owe, how much I'm making, my potential savings by month-end, and if I'm on track for my goals.", 'date': '2025-12-22T18:12:36.124Z'}]}
+2025-12-22 20:12:36,166 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-22 20:12:36,168 - debug_history - INFO - Created new conversation: e7c122d6-6cb7-42a3-b72a-dcbf63096b29
+2025-12-22 20:12:36,668 - debug_history - INFO - Saved user messages to database
+2025-12-22 20:12:37,730 - debug_history - INFO - Calling Gemini service...
+2025-12-22 20:12:37,899 - debug_history - INFO - Gemini response received
+2025-12-22 20:12:38,065 - debug_history - INFO - Saved AI response to database
+2025-12-22 20:12:38,240 - debug_history - INFO - Returning successful response
+2025-12-22 20:33:24,057 - debug_history - INFO - Generate history endpoint called
+2025-12-22 20:33:24,096 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1766428404031', 'role': 'user', 'content': "Please analyze my current financial status. Show me how much I owe, how much I'm making, my potential savings by month-end, and if I'm on track for my goals.", 'date': '2025-12-22T18:33:24.031Z'}]}
+2025-12-22 20:33:24,100 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-22 20:33:24,103 - debug_history - INFO - Created new conversation: 908ac5d1-404e-4931-aa24-68462691fe81
+2025-12-22 20:33:24,900 - debug_history - INFO - Saved user messages to database
+2025-12-22 20:33:29,239 - debug_history - INFO - Calling Gemini service...
+2025-12-22 20:33:29,717 - debug_history - INFO - Gemini response received
+2025-12-22 20:33:29,964 - debug_history - INFO - Saved AI response to database
+2025-12-22 20:33:30,151 - debug_history - INFO - Returning successful response
+2025-12-22 20:42:18,306 - debug_history - INFO - Generate history endpoint called
+2025-12-22 20:42:18,310 - debug_history - INFO - Generate history request body: {'messages': [{'id': '1766428938254', 'role': 'user', 'content': "Please analyze my current financial status. Show me how much I owe, how much I'm making, my potential savings by month-end, and if I'm on track for my goals.", 'date': '2025-12-22T18:42:18.255Z'}]}
+2025-12-22 20:42:18,312 - debug_history - INFO - Processing generation for conversation: None, messages: 1
+2025-12-22 20:42:18,320 - debug_history - INFO - Created new conversation: 8674ced3-028d-4943-989c-99bb962e662f
+2025-12-22 20:42:18,789 - debug_history - INFO - Saved user messages to database
+2025-12-22 20:42:19,171 - debug_history - INFO - Calling Gemini service...
+2025-12-22 20:42:19,356 - debug_history - INFO - Gemini response received
+2025-12-22 20:42:19,520 - debug_history - INFO - Saved AI response to database
+2025-12-22 20:42:19,697 - debug_history - INFO - Returning successful response

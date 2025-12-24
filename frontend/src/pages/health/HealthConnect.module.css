@@ -1,0 +1,337 @@
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* Header */
+.header {
+    margin-bottom: 40px;
+}
+
+.backButton {
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    color: #666;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+}
+
+.backButton:hover {
+    background: #f5f5f5;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.subtitle {
+    font-size: 16px;
+    color: #666;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Providers List */
+.providersList {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 48px;
+}
+
+.providerCard {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.providerCard:hover {
+    border-color: #FF6A00;
+    box-shadow: 0 4px 16px rgba(255, 106, 0, 0.12);
+}
+
+.providerHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.providerInfo {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+}
+
+.providerIcon {
+    font-size: 48px;
+    flex-shrink: 0;
+}
+
+.providerName {
+    font-size: 22px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 4px 0;
+}
+
+.providerDescription {
+    font-size: 14px;
+    color: #666;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.connectButton {
+    padding: 10px 24px;
+    background: linear-gradient(135deg, #FF6A00 0%, #FF8A33 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.connectButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 106, 0, 0.3);
+}
+
+.connectButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.connectedBadge {
+    padding: 10px 24px;
+    background: #E8F5E9;
+    color: #2E7D32;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Benefits */
+.benefitsList {
+    margin-bottom: 20px;
+}
+
+.benefitsTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 12px;
+}
+
+.benefits {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+}
+
+.benefit {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #333;
+}
+
+.benefitIcon {
+    color: #00C853;
+    font-weight: 700;
+}
+
+/* Connected Actions */
+.connectedActions {
+    padding-top: 20px;
+    border-top: 1px solid #e0e0e0;
+}
+
+.connectionDetails {
+    display: flex;
+    gap: 32px;
+    margin-bottom: 16px;
+}
+
+.detailItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.detailLabel {
+    font-size: 12px;
+    color: #999;
+    font-weight: 500;
+}
+
+.detailValue {
+    font-size: 14px;
+    color: #333;
+    font-weight: 600;
+}
+
+.actionButtons {
+    display: flex;
+    gap: 12px;
+}
+
+.syncButton {
+    padding: 8px 16px;
+    background: #005BFF;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.syncButton:hover {
+    background: #0047CC;
+}
+
+.disconnectButton {
+    padding: 8px 16px;
+    background: transparent;
+    color: #D32F2F;
+    border: 2px solid #D32F2F;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.disconnectButton:hover {
+    background: #D32F2F;
+    color: white;
+}
+
+/* Info Section */
+.infoSection {
+    margin-top: 48px;
+}
+
+.infoTitle {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 24px 0;
+}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.infoCard {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+}
+
+.infoIcon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.infoCardTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.infoCardText {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.5;
+    margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .title {
+        font-size: 24px;
+    }
+
+    .providerHeader {
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .connectButton,
+    .connectedBadge {
+        width: 100%;
+        text-align: center;
+    }
+
+    .benefits {
+        grid-template-columns: 1fr;
+    }
+
+    .connectionDetails {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .actionButtons {
+        flex-direction: column;
+    }
+
+    .syncButton,
+    .disconnectButton {
+        width: 100%;
+    }
+
+    .infoGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.connectWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.privacyNote {
+    font-size: 0.7rem;
+    color: #888;
+    text-align: center;
+    max-width: 150px;
+}
+
+.privacyLink {
+    color: #007bff;
+    cursor: pointer;
+    text-decoration: underline;
+}

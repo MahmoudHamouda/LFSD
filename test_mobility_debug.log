@@ -1,0 +1,13 @@
+INFO:root:User created.
+INFO:root:Calling generate_response
+DEBUG:asyncio:Using proactor: IocpProactor
+INFO:gemini_service:generate_response called (Viv Architecture V2)
+INFO:gemini_service:Detected intent: {'intent': 'mobility_booking', 'destination': 'Dubai Mall', 'provider': 'uber', 'ride_type': 'uberx', 'original_text': 'book uber to dubai mall'}
+INFO:gemini_service:Slots - Dest: Dubai Mall, Start: None, Time: None
+INFO:googlemaps.client:API queries_quota: 60
+DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): maps.googleapis.com:443
+DEBUG:urllib3.connectionpool:https://maps.googleapis.com:443 "GET /maps/api/geocode/json?address=Dubai+Mall&key=AIzaSyByM6TgICSmaXLgjUWEhPcgYCgpg9hnX-w HTTP/1.1" 200 None
+INFO:gemini_service:Logged interaction: 696ef2b3-2dac-4d8b-9739-d4ec39f2b673
+INFO:root:Response: {"type": "mobility_booking_confirmed", "text": "Booking confirmed for Uber uberx!", "data": {"provider": "Uber", "ride_type": "uberx", "eta": "5 mins", "driver_name": "Test Driver", "driver_rating": "4.9", "vehicle": "Toyota Camry", "plate": "DXB 12345", "trip_id": "746f78f4-6de5-45d4-aa92-57ba2907b2ee"}}
+INFO:root:SUCCESS: Trip 746f78f4-6de5-45d4-aa92-57ba2907b2ee found. Provider: uber, Cost: 50.0
+INFO:root:SUCCESS: Log 696ef2b3-2dac-4d8b-9739-d4ec39f2b673 found. Intent: mobility_booking
