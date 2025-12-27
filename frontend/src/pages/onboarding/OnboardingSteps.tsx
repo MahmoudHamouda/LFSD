@@ -122,7 +122,7 @@ export const Pill = ({ label, selected, onClick }: { label: string, selected: bo
             padding: '0.5rem 1rem',
             borderRadius: 'var(--radius-full)',
             border: `1px solid ${selected ? 'var(--color-accent-blue)' : 'var(--border-light)'}`,
-            background: selected ? 'var(--bg-secondary)' : 'var(--bg-primary)',
+            background: selected ? 'var(--bg-badge-success)' : 'var(--bg-card)',
             color: selected ? 'var(--color-accent-blue)' : 'var(--text-secondary)',
             cursor: 'pointer',
             fontSize: '0.9rem',

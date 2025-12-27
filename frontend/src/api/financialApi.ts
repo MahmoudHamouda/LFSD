@@ -160,10 +160,11 @@ export async function getCategoryCoverage(categoryId: string, windowDays: number
 
 // --- GOALS API ---
 
-export async function getFinancialGoals(): Promise<any[]> {
+export async function getFinancialGoals(pillar?: string): Promise<any[]> {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch('/api/finance/goals', {
+        const url = pillar ? `/api/finance/goals?pillar=${pillar}` : '/api/finance/goals';
+        const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!response.ok) return [];

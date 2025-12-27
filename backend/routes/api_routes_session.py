@@ -15,8 +15,9 @@ from core.authentication import (
 )
 
 # Define schemas
-class LoginRequest(BaseModel):
-    username: str
+class SessionLoginRequest(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
     password: str
 
 class OnboardingProgressRequest(BaseModel):
@@ -57,12 +58,20 @@ async def check_session(
     )
 
 @router.post("/login")
+@router.post("/login_testing")
 async def login(
-    payload: LoginRequest,
+    payload: SessionLoginRequest,
     response: Response,
     db: Session = Depends(get_db)
 ):
-    user = authenticate_user(db, payload.username, payload.password)
+    identifier = payload.email if payload.email else payload.username
+    if not identifier:
+         raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email or username required"
+        )
+    
+    user = authenticate_user(db, identifier, payload.password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -97,7 +106,12 @@ async def login(
 
 @router.post("/logout")
 async def logout(response: Response):
-    response.delete_cookie("access_token")
+    """
+    Logout the user by clearing authentication cookies.
+    """
+    response.delete_cookie(key="access_token")
+    response.delete_cookie(key="oauth_state")
+    response.delete_cookie(key="token") # Fallback
     return {"message": "Logged out successfully"}
 
 # User-specific onboarding routes

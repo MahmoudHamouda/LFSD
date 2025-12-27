@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 from models.database import get_db
@@ -13,11 +13,15 @@ router = APIRouter(prefix="/finance/goals", tags=["finance-goals"])
 
 @router.get("", response_model=List[GoalResponse])
 async def list_goals(
+    pillar: Optional[str] = None,
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
     """List all life goals."""
-    goals = db.query(LifeGoal).filter(LifeGoal.user_id == current_user.id).all()
+    query = db.query(LifeGoal).filter(LifeGoal.user_id == current_user.id)
+    if pillar:
+        query = query.filter(LifeGoal.pillar == pillar)
+    goals = query.all()
     return [
         GoalResponse(
             id=g.id,
@@ -28,6 +32,7 @@ async def list_goals(
             monthly_contribution_target=g.monthly_contribution_target or 0,
             priority=g.priority or "medium",
             saved_amount=g.saved_amount or 0,
+            pillar=g.pillar or "finance",
             impact_vector_json=g.impact_vector_json
         ) for g in goals
     ]
@@ -47,6 +52,7 @@ async def create_goal(
         target_amount=payload.target_amount,
         target_date=payload.target_date,
         type=payload.type,
+        pillar=payload.pillar,
         monthly_contribution_target=payload.monthly_contribution_target,
         priority=payload.priority,
         saved_amount=0 # Start at 0

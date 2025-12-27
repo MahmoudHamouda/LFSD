@@ -43,8 +43,8 @@ const StatementUploadModal: React.FC<StatementUploadModalProps> = ({ isOpen, onC
 
     return (
         <div className={styles.overlay} onClick={onClose}>
-            <div className={styles.modal} onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', backgroundColor: '#1E1E1E', color: '#FFFFFF' }}>
-                <div className={styles.header} style={{ padding: '20px 24px', borderBottom: '1px solid #333' }}>
+            <div className={styles.modal} onClick={e => e.stopPropagation()} style={{ maxWidth: '500px', backgroundColor: 'var(--bg-card)', color: 'var(--text-primary)' }}>
+                <div className={styles.header} style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-light)' }}>
                     <div className={styles.titleContainer}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#E0E0E0' }}>
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -59,7 +59,7 @@ const StatementUploadModal: React.FC<StatementUploadModalProps> = ({ isOpen, onC
                 </div>
 
                 <div className={styles.content} style={{ padding: '32px 24px' }}>
-                    <p className={styles.description} style={{ color: '#AAAAAA', fontSize: '14px', marginBottom: '32px', lineHeight: '1.5' }}>
+                    <p className={styles.description} style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '32px', lineHeight: '1.5' }}>
                         Upload your PDF bank statement to automatically analyze income, expenses, and recurring bills.
                     </p>
 
@@ -70,23 +70,23 @@ const StatementUploadModal: React.FC<StatementUploadModalProps> = ({ isOpen, onC
                                     <polyline points="20 6 9 17 4 12"></polyline>
                                 </svg>
                             </div>
-                            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#FFF', marginBottom: '8px' }}>Upload Complete!</h3>
-                            <p style={{ color: '#888', fontSize: '14px' }}>We are analyzing your transactions...</p>
+                            <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>Upload Complete!</h3>
+                            <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>We are analyzing your transactions...</p>
                         </div>
                     ) : (
                         <div
                             style={{
-                                border: '1px dashed #444',
+                                border: '1px dashed var(--border-medium)',
                                 borderRadius: '8px',
                                 padding: '48px 20px',
                                 textAlign: 'center',
                                 cursor: 'pointer',
-                                background: '#252525',
+                                background: 'var(--bg-secondary)',
                                 transition: 'all 0.2s',
                             }}
                             onClick={() => fileInputRef.current?.click()}
-                            onMouseEnter={e => { e.currentTarget.style.borderColor = '#666'; e.currentTarget.style.background = '#2A2A2A'; }}
-                            onMouseLeave={e => { e.currentTarget.style.borderColor = '#444'; e.currentTarget.style.background = '#252525'; }}
+                            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text-secondary)'; e.currentTarget.style.background = 'var(--bg-hover)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-medium)'; e.currentTarget.style.background = 'var(--bg-secondary)'; }}
                         >
                             <input
                                 type="file"
@@ -136,11 +136,11 @@ const StatementUploadModal: React.FC<StatementUploadModalProps> = ({ isOpen, onC
                     )}
                 </div>
 
-                <div className={styles.footer} style={{ backgroundColor: '#1E1E1E', padding: '20px 24px', borderTop: '1px solid #333' }}>
+                <div className={styles.footer} style={{ backgroundColor: 'var(--bg-card)', padding: '20px 24px', borderTop: '1px solid var(--border-light)' }}>
                     <button
                         className={styles.cancelButton}
                         onClick={onClose}
-                        style={{ padding: '10px 20px', borderRadius: '6px', fontSize: '14px', background: 'transparent', color: '#AAA', border: '1px solid #444', marginRight: '12px' }}
+                        style={{ padding: '10px 20px', borderRadius: '6px', fontSize: '14px', background: 'transparent', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', marginRight: '12px' }}
                     >
                         Cancel
                     </button>
@@ -154,8 +154,8 @@ const StatementUploadModal: React.FC<StatementUploadModalProps> = ({ isOpen, onC
                                 borderRadius: '6px',
                                 fontSize: '14px',
                                 fontWeight: 500,
-                                background: (!file || status === 'uploading') ? '#444' : '#FFF',
-                                color: (!file || status === 'uploading') ? '#888' : '#000',
+                                background: (!file || status === 'uploading') ? 'var(--bg-badge-neutral)' : 'var(--color-accent-blue)',
+                                color: (!file || status === 'uploading') ? 'var(--text-tertiary)' : 'white',
                                 border: 'none',
                                 cursor: (!file || status === 'uploading') ? 'not-allowed' : 'pointer'
                             }}

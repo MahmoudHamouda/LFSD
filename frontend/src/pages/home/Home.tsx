@@ -5,75 +5,88 @@
  * and smart recommendations.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { SummaryIndexBar } from '../../components/indexes';
 import { useUserEngagement } from '../../hooks/useUser';
 import styles from './Home.module.css';
 import { Wallet, Clock, Heart, Car, CreditCard, Activity } from 'lucide-react';
 
 import { useNavigate } from 'react-router-dom';
-import { LifestyleWidget } from '../../components/lifestyle/LifestyleWidget';
-import { GoalSetter } from '../../components/lifestyle/GoalSetter';
+import GoalsSection from '../../components/dashboard/GoalsSection';
+import PillarSummaryCard, { PillarData } from '../../components/dashboard/PillarSummaryCard';
+import ChatInput from '../../components/chat/ChatInput';
 
 const Home: React.FC = () => {
     const navigate = useNavigate();
-    const [scores, setScores] = React.useState<any>(null);
-    const [isLoadingScores, setIsLoadingScores] = React.useState(true);
-    const [timeHorizon, setTimeHorizon] = React.useState<'week' | 'month'>('week');
+    const [overallScores, setOverallScores] = useState<any>(null);
+    const [weekScores, setWeekScores] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
     const { streaks } = useUserEngagement();
+    const [recommendations, setRecommendations] = useState<any[]>([]);
+    const [treats, setTreats] = useState<any[]>([]);
 
-    React.useEffect(() => {
+    useEffect(() => {
         const fetchScores = async () => {
-            setIsLoadingScores(true);
+            setIsLoading(true);
             try {
                 const token = localStorage.getItem('token');
-                // Pass the selected timeHorizon as 'period' query param
-                const response = await fetch(`/api/scores/current?period=${timeHorizon}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+
+                // Fetch Overall, Weekly scores, Recommendations, AND Treats
+                const [resOverall, resWeek, resRecs, resTreats] = await Promise.all([
+                    fetch('/api/scores/current?period=month', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('/api/scores/current?period=week', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('/api/home/recommendations', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch('/api/home/treats', { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+
+                if (resOverall.ok) {
+                    setOverallScores(await resOverall.json());
+                }
+                if (resWeek.ok) {
+                    setWeekScores(await resWeek.json());
+                }
+                if (resRecs.ok) {
+                    const data = await resRecs.json();
+                    if (data.items) {
+                        setRecommendations(data.items);
                     }
-                });
-                if (response.ok) {
-                    const data = await response.json();
-                    setScores(data);
+                }
+                if (resTreats.ok) {
+                    const data = await resTreats.json();
+                    if (data.items) {
+                        setTreats(data.items);
+                    }
                 }
             } catch (error) {
-                console.error("Failed to fetch scores", error);
+                console.error("Failed to fetch data", error);
             } finally {
-                setIsLoadingScores(false);
+                setIsLoading(false);
             }
         };
         fetchScores();
-    }, [timeHorizon]); // Re-fetch when timeHorizon changes
+    }, []);
+
+    const calculateTimeAgo = (dateString: string) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+        if (diffInSeconds < 60) return 'Just now';
+        const diffInMinutes = Math.floor(diffInSeconds / 60);
+        if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+        const diffInHours = Math.floor(diffInMinutes / 60);
+        if (diffInHours < 24) return `${diffInHours}h ago`;
+        const diffInDays = Math.floor(diffInHours / 24);
+        return `${diffInDays}d ago`;
+    };
 
     const handleChatSubmit = (message: string) => {
         if (message.trim()) {
-            // Navigate to chat with the message
             navigate('/chat', { state: { initialMessage: message } });
         }
     };
 
-    // Helper to format trend display
-    const renderTrend = (value: number | null | undefined, contextLabel?: string) => {
-        if (value === null || value === undefined) {
-            return <span className={styles.trendAction}>Connect to unlock trends</span>;
-        }
-
-        if (value === 0) return <span className={styles.trendNeutral}> (stable)</span>;
-
-        const sign = value > 0 ? '+' : '';
-        const arrow = value > 0 ? '↑' : '↓';
-        const colorClass = value > 0 ? styles.trendPositive : styles.trendNegative;
-
-        // e.g. "+4.5 (Trending Up)"
-        return (
-            <span className={colorClass}>
-                {sign}{value} {arrow} {contextLabel && `(${contextLabel})`}
-            </span>
-        );
-    };
-
-    if (isLoadingScores) {
+    if (isLoading) {
         return (
             <div className={styles.container}>
                 <div className={styles.loading}>Loading...</div>
@@ -81,162 +94,108 @@ const Home: React.FC = () => {
         );
     }
 
-    // Prepare index data for SummaryIndexBar
-    const indexData = [
-        {
-            id: 'financial',
-            label: 'Stabilize Finances',
-            value: scores?.has_data ? (scores?.financial_score || 0) : 0,
-            trend: scores?.has_data ? (scores?.financial_trend || 0) : 0,
-            variant: 'primary' as const,
-            icon: (
-                <div className={`${styles.iconContainer} ${styles.iconFinancial}`} style={{ margin: 0, padding: '8px', borderRadius: '8px' }}>
-                    <Wallet size={20} />
-                </div>
-            ),
-            onClick: () => navigate('/finance'),
-        },
-        {
-            id: 'time',
-            label: 'Execute & Focus',
-            value: scores?.has_data ? (scores?.productivity_score || 0) : 0,
-            trend: scores?.has_data ? (scores?.productivity_trend || 0) : 0,
-            variant: 'secondary' as const,
-            icon: (
-                <div className={`${styles.iconContainer} ${styles.iconTime}`} style={{ margin: 0, padding: '8px', borderRadius: '8px' }}>
-                    <Clock size={20} />
-                </div>
-            ),
-            onClick: () => navigate('/time'),
-        },
-        {
-            id: 'health',
-            label: 'Recover Energy',
-            value: scores?.has_data ? (scores?.health_score || 0) : 0,
-            trend: scores?.has_data ? (scores?.health_trend || 0) : 0,
-            variant: 'primary' as const,
-            icon: (
-                <div className={`${styles.iconContainer} ${styles.iconHealth}`} style={{ margin: 0, padding: '8px', borderRadius: '8px' }}>
-                    <Heart size={20} />
-                </div>
-            ),
-            onClick: () => navigate('/health'),
-        }
-    ];
+    // --- Data Preparation for Pillars ---
+
+    // Finance
+    const financeOverall: PillarData = {
+        value: overallScores?.financial_score || 0,
+        trend: overallScores?.financial_trend,
+        metricLabel: 'Overall Financial Score',
+        subtext: 'Monthly View'
+    };
+
+    const financeWeek: PillarData = {
+        value: overallScores?.breakdown?.financial?.sr ? `${Math.round(overallScores.breakdown.financial.sr * 100)}%` : '0%', // Fallback or use week score? 
+        // Wait, weekScores holds the week data.
+        // weekScores.breakdown.financial.sr
+        // Actually, let's use weekScores for weekData.
+        // If weekScores is null (fail), fallback to 0.
+        // Using 'Savings Rate' as the week metric as per previous design.
+        trend: weekScores?.financial_trend,
+        metricLabel: 'Savings Rate (WTD)',
+        subtext: 'vs last week'
+    };
+    // Update financeWeek value to use weekScores
+    if (weekScores?.breakdown?.financial?.sr !== undefined) {
+        financeWeek.value = `${Math.round(weekScores.breakdown.financial.sr * 100)}%`;
+    }
+
+    // Time
+    const timeOverall: PillarData = {
+        value: overallScores?.productivity_score || 0,
+        trend: overallScores?.productivity_trend,
+        metricLabel: 'Productivity Score',
+        subtext: 'Monthly Average'
+    };
+
+    const timeWeek: PillarData = {
+        value: weekScores?.productivity_score || 0,
+        trend: weekScores?.productivity_trend,
+        metricLabel: 'Productivity (WTD)',
+        subtext: 'vs last week'
+    };
+
+    // Health
+    const healthOverall: PillarData = {
+        value: overallScores?.health_score || 0,
+        trend: overallScores?.health_trend,
+        metricLabel: 'Health & Recovery',
+        subtext: 'Monthly Average'
+    };
+
+    const healthWeek: PillarData = {
+        value: weekScores?.health_score || 0,
+        trend: weekScores?.health_trend,
+        metricLabel: 'Health Score (WTD)',
+        subtext: 'vs last week'
+    };
 
     return (
         <div className={styles.container}>
             {/* Hero Indexes Section */}
             <section className={styles.heroSection}>
-                <h1 className={styles.welcomeTitle}>Welcome back!</h1>
-                <p className={styles.welcomeSubtitle}>Here's your wellbeing overview</p>
+                <h1 className={styles.welcomeTitle}>Welcome back</h1>
+                <p className={styles.welcomeSubtitle}>Here’s how things are looking today.</p>
 
-                <div style={{ marginBottom: '40px' }}></div>
+                <div className={styles.chatPromptContainer}>
+                    <ChatInput onSend={handleChatSubmit} isLoading={false} />
+                </div>
 
-                <SummaryIndexBar indexes={indexData} />
+                <div className={styles.pillarGrid}>
+                    <PillarSummaryCard
+                        title="Stabilize Finances"
+                        icon={<Wallet size={24} />}
+                        color="var(--color-accent-green)"
+                        overallData={financeOverall}
+                        weekData={financeWeek}
+                        onNavigate={() => navigate('/finance')}
+                    />
+                    <PillarSummaryCard
+                        title="Execute & Focus"
+                        icon={<Clock size={24} />}
+                        color="var(--color-accent-blue)"
+                        overallData={timeOverall}
+                        weekData={timeWeek}
+                        onNavigate={() => navigate('/time')}
+                    />
+                    <PillarSummaryCard
+                        title="Recover Energy"
+                        icon={<Heart size={24} />}
+                        color="var(--color-accent-red)"
+                        overallData={healthOverall}
+                        weekData={healthWeek}
+                        onNavigate={() => navigate('/health')}
+                    />
+                </div>
             </section>
 
-            {/* Dashboard Grid Layout */}
-            <div className={styles.dashboardGrid}>
-                {/* Main Content Column */}
-                <div className={styles.dashboardMain}>
-                    {/* This Week / Month at a Glance */}
-                    <section className={styles.highlightsSection}>
-                        <div className={styles.sectionHeader}>
-                            <h2 className={styles.sectionTitle} style={{ margin: 0 }}>
-                                {timeHorizon === 'week' ? 'This Week at a Glance' : 'This Month in Review'}
-                            </h2>
-                            <div className={styles.toggleContainer}>
-                                <span
-                                    className={`${styles.toggleOption} ${timeHorizon === 'week' ? styles.active : ''}`}
-                                    onClick={() => setTimeHorizon('week')}
-                                >
-                                    This Week
-                                </span>
-                                <span
-                                    className={`${styles.toggleOption} ${timeHorizon === 'month' ? styles.active : ''}`}
-                                    onClick={() => setTimeHorizon('month')}
-                                >
-                                    This Month
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className={styles.highlightGrid}>
-                            {/* Financial Card */}
-                            <div
-                                className={`${styles.highlightCard} ${styles.clickable}`}
-                                onClick={() => navigate('/finance')}
-                            >
-                                <div className={`${styles.iconContainer} ${styles.iconFinancial}`}>
-                                    <Wallet size={32} />
-                                </div>
-                                <h3 className={styles.highlightTitle}>
-                                    {timeHorizon === 'week' ? 'Financial (WTD)' : 'Financial (MTD)'}
-                                </h3>
-                                {scores?.has_data ? (
-                                    <p className={styles.highlightText}>
-                                        Savings: {scores?.breakdown?.financial?.sr ? Math.round(scores.breakdown.financial.sr * 100) : 0}%
-                                        {' '}{renderTrend(scores?.financial_trend, timeHorizon === 'week' ? 'vs last week' : 'vs last month')}
-                                    </p>
-                                ) : (
-                                    <p className={styles.highlightText} style={{ color: 'var(--color-accent-blue)', fontWeight: 600 }}>
-                                        Complete onboarding to see your insights
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Focus Card */}
-                            <div
-                                className={`${styles.highlightCard} ${styles.clickable}`}
-                                onClick={() => navigate('/time')}
-                            >
-                                <div className={`${styles.iconContainer} ${styles.iconTime}`}>
-                                    <Clock size={32} />
-                                </div>
-                                <h3 className={styles.highlightTitle}>
-                                    {timeHorizon === 'week' ? 'Focus (WTD)' : 'Focus (MTD)'}
-                                </h3>
-                                {scores?.has_data ? (
-                                    <p className={styles.highlightText}>
-                                        Productivity: {Math.round(scores?.productivity_score || 0)}
-                                        {' '}{renderTrend(scores?.productivity_trend, timeHorizon === 'week' ? 'vs last week' : 'vs last month')}
-                                    </p>
-                                ) : (
-                                    <p className={styles.highlightText} style={{ color: 'var(--color-accent-blue)', fontWeight: 600 }}>
-                                        Complete onboarding to see your insights
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Energy Card */}
-                            <div
-                                className={`${styles.highlightCard} ${styles.clickable}`}
-                                onClick={() => navigate('/health')}
-                            >
-                                <div className={`${styles.iconContainer} ${styles.iconHealth}`}>
-                                    <Heart size={32} />
-                                </div>
-                                <h3 className={styles.highlightTitle}>
-                                    {timeHorizon === 'week' ? 'Energy (WTD)' : 'Energy (MTD)'}
-                                </h3>
-                                {scores?.has_data ? (
-                                    <p className={styles.highlightText}>
-                                        Health Score: {scores?.health_score || 0}
-                                        {' '}{renderTrend(scores?.health_trend, timeHorizon === 'week' ? 'vs last week' : 'vs last month')}
-                                    </p>
-                                ) : (
-                                    <p className={styles.highlightText} style={{ color: 'var(--color-accent-blue)', fontWeight: 600 }}>
-                                        Complete onboarding to see your insights
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    </section>
-
+            {/* Main Sections Row: 2 Columns */}
+            <div className={styles.sectionsRow}>
+                {/* Left Column: Streaks + Lifestyle */}
+                <div className={styles.columnLeft}>
                     {/* Streaks */}
                     {streaks && (
-                        <section className={styles.streaksSection}>
+                        <section className={styles.streaksColumn}>
                             <h2 className={styles.sectionTitle}>Your Streaks</h2>
 
                             <div className={styles.streaksGrid}>
@@ -254,20 +213,18 @@ const Home: React.FC = () => {
                     )}
 
                     {/* Lifestyle Section */}
-                    {/* Moved inside main content to keep it linear */}
-                    <section className={styles.recommendationsSection} style={{ marginTop: '0' }}>
+                    <section className={styles.lifestyleColumn}>
                         <h2 className={styles.sectionTitle}>Lifestyle & Goals</h2>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-                            <LifestyleWidget />
-                            <GoalSetter />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                            <GoalsSection variant="all" />
                         </div>
                     </section>
                 </div>
 
-                {/* Sidebar Column */}
-                <div className={styles.dashboardSidebar}>
+                {/* Right Column: Quick Actions + Recommendations */}
+                <div className={styles.columnRight}>
                     {/* Quick Actions */}
-                    <section className={styles.quickActionsSection}>
+                    <section className={styles.quickActionsColumn}>
                         <h2 className={styles.sectionTitle}>Quick Actions</h2>
 
                         <div className={styles.quickActionsGrid}>
@@ -275,7 +232,7 @@ const Home: React.FC = () => {
                                 className={styles.quickActionButton}
                                 onClick={() => handleChatSubmit("I want to book a car. Please ask me for the origin, destination, and time to make a mobility decision.")}
                             >
-                                <span className={styles.quickActionIcon}><Car size={24} /></span>
+                                <span className={styles.quickActionIcon}><Car size={40} /></span>
                                 <span className={styles.quickActionLabel}>Book a Car</span>
                             </button>
 
@@ -283,7 +240,7 @@ const Home: React.FC = () => {
                                 className={styles.quickActionButton}
                                 onClick={() => handleChatSubmit("Please analyze my current financial status. Show me how much I owe, how much I'm making, my potential savings by month-end, and if I'm on track for my goals.")}
                             >
-                                <span className={styles.quickActionIcon}><CreditCard size={24} /></span>
+                                <span className={styles.quickActionIcon}><CreditCard size={40} /></span>
                                 <span className={styles.quickActionLabel}>Financial Health</span>
                             </button>
 
@@ -291,7 +248,7 @@ const Home: React.FC = () => {
                                 className={styles.quickActionButton}
                                 onClick={() => handleChatSubmit("Show me my health overview.")}
                             >
-                                <span className={styles.quickActionIcon}><Activity size={24} /></span>
+                                <span className={styles.quickActionIcon}><Activity size={40} /></span>
                                 <span className={styles.quickActionLabel}>View Health</span>
                             </button>
                         </div>
@@ -301,49 +258,82 @@ const Home: React.FC = () => {
                     <section className={styles.recommendationsSection}>
                         <h2 className={styles.sectionTitle}>Smart Recommendations</h2>
 
-                        <div className={styles.recommendationsList}>
-                            <div className={styles.recommendationCard}>
-                                <div className={styles.recommendationHeader}>
-                                    <span className={styles.recommendationBadge}>Financial</span>
-                                    <span className={styles.recommendationTime}>2 hours ago</span>
-                                </div>
-                                <h3 className={styles.recommendationTitle}>
-                                    Optimize your monthly subscriptions
-                                </h3>
-                                <p className={styles.recommendationDescription}>
-                                    We found 3 subscriptions you rarely use. Cancel them to save $45/month.
-                                </p>
-                                <button className={styles.recommendationAction}>Review Now</button>
+                        {recommendations.length > 0 ? (
+                            <div className={styles.recommendationsList}>
+                                {recommendations.map((rec) => (
+                                    <div key={rec.id} className={styles.recommendationCard}>
+                                        <div className={styles.recommendationHeader}>
+                                            <span className={styles.recommendationBadge}>
+                                                {rec.category.charAt(0) + rec.category.slice(1).toLowerCase()}
+                                            </span>
+                                            <span className={styles.recommendationTime}>
+                                                {calculateTimeAgo(rec.createdAt)}
+                                            </span>
+                                        </div>
+                                        <h3 className={styles.recommendationTitle}>
+                                            {rec.title}
+                                        </h3>
+                                        <p className={styles.recommendationDescription}>
+                                            {rec.body}
+                                        </p>
+                                        <button
+                                            className={styles.recommendationAction}
+                                            onClick={() => navigate(rec.cta.href)}
+                                        >
+                                            {rec.cta.label}
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
+                        ) : (
+                            <div className={styles.emptyState}>
+                                <div className={styles.emptyStateIcon}>🎉</div>
+                                <p className={styles.emptyStateText}>All caught up! No new recommendations at this time.</p>
+                            </div>
+                        )}
+                    </section>
 
-                            <div className={styles.recommendationCard}>
-                                <div className={styles.recommendationHeader}>
-                                    <span className={styles.recommendationBadge}>Time</span>
-                                    <span className={styles.recommendationTime}>5 hours ago</span>
-                                </div>
-                                <h3 className={styles.recommendationTitle}>
-                                    Automate your morning commute
-                                </h3>
-                                <p className={styles.recommendationDescription}>
-                                    Set up automatic ride booking for your 8 AM commute every weekday.
-                                </p>
-                                <button className={styles.recommendationAction}>Set Up</button>
-                            </div>
+                    {/* Treat Yourself */}
+                    <section className={styles.recommendationsSection} style={{ marginTop: '20px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                            <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Treat Yourself</h2>
 
-                            <div className={styles.recommendationCard}>
-                                <div className={styles.recommendationHeader}>
-                                    <span className={styles.recommendationBadge}>Health</span>
-                                    <span className={styles.recommendationTime}>1 day ago</span>
-                                </div>
-                                <h3 className={styles.recommendationTitle}>
-                                    Schedule recovery time
-                                </h3>
-                                <p className={styles.recommendationDescription}>
-                                    Your activity load is high. Consider lighter tasks tomorrow afternoon.
-                                </p>
-                                <button className={styles.recommendationAction}>View Schedule</button>
-                            </div>
                         </div>
+
+                        <p style={{ color: 'var(--color-text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
+                            Rewards based on your recent achievements.
+                        </p>
+
+                        {treats.length > 0 ? (
+                            <div className={styles.recommendationsList}>
+                                {treats.map((treat) => (
+                                    <div key={treat.id} className={styles.recommendationCard}>
+                                        <div className={styles.recommendationHeader}>
+                                            <span className={styles.recommendationBadge} style={{ backgroundColor: 'RGBA(255, 140, 0, 0.1)', color: 'darkorange' }}>
+                                                {treat.category.charAt(0) + treat.category.slice(1).toLowerCase()}
+                                            </span>
+                                        </div>
+                                        <h3 className={styles.recommendationTitle}>
+                                            {treat.title}
+                                        </h3>
+                                        <p className={styles.recommendationDescription}>
+                                            {treat.body}
+                                        </p>
+                                        <button
+                                            className={styles.recommendationAction}
+                                            style={{ backgroundColor: 'var(--color-accent-orange)', border: 'none' }}
+                                            onClick={() => navigate(treat.cta.href)}
+                                        >
+                                            {treat.cta.label}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className={styles.emptyState}>
+                                <p className={styles.emptyStateText}>No recommendations yet. Keep up the good work!</p>
+                            </div>
+                        )}
                     </section>
                 </div>
             </div>

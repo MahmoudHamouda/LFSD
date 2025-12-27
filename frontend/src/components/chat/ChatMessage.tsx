@@ -5,6 +5,86 @@ import RideOptions from './RideOptions';
 import FinancialSummary from './FinancialSummary';
 import TradeoffCard from './TradeoffCard';
 import { bookRide } from '../../api/api';
+import { z } from 'zod';
+import DOMPurify from 'dompurify';
+
+// Define Zod Schemas
+const BaseSchema = z.object({
+    type: z.string(),
+    text: z.string().optional(),
+    data: z.any().optional()
+});
+
+const MobilityOptionsSchema = BaseSchema.extend({
+    type: z.literal('mobility_options'),
+    data: z.object({
+        destination: z.string(),
+        options: z.array(z.object({
+            id: z.string(),
+            provider: z.string(),
+            type: z.string(),
+            price: z.string(),
+            eta: z.string(),
+            recommended: z.boolean().optional(),
+            reasoning: z.string().optional()
+        })),
+        cheapest: z.any().optional()
+    })
+});
+
+const VivAdviceSchema = BaseSchema.extend({
+    type: z.literal('viv_advice'),
+    data: z.object({
+        suggested_actions: z.array(z.string()).optional()
+    }).optional()
+});
+
+const FinancialSpendSchema = BaseSchema.extend({
+    type: z.literal('financial_spend'),
+    data: z.object({
+        total: z.number(),
+        period: z.string(),
+        breakdown: z.array(z.object({
+            category: z.string(),
+            amount: z.number(),
+            percentage: z.number()
+        })),
+        category: z.string().optional()
+    })
+});
+
+const FinancialBalanceSchema = BaseSchema.extend({
+    type: z.literal('financial_balance'),
+    data: z.object({
+        total_balance: z.number(),
+        accounts: z.array(z.object({
+            bank: z.string(),
+            name: z.string(),
+            balance: z.number()
+        }))
+    })
+});
+
+const TradeoffAnalysisSchema = BaseSchema.extend({
+    type: z.literal('tradeoff_analysis'),
+    data: z.object({
+        title: z.string(),
+        optionA: z.any(),
+        optionB: z.any(),
+        recommendation: z.string(),
+        reasoning: z.string()
+    })
+});
+
+// Union schema for all supported types
+const MessageContentSchema = z.union([
+    MobilityOptionsSchema,
+    VivAdviceSchema,
+    FinancialSpendSchema,
+    FinancialBalanceSchema,
+    TradeoffAnalysisSchema,
+    BaseSchema // Fallback
+]);
 
 interface ChatMessageProps {
     role: 'user' | 'assistant';
@@ -14,29 +94,75 @@ interface ChatMessageProps {
 
 const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend }) => {
     const [parsedContent, setParsedContent] = useState<any>(null);
-    const [isCollapsed, setIsCollapsed] = useState(false);
 
     useEffect(() => {
         if (role === 'assistant') {
             try {
+                let jsonContent = content.trim();
+
+                // If the content is wrapped in markdown code blocks, extract the JSON part
+                if (jsonContent.startsWith('```')) {
+                    const startMatch = jsonContent.match(/\{/);
+                    const endMatch = jsonContent.lastIndexOf('}');
+                    if (startMatch && endMatch !== -1) {
+                        jsonContent = jsonContent.slice(startMatch.index, endMatch + 1);
+                    }
+                }
+
                 // Attempt to parse JSON content if it looks like JSON
-                if (content.trim().startsWith('{') || content.trim().startsWith('[')) {
-                    const parsed = JSON.parse(content);
-                    setParsedContent(parsed);
-                    // Collapse logic for structured content if needed, currently mostly for text
-                    if (parsed.type === 'text' && parsed.text.length > 300) {
-                        setIsCollapsed(true);
-                    } else if (parsed.type === 'viv_advice' && parsed.text.length > 300) {
-                        setIsCollapsed(true);
+                if (jsonContent.startsWith('{') || jsonContent.startsWith('[')) {
+                    let parsed = JSON.parse(jsonContent);
+
+                    // Handle double-encoded JSON (where 'text' itself contains a JSON string)
+                    if (parsed.type === 'text' && typeof parsed.text === 'string' && (parsed.text.trim().startsWith('{') || parsed.text.trim().startsWith('['))) {
+                        try {
+                            const innerContent = JSON.parse(parsed.text.trim());
+                            if (innerContent.type) {
+                                parsed = innerContent;
+                            } else if (innerContent.summary || innerContent.message_body) {
+                                // Implicit "viv_advice" or "tradeoff" if it has these keys
+                                parsed = {
+                                    type: innerContent.intent === 'tradeoff_analysis' ? 'tradeoff_analysis' : 'viv_advice',
+                                    text: innerContent.message_body || innerContent.summary || "I have analyzed your situation.",
+                                    data: innerContent
+                                };
+                            }
+                        } catch (e) {
+                            // Not JSON, keep as text
+                        }
+                    }
+
+                    // If it's raw AI output from the synthesizer (no 'type'), wrap it
+                    if (!parsed.type && (parsed.summary || parsed.message_body)) {
+                        parsed = {
+                            type: parsed.intent === 'tradeoff_analysis' ? 'tradeoff_analysis' : 'viv_advice',
+                            text: parsed.message_body || parsed.summary || "I have analyzed your situation.",
+                            data: parsed
+                        };
+                    }
+
+                    // Validate with Zod
+                    const result = MessageContentSchema.safeParse(parsed);
+
+                    if (result.success) {
+                        setParsedContent(result.data);
+                        setParsedContent(result.data);
+                    } else {
+                        console.warn("Schema validation failed, using fallback:", result.error);
+                        // Fallback: If it has basic structure, use it even if schema is strict
+                        if (parsed.type && (parsed.text || parsed.data)) {
+                            setParsedContent(parsed);
+                        } else {
+                            setParsedContent({ type: 'text', text: content });
+                        }
                     }
                 } else {
                     setParsedContent({ type: 'text', text: content });
-                    if (content.length > 300) setIsCollapsed(true);
+                    setParsedContent({ type: 'text', text: content });
                 }
             } catch (e) {
-                // Fallback to text if parsing fails
                 setParsedContent({ type: 'text', text: content });
-                if (content.length > 300) setIsCollapsed(true);
+                setParsedContent({ type: 'text', text: content });
             }
         } else {
             setParsedContent({ type: 'text', text: content });
@@ -46,42 +172,28 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend }) => {
     const renderContent = () => {
         if (!parsedContent) return <div className={styles.loading}>...</div>;
 
-        // Helper for collapsible text
-        const renderCollapsibleText = (text: string) => {
-            const shouldCollapse = isCollapsed && text.length > 300;
-            const displayText = shouldCollapse ? text.slice(0, 300) + '...' : text;
+        // Helper for text with sanitization
+        const renderText = (text: string = "") => {
+            // Tighten sanitization
+            const sanitizedHtml = DOMPurify.sanitize(
+                text.replace(/\n/g, '<br/>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>'),
+                {
+                    ALLOWED_TAGS: ['br', 'strong', 'em', 'p', 'b', 'i'],
+                    ALLOWED_ATTR: []
+                }
+            );
 
             return (
                 <div className={styles.messageText}>
-                    {displayText.split('\n').map((line, i) => (
-                        <p key={i} dangerouslySetInnerHTML={{
-                            __html: line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                        }} />
-                    ))}
-                    {text.length > 300 && (
-                        <button
-                            className={styles.collapseToggle}
-                            onClick={() => setIsCollapsed(!isCollapsed)}
-                            style={{
-                                background: 'transparent',
-                                border: 'none',
-                                color: 'var(--color-accent-blue)',
-                                cursor: 'pointer',
-                                fontSize: '12px',
-                                padding: '4px 0',
-                                marginTop: '4px',
-                                fontWeight: 600
-                            }}
-                        >
-                            {isCollapsed ? 'Show more' : 'Show less'}
-                        </button>
-                    )}
+                    <div dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />
                 </div>
             );
         };
 
         if (parsedContent.type === 'text') {
-            return renderCollapsibleText(parsedContent.text);
+            return renderText(parsedContent.text);
         }
 
         if (parsedContent.type === 'mobility_options') {
@@ -90,20 +202,37 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend }) => {
                     destination={parsedContent.data.destination}
                     options={parsedContent.data.options}
                     cheapest={parsedContent.data.cheapest}
-                    onBook={async (option) => {
+                    onBook={async (option: any, location: any) => {
                         if (onSend) {
-                            // Send message to chat for visual feedback
                             onSend(`Book ${option.provider} ${option.type}`);
                         }
 
-                        // Also trigger actual booking API
+                        // Determine start location based on input type
+                        let startLocation = { lat: 0, lng: 0, address: "Current Location" };
+
+                        if (typeof location === 'string') {
+                            startLocation.address = location;
+                        } else {
+                            startLocation = {
+                                lat: location.lat,
+                                lng: location.lng,
+                                address: location.address || "GPS Coordinates"
+                            };
+                        }
+
                         try {
-                            console.log("Booking ride:", option);
+                            const destinationName = parsedContent.data.destination;
+                            console.log(`Booking ${option.provider} to ${destinationName} from`, startLocation);
+
                             await bookRide({
                                 provider: option.provider,
                                 ride_type: option.type,
-                                start_location: { lat: 0, lng: 0 }, // TODO: Get real location
-                                end_location: { lat: 0, lng: 0 }    // TODO: Get real location
+                                start_location: startLocation,
+                                end_location: {
+                                    lat: 0,
+                                    lng: 0,
+                                    address: destinationName
+                                }
                             });
                         } catch (e) {
                             console.error("Booking failed", e);
@@ -132,6 +261,52 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend }) => {
                     <div className={styles.confirmedHeader} style={{ color: 'var(--color-accent-red)' }}>🚫 Ride Cancelled</div>
                     <div className={styles.messageText}>
                         {parsedContent.text}
+                    </div>
+                </div>
+            );
+        }
+
+        if (parsedContent.type === 'schedule_event_confirmed' || parsedContent.type === 'calendar_event_created') {
+            const eventStart = new Date(parsedContent.data.start || parsedContent.data.time);
+            const eventEnd = parsedContent.data.end ? new Date(parsedContent.data.end) : null;
+
+            return (
+                <div className={styles.bookingConfirmed} style={{ borderColor: 'var(--color-primary)', backgroundColor: 'var(--bg-secondary)' }}>
+                    <div className={styles.confirmedHeader} style={{ color: 'var(--color-primary)' }}>📅 Event Scheduled</div>
+                    <div className={styles.messageText} style={{ marginBottom: '12px' }}>
+                        {parsedContent.text}
+                    </div>
+                    <div className={styles.confirmedDetails}>
+                        <div style={{ fontSize: '1.1em', fontWeight: 'bold', marginBottom: '4px' }}>
+                            {parsedContent.data.summary || parsedContent.data.event}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                            <span>🕒</span>
+                            <div>
+                                <div>{eventStart.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</div>
+                                <div>
+                                    {eventStart.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                                    {eventEnd && ` - ${eventEnd.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`}
+                                </div>
+                            </div>
+                        </div>
+
+                        {parsedContent.data.link && (
+                            <a
+                                href={parsedContent.data.link}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                    display: 'inline-block',
+                                    marginTop: '8px',
+                                    color: 'var(--color-primary)',
+                                    fontSize: '0.9em'
+                                }}
+                            >
+                                Open in Calendar ↗
+                            </a>
+                        )}
                     </div>
                 </div>
             );
@@ -203,7 +378,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend }) => {
         if (parsedContent.type === 'viv_advice') {
             return (
                 <div className={styles.messageWrapper}>
-                    {renderCollapsibleText(parsedContent.text)}
+                    {renderText(parsedContent.text)}
                     {parsedContent.data?.suggested_actions && (
                         <div className={styles.suggestedActions}>
                             {parsedContent.data.suggested_actions.map((action: string, i: number) => (
@@ -239,7 +414,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend }) => {
         }
 
         // Fallback
-        return renderCollapsibleText(content);
+        return renderText(content);
     };
 
     return (

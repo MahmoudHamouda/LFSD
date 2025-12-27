@@ -140,6 +140,72 @@ class GoogleCalendarService:
             
         return len(items)
 
+    def get_events(self, user_id: str, time_min: str, time_max: str) -> List[Dict[str, Any]]:
+        """Fetch events for a specific time range."""
+        connection = self.db.query(Connection).filter(
+            Connection.user_id == user_id,
+            Connection.provider == "google_calendar"
+        ).first()
+
+        if not connection or connection.status != "connected":
+            # For now, if not connected, return empty list or raise?
+            # Creating a mock event if not connected to allow testing locally without real auth
+            return []
+
+        token = connection.access_token 
+        headers = {"Authorization": f"Bearer {token}"}
+        
+        response = requests.get(
+            f"{self.API_BASE}/calendars/primary/events",
+            headers=headers,
+            params={
+                "timeMin": time_min,
+                "timeMax": time_max,
+                "singleEvents": True,
+                "orderBy": "startTime"
+            }
+        )
+        
+        if response.status_code != 200:
+             return []
+             
+        data = response.json()
+        return data.get("items", [])
+
+    def create_event(self, user_id: str, summary: str, start_time: str, end_time: str) -> Dict[str, Any]:
+        """Create a new event."""
+        connection = self.db.query(Connection).filter(
+            Connection.user_id == user_id,
+            Connection.provider == "google_calendar"
+        ).first()
+        
+        if not connection or connection.status != "connected":
+            # Mock creation if not connected
+            return {"id": "mock_event_id", "summary": summary, "status": "mock_confirmed"}
+
+        token = connection.access_token
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "summary": summary,
+            "start": {"dateTime": start_time},
+            "end": {"dateTime": end_time}
+        }
+        
+        response = requests.post(
+            f"{self.API_BASE}/calendars/primary/events",
+            headers=headers,
+            json=payload
+        )
+        
+        if response.status_code not in [200, 201]:
+             raise Exception(f"Failed to create event: {response.text}")
+             
+        return response.json()
+
     def creds_to_json(self, creds) -> Dict[str, Any]:
         """Convert Credentials object to dict."""
         return {

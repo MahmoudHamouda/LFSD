@@ -1,30 +1,37 @@
 
 import React, { useEffect, useState } from 'react';
-import { getFinancialScore } from '../../api/financialApi';
+import { getFinancialScore, getFinancialGoals } from '../../api/financialApi';
 import ProgressivePillarCard from '../../components/finance/ProgressivePillarCard';
 // import TrendCard from '../../components/dashboard/TrendCard'; // Removed in favor of TrendPanel
 import TrendPanel from '../../components/common/TrendPanel';
-import GoalsSection from '../../components/dashboard/GoalsSection';
+
 import { ShieldCheck, Lock } from 'lucide-react';
 import styles from './FinanceDashboard.module.css';
-import { SummaryIndexBar } from '../../components/indexes';
 import { Wallet } from 'lucide-react';
-import { Stack } from '@fluentui/react';
 import RecentTransactionsWidget from '../../components/finance/RecentTransactionsWidget';
+import { UnifiedDashboardLayout } from '../../components/layout/UnifiedDashboardLayout';
+import { DashboardHero } from '../../components/dashboard/DashboardHero';
+import { useNavigate } from 'react-router-dom';
 
 const FinanceDashboard: React.FC = () => {
     const [scoreData, setScoreData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+    const [goals, setGoals] = useState<any[]>([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
-        loadScore();
+        loadData();
     }, []);
 
-    const loadScore = async () => {
+    const loadData = async () => {
         try {
-            const data = await getFinancialScore('month');
-            setScoreData(data);
+            const [score, goalsData] = await Promise.all([
+                getFinancialScore('month'),
+                getFinancialGoals('finance')
+            ]);
+            setScoreData(score);
+            setGoals(goalsData);
         } catch (e) {
             console.error(e);
         } finally {
@@ -36,14 +43,10 @@ const FinanceDashboard: React.FC = () => {
         return <div className="p-8 text-white">Loading financial data...</div>;
     }
 
-    if (!scoreData) {
-        return <div className="p-8 text-white">Unable to load financial data.</div>;
-    }
-
     const categories = scoreData?.categories || {};
 
     // Ordered list of pillars to display
-    const pillars = [
+    const pillarsList = [
         { id: 'cashflow_stability', title: 'Cashflow Stability', desc: 'Consistency of income vs outflows.' },
         { id: 'bills_coverage', title: 'Bills Coverage', desc: 'Ability to cover fixed costs.' },
         { id: 'discretionary_control', title: 'Discretionary Control', desc: 'Spending on wants vs needs.' },
@@ -54,90 +57,79 @@ const FinanceDashboard: React.FC = () => {
         { id: 'investment_health', title: 'Investment Health', desc: 'Asset allocation and diversity.' },
     ];
 
+    const overallScore = scoreData?.financial_score !== undefined ? Math.round(scoreData.financial_score) : 0;
+
+    const heroSection = (
+        <DashboardHero
+            title="Financial Health"
+            icon={<Wallet size={24} />}
+            color="var(--color-accent-green)"
+            score={overallScore}
+            trend={+2.5}
+            goals={goals}
+            variant="finance"
+            onAddGoal={() => {
+                navigate('/profile?tab=financial&anchor=goals');
+            }}
+        />
+    );
+
+    const pillarsSection = (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+
+
+            {/* Core Pillars Grid */}
+            <div className={styles.section}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                    <h2 className={styles.sectionHeader} style={{ margin: 0 }}>
+                        <ShieldCheck className={styles.infoIcon} />
+                        Core Pillars
+                    </h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-tertiary)', backgroundColor: 'var(--bg-secondary)', padding: '4px 8px', borderRadius: '6px' }}>
+                        <Lock size={10} />
+                        <span>Trends unlock after ~20 days of consistent data — this keeps insights accurate.</span>
+                    </div>
+                </div>
+
+                <div className={styles.grid}>
+                    {pillarsList.map(pillar => {
+                        const catData = categories[pillar.id] || { score: 0 };
+                        const simulatedCoverage = catData.score > 0 ? 30 : 5;
+                        const trendData = [65, 68, 66, 70, 72, 71, 75, 78, 80, 82, 81, 85, 88, 87, 90];
+
+                        return (
+                            <ProgressivePillarCard
+                                key={pillar.id}
+                                title={pillar.title}
+                                description={pillar.desc}
+                                score={catData.score}
+                                coverageDays={simulatedCoverage}
+                                requiredDays={20}
+                                riskThreshold={50}
+                                profileLink={`/profile#${pillar.id}`}
+                                trendData={trendData}
+                                onClick={() => {
+                                    if (simulatedCoverage >= 20) {
+                                        setSelectedCategory(pillar.id);
+                                    } else {
+                                        window.location.href = `/profile?tab=financial&anchor=connections`;
+                                    }
+                                }}
+                            />
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+
     return (
         <div className={styles.container}>
-
-
-
-            // ... (keep structure)
-
-            {/* Header Section (Full Width) */}
-            <div className={styles.header} style={{ marginBottom: '24px' }}>
-                <h1 className={styles.title} style={{ marginBottom: '16px' }}>Financial Health</h1>
-
-                {scoreData && (
-                    <SummaryIndexBar
-                        indexes={[{
-                            id: 'financial',
-                            label: 'Overall Financial Score',
-                            value: scoreData.overall_score !== undefined ? Math.round(scoreData.overall_score) :
-                                Math.round(Object.values(scoreData.categories || {}).reduce((a: number, c: any) => a + (c.score || 0), 0) / (Object.keys(scoreData.categories || {}).length || 1)),
-                            trend: 2.5, // Mocked trend
-                            variant: 'primary',
-                            icon: <div style={{ padding: '8px', background: 'rgba(255,255,255,0.2)', borderRadius: '8px', display: 'flex' }}><Wallet size={24} color="white" /></div>
-                        }]}
-                    />
-                )}
-            </div>
-
-            {/* Main Content - Split Layout */}
-            <Stack horizontal tokens={{ childrenGap: 32 }} styles={{ root: { flexWrap: 'wrap', alignItems: 'flex-start' } }}>
-
-                {/* LEFT COLUMN: Transactions (Operational) */}
-                <Stack.Item grow={1} styles={{ root: { minWidth: '350px', maxWidth: '400px' } }}>
-                    <RecentTransactionsWidget />
-                </Stack.Item>
-
-                {/* RIGHT COLUMN: Goals & Pillars (Analytical) */}
-                <Stack.Item grow={3} styles={{ root: { minWidth: '600px', width: '100%' } }}>
-                    <Stack tokens={{ childrenGap: 24 }}>
-                        <GoalsSection variant="finance" />
-
-                        {/* Core Pillars Section */}
-                        <div className={styles.section}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-                                <h2 className={styles.sectionHeader} style={{ margin: 0 }}>
-                                    <ShieldCheck className={styles.infoIcon} />
-                                    Core Pillars
-                                </h2>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-tertiary)', backgroundColor: 'var(--bg-secondary)', padding: '4px 8px', borderRadius: '6px' }}>
-                                    <Lock size={10} />
-                                    <span>Trends unlock after ~20 days of consistent data — this keeps insights accurate.</span>
-                                </div>
-                            </div>
-
-                            <div className={styles.grid}>
-                                {pillars.map(pillar => {
-                                    const catData = categories[pillar.id] || { score: 0 };
-                                    const simulatedCoverage = catData.score > 0 ? 30 : 5;
-                                    const trendData = [65, 68, 66, 70, 72, 71, 75, 78, 80, 82, 81, 85, 88, 87, 90];
-
-                                    return (
-                                        <ProgressivePillarCard
-                                            key={pillar.id}
-                                            title={pillar.title}
-                                            description={pillar.desc}
-                                            score={catData.score}
-                                            coverageDays={simulatedCoverage}
-                                            requiredDays={20}
-                                            riskThreshold={50}
-                                            profileLink={`/profile#${pillar.id}`}
-                                            trendData={trendData}
-                                            onClick={() => {
-                                                if (simulatedCoverage >= 20) {
-                                                    setSelectedCategory(pillar.id);
-                                                } else {
-                                                    window.location.href = `/profile?tab=financial&anchor=connections`;
-                                                }
-                                            }}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </Stack>
-                </Stack.Item>
-            </Stack>
+            <UnifiedDashboardLayout
+                hero={heroSection}
+                indicators={<RecentTransactionsWidget />}
+                pillars={pillarsSection}
+            />
 
             {/* Trend Panel Overlay */}
             {selectedCategory && (
@@ -148,7 +140,7 @@ const FinanceDashboard: React.FC = () => {
                 }} onClick={() => setSelectedCategory(null)}>
                     <div style={{ width: '90%', maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
                         <TrendPanel
-                            title={pillars.find(p => p.id === selectedCategory)?.title || ''}
+                            title={pillarsList.find(p => p.id === selectedCategory)?.title || ''}
                             data={[
                                 { date: 'Jan 1', value: 65 }, { date: 'Jan 5', value: 68 },
                                 { date: 'Jan 10', value: 66 }, { date: 'Jan 15', value: 70 },
@@ -164,9 +156,10 @@ const FinanceDashboard: React.FC = () => {
                     </div>
                 </div>
             )}
-
         </div >
     );
 };
 
 export default FinanceDashboard;
+
+

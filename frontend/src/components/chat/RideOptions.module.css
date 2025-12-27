@@ -1,54 +1,149 @@
 .container {
-  background-color: #f8f9fa;
-  border-radius: 12px;
-  padding: 12px;
-  margin-top: 8px;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-top: var(--space-3);
   width: 100%;
-  max-width: 400px;
+  max-width: 440px;
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-md);
 }
 
 .header {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-4);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.locationStatus {
+  margin-bottom: var(--space-4);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.loading {
+  background-color: var(--bg-secondary);
+  color: var(--text-secondary);
+  border-color: var(--border-light);
+}
+
+.loading .statusDot {
+  background-color: var(--text-tertiary);
+  animation: pulse 1s infinite;
+}
+
+.success {
+  background-color: var(--bg-badge-success);
+  color: var(--status-success);
+  border-color: var(--status-success);
+}
+
+.success .statusDot {
+  background-color: var(--status-success);
+}
+
+.error {
+  background-color: var(--bg-badge-error);
+  color: var(--status-error);
+  border-color: var(--status-error);
+}
+
+.error .statusDot {
+  background-color: var(--status-error);
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.5;
+  }
+}
+
+.manualInputGroup {
+  margin-top: var(--space-3);
+}
+
+.addressInput {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
   font-size: 14px;
-  color: #6c757d;
-  margin-bottom: 12px;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.addressInput:focus {
+  border-color: var(--color-accent-blue);
+  box-shadow: 0 0 0 2px var(--bg-badge-success);
 }
 
 .optionsList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .optionCard {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: white;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  /* Add margin bottom to accommodate reasoning text */
-  margin-bottom: 15px;
+  width: 100%;
+  border-left-width: 4px;
 }
 
-.optionCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border-color: #ced4da;
+.optionCard:hover:not(.disabled) {
+  background-color: var(--bg-hover);
+  border-color: var(--border-medium);
+  transform: translateX(4px);
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .cheapest {
-  border-color: #28a745;
-  background-color: #f0fff4;
+  border-left-color: var(--status-success);
 }
 
 .recommended {
-  border-color: #667eea;
-  background-color: #f8f9fa;
-  box-shadow: 0 0 0 1px #667eea;
+  border-left-color: var(--color-accent-blue);
+  background-color: var(--bg-badge-success);
 }
 
 .providerInfo {
@@ -58,13 +153,13 @@
 
 .providerName {
   font-weight: 600;
-  font-size: 16px;
-  color: #212529;
+  font-size: 14px;
+  color: var(--text-primary);
 }
 
 .rideType {
   font-size: 12px;
-  color: #6c757d;
+  color: var(--text-tertiary);
 }
 
 .rideDetails {
@@ -73,38 +168,31 @@
 
 .price {
   font-weight: 700;
-  font-size: 16px;
-  color: #212529;
+  font-size: 15px;
+  color: var(--text-primary);
 }
 
 .eta {
-  font-size: 12px;
-  color: #6c757d;
+  font-size: 11px;
+  color: var(--text-tertiary);
 }
 
 .badge {
   position: absolute;
   top: -8px;
   right: 12px;
-  background-color: #667eea;
+  background-color: var(--color-accent-blue);
   color: white;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
   text-transform: uppercase;
 }
 
 .reasoning {
-  position: absolute;
-  bottom: -20px;
-  left: 0;
-  width: 100%;
-  font-size: 11px;
-  color: #667eea;
-  padding: 0 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
+  margin-top: var(--space-1);
+  font-size: 10px;
+  color: var(--color-accent-blue);
+  font-weight: 500;
 }

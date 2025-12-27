@@ -7,6 +7,7 @@ export async function conversationApi(options: ConversationRequest, abortSignal:
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
     },
     body: JSON.stringify({
       messages: options.messages,
@@ -38,6 +39,9 @@ export const fetchChatHistoryInit = (): Conversation[] | null => {
 export const historyList = async (offset = 0): Promise<Conversation[] | null> => {
   const response = await fetch(`/history/list?offset=${offset}`, {
     method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
+    }
   })
     .then(async (res) => {
       const payload = await res.json();
@@ -83,6 +87,7 @@ export const historyRead = async (convId: string): Promise<ChatMessage[]> => {
     }),
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
     },
   })
     .then(async (res) => {
@@ -132,6 +137,7 @@ export const historyGenerate = async (
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
     },
     body: body,
     signal: abortSignal,
@@ -155,6 +161,7 @@ export const historyUpdate = async (messages: ChatMessage[], convId: string): Pr
     }),
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
     },
   })
     .then(async (res) => {
@@ -180,6 +187,7 @@ export const historyDelete = async (convId: string): Promise<Response> => {
     }),
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
     },
   })
     .then((res) => {
@@ -203,6 +211,7 @@ export const historyDeleteAll = async (): Promise<Response> => {
     body: JSON.stringify({}),
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
     },
   })
     .then((res) => {
@@ -228,6 +237,7 @@ export const historyClear = async (convId: string): Promise<Response> => {
     }),
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
     },
   })
     .then((res) => {
@@ -254,6 +264,7 @@ export const historyRename = async (convId: string, title: string): Promise<Resp
     }),
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
     },
   })
     .then((res) => {
@@ -380,6 +391,7 @@ export const bookRide = async (bookingRequest: any): Promise<Response> => {
     body: JSON.stringify(bookingRequest),
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`
     },
   })
     .then((res) => res)

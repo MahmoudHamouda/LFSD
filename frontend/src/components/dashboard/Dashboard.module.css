@@ -136,12 +136,13 @@
 
 /* Goal Card Styles */
 .goalCard {
-    padding: var(--space-6);
+    padding: var(--space-4);
     border-radius: var(--radius-lg);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    background-color: var(--bg-card);
-    transition: background-color 0.2s;
-    position: relative;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-surface);
+    transition: all 0.2s ease;
+    cursor: default;
+    box-shadow: var(--shadow-sm);
     display: flex;
     flex-direction: column;
 }

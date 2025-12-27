@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getTransactions } from '../../api/financialApi';
 import { Transaction } from '../../types/finance';
 import { ArrowUpRight, ArrowDownLeft, Receipt } from 'lucide-react';
+import Card from '../common/Card';
 
 const RecentTransactionsWidget: React.FC = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -21,32 +22,30 @@ const RecentTransactionsWidget: React.FC = () => {
         fetchTx();
     }, []);
 
-    if (loading) return <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>Loading transactions...</div>;
+    if (loading) return <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-tertiary)' }}>Loading transactions...</div>;
+
+    const handleAction = () => {
+        if (transactions.length === 0) {
+            window.location.href = '/profile?tab=financial&anchor=connections';
+        } else {
+            console.log("View All Transactions");
+            // Navigate to full transactions page if it exists
+        }
+    };
 
     return (
-        <div style={{
-            backgroundColor: 'white',
-            borderRadius: '12px',
-            border: '1px solid var(--border-color)',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px',
-            height: 'fit-content'
-        }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Recent Transactions</h3>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <Card title="Recent Transactions" actionLabel="View All" onAction={handleAction}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
                 {transactions.length > 0 ? (
                     transactions.map((tx, idx) => (
                         <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
                                 <div style={{
                                     width: '32px', height: '32px',
                                     borderRadius: '50%',
-                                    backgroundColor: tx.amount < 0 ? '#FEF2F2' : '#EFF6FF',
+                                    backgroundColor: tx.amount < 0 ? 'var(--bg-badge-error)' : 'var(--bg-badge-success)', // Use token badge colors
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: tx.amount < 0 ? '#EF4444' : '#3B82F6'
+                                    color: tx.amount < 0 ? 'var(--color-accent-red)' : 'var(--color-accent-blue)' // Actually + money is green usually but UI had blue. I'll stick to blue or Green. Request said consistent design. I'll use success/error.
                                 }}>
                                     {tx.amount < 0 ? <ArrowUpRight size={16} /> : <ArrowDownLeft size={16} />}
                                 </div>
@@ -58,33 +57,39 @@ const RecentTransactionsWidget: React.FC = () => {
                             <span style={{
                                 fontSize: '14px',
                                 fontWeight: 600,
-                                color: tx.amount < 0 ? 'var(--text-primary)' : '#10B981'
+                                color: tx.amount < 0 ? 'var(--text-primary)' : 'var(--status-success)'
                             }}>
                                 {tx.amount < 0 ? '-' : '+'}${Math.abs(tx.amount).toFixed(2)}
                             </span>
                         </div>
                     ))
                 ) : (
-                    <div style={{ textAlign: 'center', padding: '20px 0', color: 'var(--text-tertiary)' }}>
-                        <Receipt size={24} style={{ marginBottom: '8px', opacity: 0.5 }} />
-                        <div style={{ fontSize: '13px' }}>No recent transactions</div>
+                    <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-tertiary)' }}>
+                        <Receipt size={32} style={{ marginBottom: '12px', opacity: 0.3 }} />
+                        <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text-secondary)', marginBottom: '4px' }}>No transactions found</div>
+                        <div style={{ fontSize: '12px', marginBottom: '16px' }}>Upload a statement to see your spending insights.</div>
+                        <a
+                            href="/profile?tab=financial&anchor=connections"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: '8px 16px',
+                                backgroundColor: 'var(--color-primary)',
+                                color: 'white',
+                                borderRadius: '6px',
+                                fontSize: '13px',
+                                fontWeight: 500,
+                                textDecoration: 'none',
+                                transition: 'background-color 0.2s'
+                            }}
+                        >
+                            Upload Statement
+                        </a>
                     </div>
                 )}
             </div>
-
-            <button style={{
-                width: '100%',
-                padding: '8px',
-                background: 'transparent',
-                border: '1px solid var(--border-color)',
-                borderRadius: '6px',
-                color: 'var(--text-secondary)',
-                fontSize: '13px',
-                cursor: 'pointer'
-            }}>
-                View All
-            </button>
-        </div>
+        </Card>
     );
 };
 

@@ -1,14 +1,17 @@
 
 import React, { useEffect, useState } from 'react';
+import { Trash2, Sun, Moon } from 'lucide-react';
+import { historyDeleteAll } from '../../api/api';
 import styles from './UserProfile.module.css';
 import { getUserProfile, updateUserProfile } from '../../api/userApi';
+import { getStoredTheme, setStoredTheme } from '../../utils/theme';
 import { User, UserIdentity, VivPreferences, OnboardingData } from '../../types/user';
 import { CurrencyInput, Pill, SectionCard } from '../onboarding/OnboardingSteps';
 import ConnectionModal from '../../components/modals/ConnectionModal';
 import StatementUploadModal from '../../components/modals/StatementUploadModal';
 import { useLocation } from 'react-router-dom';
 
-type Tab = 'account' | 'financial' | 'health' | 'time';
+type Tab = 'account' | 'financial' | 'health' | 'time' | 'updates' | 'faq';
 
 interface Connector {
     id: string;
@@ -21,10 +24,14 @@ interface Connector {
 const CONNECTIONS_DATA: Connector[] = [
     { id: 'plaid', name: 'Bank Accounts (Plaid)', category: 'financial', status: 'inactive' },
     { id: 'stripe', name: 'Stripe', category: 'financial', status: 'inactive' },
-    { id: 'statements', name: 'Bank Statements', category: 'financial', status: 'inactive' },
-    { id: 'apple_health', name: 'Apple Health', category: 'health', status: 'inactive' },
-    { id: 'google_calendar', name: 'Google Calendar', category: 'time', status: 'inactive' },
+    { id: 'statements', name: 'Bank Statements', category: 'financial', status: 'active' },
+    { id: 'apple_health', name: 'Apple Health', category: 'health', status: 'active' },
+    { id: 'google_health', name: 'Google Health', category: 'health', status: 'active' },
+    { id: 'whoop', name: 'Whoop', category: 'health', status: 'inactive' },
+    { id: 'google_calendar', name: 'Google Calendar', category: 'time', status: 'active' },
     { id: 'outlook', name: 'Outlook Calendar', category: 'time', status: 'inactive' },
+    { id: 'uber', name: 'Uber', category: 'mobility', status: 'active' },
+    { id: 'talabaat', name: 'Talabaat', category: 'time', status: 'inactive' },
 ];
 
 const UserProfile: React.FC = () => {
@@ -32,6 +39,7 @@ const UserProfile: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('account');
+    const [theme, setTheme] = useState<'light' | 'dark'>(getStoredTheme());
     const location = useLocation();
 
     // Connection Logic
@@ -110,6 +118,11 @@ const UserProfile: React.FC = () => {
         }
     };
 
+    const toggleTheme = (newTheme: 'light' | 'dark') => {
+        setTheme(newTheme);
+        setStoredTheme(newTheme);
+    };
+
     const updateOnboarding = (key: string, value: any) => {
         setOnboardingForm(prev => ({ ...prev, [key]: value }));
     };
@@ -127,44 +140,43 @@ const UserProfile: React.FC = () => {
         window.location.href = '/finance';
     };
 
-    const renderConnections = (category: string) => {
-        const items = CONNECTIONS_DATA.filter(c => c.category === category);
+    const renderConnections = (categories: string[]) => {
+        const items = CONNECTIONS_DATA.filter(c => categories.includes(c.category));
         if (items.length === 0) return null;
 
         return (
-            <div id={`connections-${category}`}>
+            <div id={`connections-${categories.join('-')}`}>
                 <SectionCard title="Integrations & Data Sources">
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
-                        {items.map(item => (
-                            <div
-                                key={item.id}
-                                onClick={() => handleConnectorClick(item)}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    padding: '12px',
-                                    background: 'white',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: 'var(--radius-md)',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--text-secondary)'}
-                                onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
-                            >
-                                <span style={{ fontSize: '14px', fontWeight: 500 }}>{item.name}</span>
-                                <span style={{
-                                    width: '8px',
-                                    height: '8px',
-                                    borderRadius: '50%',
-                                    backgroundColor:
-                                        item.status === 'active' ? 'var(--color-accent-blue)' :
-                                            item.status === 'failed' ? 'var(--color-accent-red)' :
-                                                item.status === 'pending' ? '#F59E0B' : 'var(--text-secondary)'
-                                }} />
-                            </div>
-                        ))}
+                        {items.map(item => {
+                            const isInactive = item.status === 'inactive';
+                            return (
+                                <div
+                                    key={item.id}
+                                    onClick={() => !isInactive && handleConnectorClick(item)}
+                                    className={`${styles.connectorCard} ${isInactive ? styles.inactiveCard : styles.activeCard}`}
+                                >
+                                    <span className={styles.connectorName}>
+                                        {item.name}
+                                    </span>
+                                    {isInactive ? (
+                                        <span className={styles.soonBadge}>
+                                            Soon
+                                        </span>
+                                    ) : (
+                                        <span
+                                            className={styles.statusDot}
+                                            style={{
+                                                backgroundColor:
+                                                    item.status === 'active' ? 'var(--color-accent-blue)' :
+                                                        item.status === 'failed' ? 'var(--color-accent-red)' :
+                                                            item.status === 'pending' ? 'var(--status-warning)' : 'var(--text-secondary)'
+                                            }}
+                                        />
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </SectionCard>
             </div>
@@ -193,12 +205,14 @@ const UserProfile: React.FC = () => {
             </div>
 
             <div className={styles.tabsContainer}>
-                {(['account', 'financial', 'health', 'time'] as const).map(tab => {
+                {(['account', 'financial', 'health', 'time', 'updates', 'faq'] as const).map(tab => {
                     const label = {
                         account: 'Account',
                         financial: 'Finances',
                         health: 'Energy',
-                        time: 'Focus'
+                        time: 'Focus',
+                        updates: 'Updates',
+                        faq: 'FAQ'
                     }[tab];
                     return (
                         <button
@@ -242,6 +256,83 @@ const UserProfile: React.FC = () => {
                                     <option value="high">High (Aggressive)</option>
                                 </select>
                             </div>
+
+                            <div className={styles.formGroup}>
+                                <label className={styles.label}>Appearance</label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        onClick={() => toggleTheme('light')}
+                                        className={`${styles.themeButton} ${theme === 'light' ? styles.activeTheme : ''}`}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px',
+                                            borderRadius: '8px', border: '1px solid var(--border-color)',
+                                            background: theme === 'light' ? 'var(--color-accent-blue)' : 'var(--bg-card)',
+                                            color: theme === 'light' ? 'white' : 'var(--text-primary)',
+                                            cursor: 'pointer', flex: 1, justifyContent: 'center', fontWeight: 500
+                                        }}
+                                    >
+                                        <Sun size={16} /> Light
+                                    </button>
+                                    <button
+                                        onClick={() => toggleTheme('dark')}
+                                        className={`${styles.themeButton} ${theme === 'dark' ? styles.activeTheme : ''}`}
+                                        style={{
+                                            display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px',
+                                            borderRadius: '8px', border: '1px solid var(--border-color)',
+                                            background: theme === 'dark' ? 'var(--color-accent-blue)' : 'var(--bg-card)',
+                                            color: theme === 'dark' ? 'white' : 'var(--text-primary)',
+                                            cursor: 'pointer', flex: 1, justifyContent: 'center', fontWeight: 500
+                                        }}
+                                    >
+                                        <Moon size={16} /> Dark
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </SectionCard>
+
+                    <div style={{ height: '20px' }} />
+                    <SectionCard title="Data Management">
+                        <div className={styles.formGrid}>
+                            <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
+                                <label className={styles.label}>Conversation History</label>
+                                <div>
+                                    <button
+                                        onClick={async () => {
+                                            if (confirm('Are you sure you want to clear all conversations from your view? This action cannot be undone.')) {
+                                                try {
+                                                    // Soft clear: Set timestamp
+                                                    localStorage.setItem('lastClearedHistory', new Date().toISOString());
+                                                    alert('Conversation history cleared from view.');
+                                                    window.location.reload();
+                                                } catch (e) {
+                                                    console.error("Failed to clear history", e);
+                                                    alert('Failed to clear history.');
+                                                }
+                                            }
+                                        }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            padding: '8px 16px',
+                                            backgroundColor: 'var(--bg-badge-error)',
+                                            color: 'var(--color-accent-red)',
+                                            border: '1px solid var(--border-light)',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: 500
+                                        }}
+                                    >
+                                        <Trash2 size={16} />
+                                        Clear all conversations
+                                    </button>
+                                    <p style={{ marginTop: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                                        Permanently remove all chat history from this device and the server.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </SectionCard>
                 </div>
@@ -250,7 +341,7 @@ const UserProfile: React.FC = () => {
             {/* Financial Tab */}
             {activeTab === 'financial' && (
                 <div className={styles.section} id="logging">
-                    {renderConnections('financial')}
+                    {renderConnections(['financial'])}
                     <div style={{ height: '24px' }} />
                     <SectionCard title="Income & Employment">
                         <div className={styles.formGrid}>
@@ -439,7 +530,7 @@ const UserProfile: React.FC = () => {
             {/* Health (Energy) Tab */}
             {activeTab === 'health' && (
                 <div className={styles.section}>
-                    {renderConnections('health')}
+                    {renderConnections(['health'])}
                     <div style={{ height: '24px' }} />
 
                     <SectionCard title="Sleep">
@@ -597,8 +688,7 @@ const UserProfile: React.FC = () => {
             {/* Time (Focus) Tab */}
             {activeTab === 'time' && (
                 <div className={styles.section}>
-                    {renderConnections('time')}
-                    {renderConnections('mobility')}
+                    {renderConnections(['time', 'mobility'])}
                     <div style={{ height: '24px' }} />
 
                     <SectionCard title="Work & Structure">
@@ -754,6 +844,55 @@ const UserProfile: React.FC = () => {
                     </SectionCard>
                 </div>
             )}
+
+            {/* Updates Tab */}
+            {activeTab === 'updates' && (
+                <div className={styles.section}>
+                    <SectionCard title="Product Updates">
+                        <div className={styles.updateList}>
+                            <div className={styles.updateItem}>
+                                <h4 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>v1.2.0 - Personal Benchmarks</h4>
+                                <p style={{ margin: '0', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                                    We've added personal benchmarking for your Focus and Energy scores.
+                                    See how you compare to your own averages over the last 90 days.
+                                </p>
+                                <span style={{ fontSize: '12px', color: 'var(--color-accent-blue)', fontWeight: 500 }}>December 2025</span>
+                            </div>
+                            <div style={{ height: '20px', borderBottom: '1px solid var(--border-color)', margin: '16px 0' }} />
+                            <div className={styles.updateItem}>
+                                <h4 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>v1.1.5 - New Mobility Connectors</h4>
+                                <p style={{ margin: '0', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                                    Uber and local public transit integrations are now more robust,
+                                    providing better cost-vs-time trade-off analysis.
+                                </p>
+                                <span style={{ fontSize: '12px', color: 'var(--color-accent-blue)', fontWeight: 500 }}>November 2025</span>
+                            </div>
+                        </div>
+                    </SectionCard>
+                </div>
+            )}
+
+            {/* FAQ Tab */}
+            {activeTab === 'faq' && (
+                <div className={styles.section}>
+                    <SectionCard title="Frequently Asked Questions">
+                        <div className={styles.faqList}>
+                            {[
+                                { q: "How are my scores calculated?", a: "Scores are derived from a combination of your connected data (Plaid, Google Health, etc.) and your onboarding profile, processed through our proprietary wellbeing engine." },
+                                { q: "Is my data secure?", a: "Yes. We use industry-standard encryption and never sell your personal data. You can clear your conversation history at any time." },
+                                { q: "Can I connect multiple bank accounts?", a: "Currently, we support one primary bank connection via Plaid and manual statement uploads for others." },
+                                { q: "What is 'Energy Score'?", a: "It's a holistic view of your physical state, combining sleep quality, activity levels, and recovery metrics." }
+                            ].map((faq, i) => (
+                                <div key={i} style={{ marginBottom: '24px' }}>
+                                    <h4 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>{faq.q}</h4>
+                                    <p style={{ margin: '0', fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>{faq.a}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </SectionCard>
+                </div>
+            )}
+
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px', paddingBottom: '40px' }}>
                 <button className={styles.saveButton} onClick={handleSave} disabled={saving}>

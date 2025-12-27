@@ -14,7 +14,7 @@ settings = get_settings()
 # Create SQLAlchemy engine
 engine = create_engine(
     settings.DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
+    connect_args={"check_same_thread": False, "timeout": 30} if "sqlite" in settings.DATABASE_URL else {},
     echo=settings.DEBUG,
 )
 

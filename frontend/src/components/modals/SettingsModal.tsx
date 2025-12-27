@@ -51,11 +51,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onDismiss }) => {
                 <div className={styles.content}>
                     {activeTab === 'general' && (
                         <div className={styles.section}>
-                            <h3>Theme</h3>
-                            <div className={styles.settingRow}>
-                                <span>Dark Mode</span>
-                                <Toggle checked={isDarkMode} onChange={(_, checked) => setIsDarkMode(!!checked)} />
-                            </div>
+                            <h3>General</h3>
                             <div className={styles.settingRow}>
                                 <span>Clear all chats</span>
                                 <DefaultButton text="Clear" className={styles.dangerButton} />

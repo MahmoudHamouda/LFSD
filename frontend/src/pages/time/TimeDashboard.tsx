@@ -1,41 +1,45 @@
-import React from 'react';
-import { Stack, Text, IStackStyles } from '@fluentui/react';
+import React, { useState } from 'react';
 import { TimelineView } from '../../components/time/TimelineView';
-import { ProductivityScore } from '../../components/time/ProductivityScore';
-// import { ConnectCalendar, AddEventForm, UploadSchedule } from '../../components/time/DataIngestion'; // Removed inline forms
 import { TimePillarCard } from '../../components/time/TimePillarCard';
 import { TIME_PILLARS } from '../../constants/timeConstants';
 import { SignalType } from '../../components/time/DirectionalSignal';
 import DashboardCTA from '../../components/common/DashboardCTA';
-import TrendPanel from '../../components/common/TrendPanel';
-import { useState } from 'react';
-import { SummaryIndexBar } from '../../components/indexes';
-import { Clock } from 'lucide-react';
-import GoalsSection from '../../components/dashboard/GoalsSection';
 
-const containerStyles: IStackStyles = {
-    root: {
-        height: '100%',
-        width: '100%',
-        padding: '32px', // Increased padding for better spacing
-        boxSizing: 'border-box',
-        overflowY: 'auto',
-        backgroundColor: '#FAFAFA', // Very light gray, cleaner than #f8f9fa
-    },
-};
+import { Clock } from 'lucide-react';
+import { UnifiedDashboardLayout } from '../../components/layout/UnifiedDashboardLayout';
+import { DashboardHero } from '../../components/dashboard/DashboardHero';
+import { getFinancialScore, getFinancialGoals } from '../../api/financialApi';
 
 const TimeDashboard: React.FC = () => {
-    // MOCK DATA STATE
-    // Toggle this to test different states (Learning vs Stable)
-    const isLearningMode = true;
+    const [scoreData, setScoreData] = useState<any>(null);
+    const [goals, setGoals] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const mockCoverageDays = isLearningMode ? 5 : 20;
+    const isLearningMode = false;
+    const mockCoverageDays = 20;
+
+    React.useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [sData, gData] = await Promise.all([
+                    getFinancialScore('month'),
+                    getFinancialGoals('time')
+                ]);
+                setScoreData(sData);
+                setGoals(gData);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadData();
+    }, []);
 
     // Helper to generate mock pillar data
     const getPillarData = (key: string) => {
         const pillar = TIME_PILLARS[key];
-        // Mock values
-        const score = isLearningMode ? null : Math.floor(Math.random() * 40) + 60; // 60-100 range
+        const score = isLearningMode ? null : Math.floor(Math.random() * 40) + 60;
         const trendData = [65, 68, 70, 72, 68, 75, 78, 80, 82, 85];
         const earlySignal: SignalType = 'Improving';
 
@@ -57,99 +61,87 @@ const TimeDashboard: React.FC = () => {
         'WEEKLY_RHYTHM'
     ].map(key => getPillarData(key));
 
-    return (
-        <Stack styles={containerStyles} tokens={{ childrenGap: 32 }}>
+    if (loading) return <div className="p-8 text-white">Loading focus data...</div>;
 
-            {/* HEADER */}
-            <Stack tokens={{ childrenGap: 16 }}>
-                <Stack>
-                    <Text variant="xxLarge" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Deep Time</Text>
-                    <Text variant="medium" style={{ color: 'var(--text-secondary)' }}>
-                        Your rhythm, learned over time. Not just checked off.
-                    </Text>
-                    <Text variant="small" style={{ color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                        🔒 Time trends unlock after ~14–20 days of consistent data.
-                    </Text>
-                </Stack>
+    const productivityScore = scoreData?.productivity_score !== undefined ? Math.round(scoreData.productivity_score) : 0;
 
-                <SummaryIndexBar
-                    indexes={[{
-                        id: 'time',
-                        label: 'Time & Focus Score',
-                        value: isLearningMode ? 0 : 82, // Mocked 82 or 0 if learning
-                        trend: 12, // Mocked trend
-                        variant: 'secondary',
-                        icon: <div style={{ padding: '8px', background: 'rgba(255,255,255,0.2)', borderRadius: '8px', display: 'flex' }}><Clock size={24} color="white" /></div>
-                    }]}
+    const heroSection = (
+        <DashboardHero
+            title="Time & Focus"
+            icon={<Clock size={24} />}
+            color="var(--color-accent-blue)"
+            score={productivityScore}
+            trend={scoreData?.productivity_trend || 0}
+            goals={goals}
+            variant="time"
+            onAddGoal={() => {
+                window.location.href = '/profile?tab=time&anchor=goals';
+            }}
+        />
+    );
+
+    const leftColumn = (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <TimelineView />
+            {/* Ingestion Actions */}
+            <div style={{
+                padding: '20px',
+                backgroundColor: 'var(--bg-surface)',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                textAlign: 'center'
+            }}>
+                <span style={{ display: 'block', marginBottom: '12px', color: 'var(--text-secondary)' }}>
+                    Manage your schedule & sources
+                </span>
+                <DashboardCTA
+                    label="Manage Calendar Connections"
+                    targetTab="time"
+                    targetAnchor="connections-time"
+                    variant="secondary"
+                    fullWidth
                 />
-            </Stack>
+            </div>
+        </div>
+    );
 
-            <Stack horizontal tokens={{ childrenGap: 32 }} styles={{ root: { flexWrap: 'wrap', alignItems: 'stretch' } }}>
+    const rightColumn = (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-                {/* LEFT COLUMN: Timeline & Operational (Operational Layer) */}
-                <Stack.Item grow={1} styles={{ root: { minWidth: '350px', maxWidth: '400px' } }}>
-                    <Stack tokens={{ childrenGap: 24 }}>
-                        <TimelineView />
-                        {/* Ingestion Actions - REDIRECT TO PROFILE */}
-                        <div style={{
-                            padding: '20px',
-                            backgroundColor: 'white',
-                            borderRadius: '12px',
-                            border: '1px solid var(--border-color)',
-                            textAlign: 'center'
-                        }}>
-                            <Text variant="medium" style={{ display: 'block', marginBottom: '12px', color: 'var(--text-secondary)' }}>
-                                Manage your schedule & sources
-                            </Text>
-                            <DashboardCTA
-                                label="Manage Calendar Connections"
-                                targetTab="time"
-                                targetAnchor="connections-time"
-                                variant="secondary"
-                                fullWidth
-                            />
-                        </div>
-                    </Stack>
-                </Stack.Item>
 
-                {/* RIGHT COLUMN: Analytical Layer (Pillars) */}
-                <Stack.Item grow={2} styles={{ root: { minWidth: '500px' } }}>
-                    <Stack tokens={{ childrenGap: 24 }}>
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                gap: '24px'
+            }}>
+                {pillars.map((p) => (
+                    <TimePillarCard
+                        key={p.key}
+                        title={p.title}
+                        score={p.score}
+                        coverageDays={p.coverageDays}
+                        requiredDays={p.requiredDays}
+                        riskThreshold={p.riskThreshold}
+                        trendData={p.trendData}
+                        earlySignal={p.earlySignal}
+                        onClick={() => {
+                            // Navigation logic...
+                            if (p.coverageDays < p.requiredDays) {
+                                window.location.href = `/profile?tab=time&anchor=connections-time`;
+                            }
+                        }}
+                    />
+                ))}
+            </div>
+        </div>
+    );
 
-                        <GoalsSection variant="time" />
-
-                        {/* Pillars Grid */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                            gap: '24px'
-                        }}>
-                            {pillars.map((p) => (
-                                <TimePillarCard
-                                    key={p.key}
-                                    title={p.title}
-                                    score={p.score}
-                                    coverageDays={p.coverageDays}
-                                    requiredDays={p.requiredDays}
-                                    riskThreshold={p.riskThreshold}
-                                    trendData={p.trendData}
-                                    earlySignal={p.earlySignal}
-                                    onClick={() => {
-                                        if (p.coverageDays >= p.requiredDays) {
-                                            setSelectedPillar(p);
-                                        } else {
-                                            window.location.href = `/profile?tab=time&anchor=connections-time`;
-                                        }
-                                    }}
-                                />
-                            ))}
-                        </div>
-
-                    </Stack>
-                </Stack.Item>
-
-            </Stack>
-        </Stack>
+    return (
+        <UnifiedDashboardLayout
+            hero={heroSection}
+            indicators={leftColumn}
+            pillars={rightColumn}
+        />
     );
 };
 

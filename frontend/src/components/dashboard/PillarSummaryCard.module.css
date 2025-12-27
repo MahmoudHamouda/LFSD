@@ -1,0 +1,164 @@
+.card {
+    background: var(--bg-surface);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 220px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-accent-blue);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.iconContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 12px;
+    /* Using color-mix for modern browser support to fade the icon color */
+    background-color: color-mix(in srgb, var(--icon-color), transparent 90%);
+    /* Fallback for older browsers if needed, though color-mix is well supported in modern Chrome/Edge/firefox/Safari */
+    color: var(--icon-color);
+}
+
+.title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mainMetric {
+    margin-bottom: 24px;
+}
+
+.scoreRow {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.scoreValue {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+}
+
+.scoreLabel {
+    /* For metric label (e.g., 'Savings Rate') */
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.trendContainer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.trendPositive {
+    color: var(--color-accent-green);
+}
+
+.trendNegative {
+    color: var(--color-accent-red);
+}
+
+.trendNeutral {
+    color: var(--text-secondary);
+}
+
+.toggleContainer {
+    display: flex;
+    gap: 16px;
+    margin-bottom: auto;
+    /* Push footer down */
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+}
+
+.toggleOption {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.2s ease;
+    padding-bottom: 2px;
+}
+
+.toggleOption:hover {
+    color: var(--text-primary);
+}
+
+.toggleOption.active {
+    color: var(--text-primary);
+    position: relative;
+}
+
+.toggleOption.active::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    /* Aligns with border-bottom of container */
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--icon-color);
+    border-radius: 2px;
+}
+
+.metricContext {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+.footer {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ctaButton {
+    background: none;
+    border: none;
+    color: var(--color-accent-blue);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    transition: gap 0.2s ease;
+}
+
+.ctaButton:hover {
+    gap: 10px;
+    text-decoration: underline;
+}

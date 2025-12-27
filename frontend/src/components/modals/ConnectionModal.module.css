@@ -14,21 +14,20 @@
 }
 
 .modal {
-    background-color: #1E1E1E;
-    /* Dark theme base */
-    border: 1px solid #333;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-medium);
     border-radius: 12px;
     width: 100%;
     max-width: 480px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--shadow-lg);
     overflow: hidden;
     animation: slideUp 0.3s ease-out;
-    color: #FFFFFF;
+    color: var(--text-primary);
 }
 
 .header {
     padding: 20px 24px;
-    border-bottom: 1px solid #333;
+    border-bottom: 1px solid var(--border-light);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -48,7 +47,7 @@
     font-size: 18px;
     font-weight: 600;
     margin: 0;
-    color: #FFF;
+    color: var(--text-primary);
 }
 
 .closeButton {
@@ -90,9 +89,9 @@
 }
 
 .statusInactive {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: #888;
-    border: 1px solid #444;
+    background-color: var(--bg-badge-neutral);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
 }
 
 .statusDot {
@@ -124,9 +123,9 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px;
-    background-color: #252525;
+    background-color: var(--bg-secondary);
     border-radius: 8px;
-    border: 1px solid #333;
+    border: 1px solid var(--border-light);
 }
 
 .permissionInfo {
@@ -137,12 +136,12 @@
 
 .permissionLabel {
     font-size: 14px;
-    color: #E0E0E0;
+    color: var(--text-primary);
 }
 
 .permissionDesc {
     font-size: 12px;
-    color: #888;
+    color: var(--text-secondary);
 }
 
 /* Toggle Switch */
@@ -193,7 +192,7 @@ input:checked+.slider:before {
 
 /* Inactive State Styles */
 .description {
-    color: #CCC;
+    color: var(--text-secondary);
     font-size: 14px;
     line-height: 1.5;
     margin-bottom: 24px;
@@ -221,8 +220,8 @@ input:checked+.slider:before {
 /* Footer Actions */
 .footer {
     padding: 16px 24px;
-    background-color: #252525;
-    border-top: 1px solid #333;
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-light);
     display: flex;
     justify-content: flex-end;
     gap: 12px;
@@ -240,21 +239,21 @@ input:checked+.slider:before {
 
 .cancelButton {
     background-color: transparent;
-    color: #E0E0E0;
-    border: 1px solid #444;
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
 }
 
 .cancelButton:hover {
-    background-color: #333;
+    background-color: var(--bg-hover);
 }
 
 .primaryButton {
-    background-color: #FFFFFF;
-    color: #000000;
+    background-color: var(--color-accent-blue);
+    color: white;
 }
 
 .primaryButton:hover {
-    background-color: #E0E0E0;
+    filter: brightness(1.1);
 }
 
 .dangerButton {

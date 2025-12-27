@@ -33,8 +33,9 @@ class Settings(BaseSettings):
 
     APP_NAME: str = Field("lfsd", description="Human readable name of the application")
     ENV: str = Field("dev", description="Environment name, e.g. dev/staging/prod")
-    DEBUG: bool = Field(True, description="Enable debug mode")
-    SECRET_KEY: str = Field("change_me", description="Secret key for JWT signing")
+    DEBUG: bool = Field(False, description="Enable debug mode")
+    SECRET_KEY: str = Field(..., description="Secret key for JWT signing")
+    
     JWT_ALG: str = Field("HS256", description="Algorithm used to sign JWT tokens")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(60, description="Access token expiry window in minutes")
     ALLOWED_ORIGINS: str = Field("*", description="Comma separated list of allowed CORS origins. Use '*' for any origin.")
@@ -93,4 +94,7 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings() -> Settings:
     """Return a cached instance of Settings."""
-    return Settings()
+    settings = Settings()
+    if settings.SECRET_KEY == "change_me" and not settings.DEBUG:
+        raise ValueError("Critical Security Violation: SECRET_KEY is set to 'change_me' in a non-debug environment. Update .env with a secure key.")
+    return settings
