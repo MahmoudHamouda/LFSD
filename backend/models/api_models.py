@@ -215,6 +215,7 @@ class GoalBase(BaseModel):
     target_amount: float
     target_date: Optional[datetime] = None
     type: str = "custom"
+    pillar: str = "finance"
     monthly_contribution_target: float = 0
     priority: str = "medium"
 
@@ -226,6 +227,7 @@ class GoalUpdate(BaseModel):
     target_amount: Optional[float] = None
     target_date: Optional[datetime] = None
     type: Optional[str] = None
+    pillar: Optional[str] = None
     monthly_contribution_target: Optional[float] = None
     priority: Optional[str] = None
     saved_amount: Optional[float] = None

@@ -1,5 +1,6 @@
 .container {
-    max-width: 1200px;
+    max-width: 95%;
+    width: 100%;
     margin: 0 auto;
     padding: 24px;
 }
@@ -17,6 +18,15 @@
 .heroSection {
     margin-bottom: 40px;
     text-align: center;
+}
+
+.pillarGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    margin-top: 32px;
+    text-align: left;
+    /* Reset text align from hero */
 }
 
 .welcomeTitle {
@@ -260,6 +270,24 @@
     margin-bottom: 12px;
 }
 
+@media (prefers-color-scheme: dark) {
+    .quickActionIcon {
+        color: white;
+    }
+
+    .quickActionIcon svg {
+        stroke: white;
+    }
+}
+
+:global([data-theme='dark']) .quickActionIcon {
+    color: white;
+}
+
+:global([data-theme='dark']) .quickActionIcon svg {
+    stroke: white;
+}
+
 .quickActionLabel {
     font-size: 14px;
     font-weight: 500;
@@ -274,13 +302,13 @@
 .recommendationsList {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
 }
 
 .recommendationCard {
     background: var(--bg-surface);
-    border-radius: 16px;
-    padding: 24px;
+    border-radius: 12px;
+    padding: 16px;
     box-shadow: var(--shadow-sm);
     border: 1px solid var(--border-color);
     border-left: 4px solid var(--color-accent-blue);
@@ -309,17 +337,17 @@
 }
 
 .recommendationTitle {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--text-primary);
-    margin: 0 0 8px 0;
+    margin: 0 0 4px 0;
 }
 
 .recommendationDescription {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-secondary);
-    line-height: 1.5;
-    margin: 0 0 16px 0;
+    line-height: 1.4;
+    margin: 0 0 12px 0;
 }
 
 .recommendationAction {
@@ -339,7 +367,14 @@
 }
 
 /* Streaks */
+.streaksColumn,
+.lifestyleColumn,
+.quickActionsColumn {
+    margin-bottom: 40px;
+}
+
 .streaksSection {
+    /* Legacy/Internal use if needed */
     margin-bottom: 40px;
 }
 
@@ -350,24 +385,30 @@
 }
 
 .streakCard {
-    background: linear-gradient(135deg, #FF6A00 0%, #FF8A33 100%);
-    border-radius: 16px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
     padding: 24px;
     text-align: center;
-    color: white;
-    box-shadow: 0 4px 16px rgba(255, 106, 0, 0.2);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .streakNumber {
     font-size: 48px;
     font-weight: 700;
     margin-bottom: 8px;
+    color: var(--color-accent-blue);
 }
 
 .streakLabel {
     font-size: 14px;
     font-weight: 500;
-    opacity: 0.9;
+    color: var(--text-secondary);
 }
 
 /* Responsive */
@@ -390,22 +431,28 @@
 
 /* Dashboard Desktop Layout */
 @media (min-width: 1024px) {
-    .dashboardGrid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
+    .sectionsRow {
+        display: flex;
         gap: 32px;
         align-items: start;
+        margin-bottom: 32px;
     }
 
-    .dashboardMain {
+    .columnLeft,
+    .columnRight {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
         min-width: 0;
-        /* Prevent grid blowout */
     }
 
-    .dashboardSidebar {
+    /* Prevent columns from blowing out and reset margins */
+    .streaksColumn,
+    .lifestyleColumn,
+    .quickActionsColumn {
         min-width: 0;
-        position: sticky;
-        top: 24px;
+        margin-bottom: 0;
     }
 
     /* Adjust spacing within grid */
@@ -413,10 +460,36 @@
         margin-bottom: 32px;
     }
 
-    .highlightsSection,
+    /* Ensure specific sections inside columns don't add bottom margin that breaks alignment */
     .streaksSection,
     .quickActionsSection,
     .recommendationsSection {
-        margin-bottom: 32px;
+        margin-bottom: 0;
     }
+}
+
+/* Empty State */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    text-align: center;
+    height: 100%;
+    min-height: 200px;
+    background: var(--bg-surface);
+    border-radius: 16px;
+    border: 1px dashed var(--border-color);
+}
+
+.emptyStateIcon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.emptyStateText {
+    font-size: 16px;
+    color: var(--text-secondary);
+    line-height: 1.5;
 }

@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthProvider';
 import styles from './Login.module.css';
+import helmLogo from '../../assets/brand/Helm/helm_final_wordmark.svg';
+import googleIcon from '../../assets/icons/google.svg';
+import facebookIcon from '../../assets/icons/facebook.svg';
 
 // Simple Toggle Component
 const AuthTabs = ({ mode, setMode }: { mode: 'login' | 'signup', setMode: (m: 'login' | 'signup') => void }) => (
@@ -198,7 +201,9 @@ const Login: React.FC = () => {
     return (
         <div className={styles.container}>
             <div className={styles.card}>
-                <h1 className={styles.title} style={{ textAlign: 'center' }}>Welcome to HELM</h1>
+                <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                    <img src={helmLogo} alt="HELM" style={{ height: '50px' }} />
+                </div>
                 <AuthTabs mode={mode} setMode={setMode} />
 
                 <form onSubmit={handleSubmit} className={styles.form}>
@@ -290,16 +295,18 @@ const Login: React.FC = () => {
                                 className={styles.socialButton}
                                 onClick={handleGoogleLogin}
                             >
-                                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" width="20" height="20" />
+                                <img src={googleIcon} alt="Google" width="20" height="20" />
                                 <span>Google</span>
                             </button>
                             <button
                                 type="button"
                                 className={styles.socialButton}
-                                onClick={() => alert("Facebook Login coming soon!")}
+                                style={{ opacity: 0.6, cursor: 'not-allowed', filter: 'grayscale(100%)' }}
+                                disabled
+                                title="Coming Soon"
                             >
-                                <img src="https://www.svgrepo.com/show/475647/facebook-color.svg" alt="Facebook" width="20" height="20" />
-                                <span>Facebook</span>
+                                <img src={facebookIcon} alt="Facebook" width="20" height="20" />
+                                <span>Facebook <span style={{ fontSize: '0.7em', marginLeft: '4px', opacity: 0.8 }}>(Coming Soon)</span></span>
                             </button>
                         </div>
                     </div>

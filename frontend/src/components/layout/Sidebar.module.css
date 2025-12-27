@@ -65,11 +65,18 @@
     align-items: center;
     justify-content: center;
     border-radius: 6px;
+    /* Move arrow to the right of New Chat when open */
+    order: 2;
 }
 
 .toggleButton:hover {
     background-color: #2D2D2D;
     color: white;
+}
+
+/* Ensure arrow is on top when collapsed */
+.sidebar.collapsed .toggleButton {
+    order: -1;
 }
 
 .content {

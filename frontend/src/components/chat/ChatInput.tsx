@@ -47,12 +47,7 @@ const ChatInput: React.FC<ChatInputProps> = ({ onSend, isLoading }) => {
                     rows={1}
                     disabled={isLoading}
                 />
-                <button
-                    onClick={() => alert("HELM: 'I only use your heart rate data to calculate your recovery score and suggest better times for deep work. Your raw data is encrypted and never sold.'")}
-                    className={styles.privacyButton} // Assuming a new style for this button
-                >
-                    Ask HELM about Privacy
-                </button>
+
                 <button
                     onClick={() => handleSubmit()}
                     disabled={!input.trim() || isLoading}

@@ -32,6 +32,12 @@ class SchedulerService:
 
     async def sync_health_data(self):
         """Job to sync health data for all connected users."""
+        import asyncio
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._sync_health_data_impl)
+
+    def _sync_health_data_impl(self):
+        """Synchronous implementation of health data sync."""
         logger.info("Starting scheduled health data sync...")
         db = SessionLocal()
         try:

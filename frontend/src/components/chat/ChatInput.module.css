@@ -2,19 +2,25 @@
     width: 100%;
     max-width: 800px;
     margin: 0 auto;
-    padding: 0 20px 20px;
+    padding: 0 var(--space-4) var(--space-6);
     position: relative;
 }
 
 .inputWrapper {
     position: relative;
-    background-color: var(--bg-input);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
     display: flex;
     align-items: flex-end;
-    padding: 10px;
+    padding: var(--space-2);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inputWrapper:focus-within {
+    border-color: var(--color-accent-blue);
+    box-shadow: 0 0 0 2px var(--bg-badge-success);
 }
 
 .textarea {
@@ -23,46 +29,51 @@
     border: none;
     color: var(--text-primary);
     font-family: inherit;
-    font-size: 16px;
-    padding: 10px;
+    font-size: 15px;
+    padding: var(--space-2) var(--space-3);
     resize: none;
     max-height: 200px;
     outline: none;
-    line-height: 1.5;
+    line-height: 1.6;
 }
 
 .textarea::placeholder {
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
 }
 
 .sendButton {
-    background-color: var(--accent-color);
+    background-color: var(--color-accent-blue);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     width: 32px;
     height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background-color 0.2s;
-    margin-bottom: 4px;
+    transition: all 0.2s;
+    margin-bottom: var(--space-1);
+    margin-right: var(--space-1);
 }
 
 .sendButton:hover:not(:disabled) {
-    background-color: var(--accent-hover);
+    background-color: var(--color-accent-blue);
+    transform: scale(1.05);
+    filter: brightness(1.1);
 }
 
 .sendButton:disabled {
     background-color: transparent;
-    color: var(--text-secondary);
+    color: var(--text-tertiary);
     cursor: default;
+    opacity: 0.5;
 }
 
 .footer {
     text-align: center;
-    font-size: 12px;
-    color: var(--text-secondary);
-    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: var(--space-3);
+    letter-spacing: 0.02em;
 }

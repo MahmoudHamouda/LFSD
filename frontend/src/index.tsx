@@ -23,6 +23,10 @@ import ResetPassword from './pages/login/ResetPassword';
 
 import { AppStateProvider } from './state/AppProvider';
 import './index.css';
+import { initTheme } from './utils/theme';
+
+// Initialize Theme
+initTheme();
 
 // Initialize Fluent UI icons
 initializeIcons();

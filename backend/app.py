@@ -50,6 +50,10 @@ from core.middleware import RequestIDMiddleware, BugReportMiddleware
 def create_app() -> FastAPI:
     """Create and configure a FastAPI application."""
     setup_logging() # Configure structured logging
+    logger.error("!!! APP FACTORY CALLED - BATCH 1 VERIFICATION START !!!")
+    print("!!! STDOUT PROBE - APP FACTORY !!!")
+    import sys
+    sys.stdout.flush()
     
     settings = get_settings()
     app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
@@ -74,7 +78,7 @@ def create_app() -> FastAPI:
 
     # Rate limiting
     app.state.limiter = limiter
-    # app.add_middleware(RateLimitMiddleware)
+    app.add_middleware(RateLimitMiddleware)
 
     # Exception handlers
     @app.exception_handler(HTTPException)
@@ -115,12 +119,14 @@ def create_app() -> FastAPI:
         calendar_routes,
         api_routes_onboarding,
         api_routes_scores,
+        mobility_routes,
     )
     
     # Ensure mappers are configured
     from sqlalchemy.orm import configure_mappers
     configure_mappers()
-
+    
+    app.include_router(mobility_routes.router, prefix="/api")
     app.include_router(api_routes_time.router, prefix="/api")
     app.include_router(api_routes_health.router) # Prefix is already in router definition
     app.include_router(api_routes_finance.router, prefix="/api")
@@ -129,7 +135,6 @@ def create_app() -> FastAPI:
     app.include_router(user_routes.router, prefix="/api")
     app.include_router(calendar_routes.router)
     app.include_router(api_routes_onboarding.router, prefix="/api")
-    app.include_router(api_routes_onboarding.router, prefix="/api")
     app.include_router(api_routes_scores.router, prefix="/api/scores")
     
     from routes import api_routes_goals
@@ -137,10 +142,21 @@ def create_app() -> FastAPI:
     
     from routes import api_routes_auth
     app.include_router(api_routes_auth.router, prefix="/api")
+    
+    from routes import recommendation_routes, partner_routes
+    app.include_router(recommendation_routes.router, prefix="/api")
+    app.include_router(partner_routes.router, prefix="/api")
+    
+    # Init DB on startup if needed (simplified)
+    # from models.database import init_db
+    # init_db()
 
     from routes import api_routes_session
     app.include_router(api_routes_session.router, prefix="/api")
     app.include_router(api_routes_session.user_router, prefix="/api")
+
+    from routes import recommendation_routes
+    app.include_router(recommendation_routes.router, prefix="/api/home")
 
     # Initialize Scheduler
     from services.scheduler_service import SchedulerService
@@ -148,7 +164,8 @@ def create_app() -> FastAPI:
     
     @app.on_event("startup")
     async def startup_event():
-        scheduler.start()
+        # scheduler.start()
+        pass
         
     @app.on_event("shutdown")
     async def shutdown_event():

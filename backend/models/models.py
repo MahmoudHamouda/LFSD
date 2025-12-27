@@ -2,7 +2,7 @@
 Enterprise-Grade Database Models for Viv Logic Engine.
 """
 
-from sqlalchemy import Column, String, Float, DateTime, ForeignKey, Integer, Text, Boolean, Date, JSON
+from sqlalchemy import Column, String, Float, DateTime, ForeignKey, Integer, Text, Boolean, Date, JSON, Index
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
@@ -108,6 +108,9 @@ class HealthDataSample(Base):
 class VivIndex(Base):
     """Time-series tracking of the 3 tenants."""
     __tablename__ = "viv_indexes"
+    __table_args__ = (
+        Index('idx_viv_index_user_timestamp', 'user_id', 'timestamp'),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -136,6 +139,7 @@ class LifeGoal(Base):
     target_date = Column(DateTime, nullable=True) # Renamed from deadline for consistency
     
     type = Column(String, nullable=True) # car, house, emergency_fund, travel, education, custom
+    pillar = Column(String, default="finance") # finance, time, health
     monthly_contribution_target = Column(Float, default=0.0)
     
     impact_vector_json = Column(JSON, nullable=True) # {"finance": -100, "health": +20}
@@ -169,7 +173,7 @@ __all__ = [
     "User", "Connection", "VivIndex", "LifeGoal", "FinancialAccount", 
     "Transaction", "HealthDailySummary", "SleepSession", "Workout", 
     "CalendarEvent", "MobilityTrip", "VivLog", "DBConversation", "DBMessage",
-    "SystemLog", "BugReport"
+    "SystemLog", "BugReport", "Recommendation", "ActivityFeed", "OnboardingSession"
 ]
 
 
@@ -195,6 +199,9 @@ class Statement(Base):
 class Transaction(Base):
     """The Deep Dive into spending."""
     __tablename__ = "transactions"
+    __table_args__ = (
+        Index('idx_transactions_user_date', 'user_id', 'transaction_date'),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
     account_id = Column(String, ForeignKey("financial_accounts.id"), nullable=True, index=True) # Made nullable to allow statement-only transactions initially
@@ -248,6 +255,9 @@ class RecurringBill(Base):
 
 class HealthDailySummary(Base):
     __tablename__ = "health_daily_summaries"
+    __table_args__ = (
+        Index('idx_health_summary_user_date', 'user_id', 'date'),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid) # Added ID for consistency
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -301,6 +311,9 @@ class Workout(Base):
 
 class CalendarEvent(Base):
     __tablename__ = "calendar_events"
+    __table_args__ = (
+        Index('idx_calendar_events_user_start', 'user_id', 'start_time'),
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -357,6 +370,37 @@ class VivLog(Base):
 
     user = relationship("User", back_populates="viv_logs")
 
+
+class Recommendation(Base):
+    __tablename__ = "recommendations"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    type = Column(String, nullable=False) # "mobility.car_purchase"
+    source = Column(String, default="auto") # "auto", "manual"
+    
+    content_json = Column(JSON, nullable=False) # Full structured response
+    status = Column(String, default="active") # active, dismissed, acted_upon
+    
+    user = relationship("User", back_populates="recommendations")
+
+
+class ActivityFeed(Base):
+    __tablename__ = "activity_feed"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+    
+    action_type = Column(String, nullable=False) # RECOMMENDATION_CREATED, etc.
+    description = Column(String, nullable=False)
+    metadata_json = Column(JSON, nullable=True) # Linked entity ID, etc.
+    
+    is_read = Column(Boolean, default=False)
+    
+    user = relationship("User", back_populates="activity_feed")
 
 # ============================================================================
 # 5. Chat & Conversation Models
@@ -597,3 +641,5 @@ User.time_profile = relationship("TimeProfile", uselist=False, back_populates="u
 User.time_events = relationship("TimeEvent", back_populates="user", cascade="all, delete-orphan")
 User.time_scores = relationship("TimeScore", back_populates="user", cascade="all, delete-orphan")
 User.recurring_bills = relationship("RecurringBill", back_populates="user", cascade="all, delete-orphan")
+User.recommendations = relationship("Recommendation", back_populates="user", cascade="all, delete-orphan")
+User.activity_feed = relationship("ActivityFeed", back_populates="user", cascade="all, delete-orphan")

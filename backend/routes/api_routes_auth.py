@@ -60,31 +60,98 @@ async def signup(payload: SignupPayload, db: Session = Depends(get_db)):
 
 class CodePayload(BaseModel):
     code: str
+    state: str
+
+
+
+# Retrying with correct imports handling
+from fastapi import Response, Request
 
 @router.get("/google/url")
-async def google_auth_url(db: Session = Depends(get_db)):
+async def google_auth_url(response: Response, db: Session = Depends(get_db)):
     from services.google_calendar_service import GoogleCalendarService
+    
+    # Generate random state for CSRF protection
+    state = secrets.token_urlsafe(32)
+    
     # Use a dummy user_id since we are just getting the URL
     service = GoogleCalendarService(db, user_id="auth_init")
-    # But for "Continue with Google", we mainly want identity.
-    # Service defaults to Calendar scopes. Let's create a dedicated simplified flow here or update helper.
-    # For speed/MVP: We will modify the frontend to expect a popup that calls back here.
     
-    url = service.get_auth_url() # This uses Calendar scopes.
-    # TODO: Ideally should separate scopes. For this specific user request "Sign up with Google", 
-    # capturing their Calendar permission simultaneously is actually a feature :)
+    url = service.get_auth_url(state=state)
+    
+    # Set state in HTTPOnly cookie to verify on callback
+    response.set_cookie(
+        key="oauth_state",
+        value=state,
+        httponly=True,
+        samesite="lax",
+        secure=True, # Should be True in Prod, ensure SSL is used
+        max_age=600  # 10 minutes
+    )
+    
     return {"url": url}
 
 @router.post("/google/callback")
-async def google_auth_callback(payload: CodePayload, db: Session = Depends(get_db)):
+async def google_auth_callback(payload: CodePayload, request: Request, db: Session = Depends(get_db)):
+    # Verify state
+    cookie_state = request.cookies.get("oauth_state")
+    if not cookie_state or not payload.state or cookie_state != payload.state:
+        print(f"[AUTH] CSRF State Mismatch. Cookie: {cookie_state}, Payload: {payload.state}")
+        raise HTTPException(status_code=400, detail="Invalid state parameter. Possible CSRF attempt.")
+
     from services.google_calendar_service import GoogleCalendarService
+    from models.models import Connection # Ensure Connection is imported
+    
+    # We use a placeholder user_id initially because we don't know the user yet
+    # Ideally, we should just use the service's static methods or helpers, 
+    # but the service is designed around an instance with user_id. 
+    # We will instantiate it with specific "auth_callback" ID just to get the exchange method.
     service = GoogleCalendarService(db, user_id="auth_callback")
+    
     try:
         # Exchange code for credentials
-        creds = service.exchange_code(payload.code)
+        # The service.exchange_code method expects a user_id to save the connection immediately.
+        # However, we don't have the user_id until we get the email from the token.
+        # We need to manually do what the service does but in the right order:
+        # 1. Exchange code -> Get Tokens (without saving to a user yet)
+        # 2. Get User Info -> Find/Create User
+        # 3. Create/Update Connection for that User
+        
+        # Since service.exchange_code does ALL of this in one go for an *existing* user, 
+        # it is not suitable for "Sign Up / Log In" flow where user is unknown.
+        # We will manually call the token endpoint here or refactor the service.
+        # For minimal intrusion, we replicate the "exchange" logic using requests directly or 
+        # modify the service usage (but service insists on user_id).
+        
+        # Let's extract the exchange logic carefully.
+        import requests
+        token_payload = {
+            "client_id": service.CLIENT_ID,
+            "client_secret": service.CLIENT_SECRET,
+            "code": payload.code,
+            "grant_type": "authorization_code",
+            "redirect_uri": service.REDIRECT_URI
+        }
+        
+        token_resp = requests.post(service.TOKEN_URL, data=token_payload)
+        if token_resp.status_code != 200:
+             raise Exception(f"Failed to exchange code: {token_resp.text}")
+        
+        token_data = token_resp.json()
         
         # Get User Info
+        from google.oauth2.credentials import Credentials
         from googleapiclient.discovery import build
+        
+        creds = Credentials(
+            token=token_data.get("access_token"),
+            refresh_token=token_data.get("refresh_token"),
+            token_uri=service.TOKEN_URL,
+            client_id=service.CLIENT_ID,
+            client_secret=service.CLIENT_SECRET,
+            scopes=token_data.get("scope", "").split(" ")
+        )
+        
         oauth2 = build('oauth2', 'v2', credentials=creds)
         user_info = oauth2.userinfo().get().execute()
         
@@ -98,15 +165,42 @@ async def google_auth_callback(payload: CodePayload, db: Session = Depends(get_d
                 id=str(uuid.uuid4()),
                 email=email,
                 hashed_password="SOCIAL_LOGIN_NO_PASSWORD",
-                profile_json={"name": name, "google_creds": service.creds_to_json(creds)}
+                profile_json={"name": name}
             )
             db.add(user)
-        else:
-            # Update tokens
-            # Merge existing profile with new creds
-            profile = user.profile_json or {}
-            profile["google_creds"] = service.creds_to_json(creds)
-            user.profile_json = profile
+            db.commit() # Commit to get ID
+            db.refresh(user)
+            
+        # Update Connection Record (Centralized Storage)
+        connection = db.query(Connection).filter(
+            Connection.user_id == user.id,
+            Connection.provider == "google_calendar" # Or generic 'google'
+        ).first()
+        
+        if not connection:
+            connection = Connection(
+                id=str(uuid.uuid4()),
+                user_id=user.id,
+                provider="google_calendar",
+                status="connected"
+            )
+            db.add(connection)
+            
+        connection.access_token = token_data.get("access_token")
+        connection.refresh_token = token_data.get("refresh_token")
+        connection.token_type = token_data.get("token_type")
+        connection.scope = token_data.get("scope")
+        
+        expires_in = token_data.get("expires_in", 3600)
+        connection.expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        connection.updated_at = datetime.utcnow()
+        connection.status = "connected"
+
+        # Clear potentially stale creds from profile if they exist (cleanup)
+        if user.profile_json and "google_creds" in user.profile_json:
+            p = user.profile_json.copy()
+            del p["google_creds"]
+            user.profile_json = p
             
         db.commit()
         db.refresh(user)
@@ -183,3 +277,5 @@ async def reset_password(payload: ResetPasswordPayload, db: Session = Depends(ge
     db.commit()
     
     return {"message": "Password updated successfully"}
+
+

@@ -97,3 +97,252 @@ DEBUG: GeminiService.__init__ end
 DEBUG: GeminiService.__init__ start
 DEBUG: Using Gemini Model: gemini-flash-latest
 DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end
+DEBUG: GeminiService.__init__ start
+DEBUG: Using Gemini Model: gemini-flash-latest
+DEBUG: GeminiService.__init__ end

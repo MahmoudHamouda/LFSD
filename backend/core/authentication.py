@@ -11,50 +11,24 @@ credential validation.
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from models.database import get_db
 from models.models import User as DBUser
-
-# Attempt to import optional dependencies. We fallback to simple implementations
-try:
-    # from passlib.context import CryptContext  # type: ignore
-    CryptContext = None # Force dummy hasher for dev to avoid bcrypt issues
-except Exception:
-    CryptContext = None  # type: ignore
-
-try:
-    import jwt  # type: ignore
-except Exception:
-    jwt = None  # type: ignore
-
 from pydantic import BaseModel
-
 from .config import get_settings
 
-# Password hashing context. If passlib is not available we fall back to a no‑op hasher.
-if CryptContext is not None:
-    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-else:
-    class _DummyCryptContext:
-        """
-        Minimal password hashing context used when passlib is unavailable. It
-        performs no hashing and simply stores passwords in plain text.
-        This is insecure and should only be used for local development or
-        testing when passlib cannot be installed.
-        """
+from passlib.context import CryptContext
+from loguru import logger
+import jwt
+import bcrypt
 
-        def hash(self, password: str) -> str:
-            return password
-
-        def verify(self, plain_password: str, hashed_password: str) -> bool:
-            return plain_password == hashed_password
-
-    pwd_context = _DummyCryptContext()
+# Password hashing context.
+# pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto") # Deprecated due to bcrypt 4.0 incompatibility
 
 # OAuth2 scheme for FastAPI. Clients will send tokens in Authorization header
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/token", auto_error=False)
 
 
 class Token(BaseModel):
@@ -70,12 +44,28 @@ class UserSchema(BaseModel):
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Check a plain text password against a hashed password."""
-    return pwd_context.verify(plain_password, hashed_password)
+    # return pwd_context.verify(plain_password, hashed_password)
+    if not hashed_password:
+        return False
+    try:
+        # Handle cases where hash might be plain string "SOCIAL_LOGIN..."
+        if not hashed_password.startswith("$2"):
+            return False
+            
+        params = plain_password.encode('utf-8')
+        p_hash = hashed_password.encode('utf-8')
+        return bcrypt.checkpw(params, p_hash)
+    except Exception as e:
+        print(f"Bcrypt verification error: {e}")
+        return False
 
 
 def get_password_hash(password: str) -> str:
     """Hash a plain text password."""
-    return pwd_context.hash(password)
+    # return pwd_context.hash(password)
+    # Ensure password is truncated to 72 bytes if needed? No, user should know.
+    # But usually we don't assume long passwords.
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 
 def get_user(db: Session, username: str) -> Optional[DBUser]:
@@ -115,17 +105,16 @@ def create_access_token(data: Dict[str, Any], expires_minutes: Optional[int] = N
         minutes=expires_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
     to_encode.update({"exp": expire})
-    if jwt:
-        # Use PyJWT to create a signed token
-        encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALG)  # type: ignore
-        return encoded_jwt
-    # Fallback: return the subject (username) directly as the token
-    return str(to_encode.get("sub") or to_encode.get("username") or "token")
+    to_encode.update({"exp": expire})
+    # Use PyJWT to create a signed token
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALG)
+    return encoded_jwt
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> DBUser:
+async def get_current_user(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> DBUser:
     """
     Decode a JWT and return the corresponding user from the DB.
+    Supports both Authorization header (Bearer token) and HttpOnly cookie (access_token).
     """
     settings = get_settings()
     credentials_exception = HTTPException(
@@ -133,24 +122,46 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
+    # Try to get token from cookie if header token is missing or generic/empty
+    active_token = token
+    logger.debug(f"Auth - Header Token: {token[:10] if token else 'None'}...")
+    
+    if not active_token:
+        cookie_token = request.cookies.get("access_token")
+        logger.debug(f"Auth - Cookie Token found: {bool(cookie_token)}")
+        if cookie_token:
+            if cookie_token.startswith("Bearer "):
+                active_token = cookie_token[7:]
+            else:
+                active_token = cookie_token
+                
+    if not active_token:
+        logger.warning("Auth failed - No token found in header or cookie.")
+        # log all cookies for debugging
+        logger.debug(f"Auth - All cookies: {list(request.cookies.keys())}")
+        raise credentials_exception
+
     username: Optional[str] = None
-    if jwt:
-        try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALG])  # type: ignore
-            username = payload.get("sub")  # subject claim
-        except Exception as e:
-            print(f"DEBUG: Auth failed - JWT Decode Error: {e}")
-            raise credentials_exception
-    else:
-        # In fallback mode, the token itself is the username
-        print("DEBUG: Auth warning - JWT library not found, using token as username.")
-        username = token
+    try:
+        # Some clients might send the literal string "undefined" or "null" if JS is messy
+        if active_token in ["undefined", "null", ""]:
+             logger.warning(f"Auth failed - Token is literal '{active_token}'")
+             raise credentials_exception
+             
+        payload = jwt.decode(active_token, settings.SECRET_KEY, algorithms=[settings.JWT_ALG])
+        username = payload.get("sub")  # subject claim
+        logger.info(f"Auth - Decoded username: {username}")
+    except Exception as e:
+        logger.error(f"Auth failed - JWT Decode Error: {e}")
+        raise credentials_exception
+        
     if not username:
-        print("DEBUG: Auth failed - No username extracted from token.")
+        logger.warning("Auth failed - No username extracted from token.")
         raise credentials_exception
         
     user = get_user(db, username=username)
     if user is None:
-        print(f"DEBUG: Auth failed - User {username} not found in DB.")
+        logger.warning(f"Auth failed - User {username} not found in DB.")
         raise credentials_exception
     return user

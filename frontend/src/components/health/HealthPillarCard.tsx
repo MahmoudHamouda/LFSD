@@ -61,10 +61,10 @@ const HealthPillarCard: React.FC<HealthPillarCardProps> = ({
         AT_RISK: {
             badge: 'At Risk',
             icon: AlertTriangle,
-            color: '#EF4444',
-            bgColor: '#FEF2F2',
-            borderColor: '#FECACA',
-            ringColor: '#EF4444',
+            color: 'var(--color-accent-red)',
+            bgColor: 'var(--bg-error-subtle)',
+            borderColor: 'var(--border-light)',
+            ringColor: 'var(--color-accent-red)',
         }
     }[state];
 
@@ -107,8 +107,8 @@ const HealthPillarCard: React.FC<HealthPillarCardProps> = ({
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: '4px',
                     padding: '4px 8px', borderRadius: '12px',
-                    backgroundColor: state === 'AT_RISK' ? 'rgba(239, 68, 68, 0.1)' : 'var(--bg-tertiary, #f1f3f5)',
-                    border: `1px solid ${state === 'AT_RISK' ? 'rgba(239, 68, 68, 0.2)' : 'transparent'}`
+                    backgroundColor: state === 'AT_RISK' ? 'var(--bg-badge-error)' : state === 'STABLE' ? 'var(--bg-badge-success)' : 'var(--bg-badge-neutral)',
+                    border: '1px solid var(--border-light)'
                 }}>
                     {state === 'LEARNING' && <Clock size={12} color={config.color} />}
                     {state === 'STABLE' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }} />}

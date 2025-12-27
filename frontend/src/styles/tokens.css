@@ -1,3 +1,4 @@
+/* Base Theme (Light Mode) */
 :root {
   /* =========================================
      HELM STRICT BRAND PALETTE
@@ -9,20 +10,15 @@
   --color-accent-blue: #3793D1;
   --color-accent-red: #E23835;
   --color-accent-orange: #FF6A00;
-  /* Added missing accent */
   --color-accent-green: #00C853;
-  /* Added missing accent */
 
   /* Backgrounds */
   --bg-primary: #FFFFFF;
   --bg-secondary: #F4F4F5;
   --bg-card: #FFFFFF;
   --bg-input: #FFFFFF;
-  /* distinct from card in dark mode usually */
   --bg-surface: #FFFFFF;
-  /* Alias for card/surface generic */
-  --bg-sidebar: #0F0F10;
-  /* Always dark sidebar */
+  --bg-sidebar: #0f0f10;
   --bg-overlay: rgba(0, 0, 0, 0.5);
 
   /* Text */
@@ -35,6 +31,7 @@
   --border-light: rgba(0, 0, 0, 0.1);
   --border-medium: rgba(0, 0, 0, 0.2);
   --border-active: var(--color-accent-blue);
+  --border-color: var(--border-light);
 
   /* Status Colors */
   --status-success: var(--color-accent-green);
@@ -60,7 +57,7 @@
   --bg-warning-subtle: #FFF3E0;
   --bg-error-subtle: #FEF2F2;
 
-  /* Status Text on Subtle Backgrounds (Darker for contrast) */
+  /* Status Text on Subtle Backgrounds */
   --text-success-on-subtle: #2E7D32;
   --text-warning-on-subtle: #E65100;
   --text-error-on-subtle: #C62828;
@@ -87,45 +84,74 @@
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
-/* Dark Mode Overrides */
+/* Dark Theme Tokens */
+[data-theme='dark'],
+.dark-theme {
+  --bg-primary: #000000;
+  --bg-secondary: #0F0F10;
+  --bg-card: #1C1C1E;
+  --bg-surface: #1C1C1E;
+  --bg-input: #2C2C2E;
+
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-tertiary: rgba(255, 255, 255, 0.5);
+  --text-inverse: #000000;
+
+  --bg-hover: rgba(255, 255, 255, 0.1);
+  --bg-active: rgba(255, 255, 255, 0.15);
+
+  --bg-success-subtle: rgba(0, 200, 83, 0.15);
+  --bg-warning-subtle: rgba(255, 106, 0, 0.15);
+  --bg-error-subtle: rgba(226, 56, 53, 0.15);
+
+  --text-success-on-subtle: #69F0AE;
+  --text-warning-on-subtle: #FFB74D;
+  --text-error-on-subtle: #FF8A80;
+
+  --border-light: rgba(255, 255, 255, 0.15);
+  --border-medium: rgba(255, 255, 255, 0.25);
+  --border-color: var(--border-light);
+
+  --bg-badge-success: rgba(0, 200, 83, 0.2);
+  --bg-badge-warning: rgba(255, 106, 0, 0.2);
+  --bg-badge-error: rgba(226, 56, 53, 0.2);
+  --bg-badge-neutral: rgba(255, 255, 255, 0.1);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* Auto-detect system preference if no manual choice set */
 @media (prefers-color-scheme: dark) {
-  :root {
-    /* Backgrounds */
+  :root:not([data-theme='light']) {
     --bg-primary: #000000;
-    /* Deepest black */
     --bg-secondary: #0F0F10;
-    /* Sidebar / secondary areas */
     --bg-card: #1C1C1E;
-    /* Cards (Apple System Gray 6ish) */
     --bg-surface: #1C1C1E;
     --bg-input: #2C2C2E;
-    /* Lighter than card for inputs to stand out */
 
-    /* Text */
     --text-primary: #FFFFFF;
     --text-secondary: rgba(255, 255, 255, 0.7);
     --text-tertiary: rgba(255, 255, 255, 0.5);
     --text-inverse: #000000;
 
-    /* Interactive Backgrounds */
     --bg-hover: rgba(255, 255, 255, 0.1);
     --bg-active: rgba(255, 255, 255, 0.15);
 
-    /* Subtle Status Backgrounds (Low opacity of accent colors) */
     --bg-success-subtle: rgba(0, 200, 83, 0.15);
     --bg-warning-subtle: rgba(255, 106, 0, 0.15);
     --bg-error-subtle: rgba(226, 56, 53, 0.15);
 
-    /* Status Text on Subtle Backgrounds (Light or Accent) */
     --text-success-on-subtle: #69F0AE;
     --text-warning-on-subtle: #FFB74D;
     --text-error-on-subtle: #FF8A80;
 
-    /* Borders */
     --border-light: rgba(255, 255, 255, 0.15);
     --border-medium: rgba(255, 255, 255, 0.25);
+    --border-color: var(--border-light);
 
-    /* Badge Backgrounds */
     --bg-badge-success: rgba(0, 200, 83, 0.2);
     --bg-badge-warning: rgba(255, 106, 0, 0.2);
     --bg-badge-error: rgba(226, 56, 53, 0.2);

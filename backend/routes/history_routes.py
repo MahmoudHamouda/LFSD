@@ -1,6 +1,10 @@
 import uuid
 from datetime import datetime
+print("DEBUG: LOADED HISTORY ROUTES V2")
+import sys
+sys.stdout.flush()
 from typing import List, Any
+from loguru import logger
 from fastapi import APIRouter, HTTPException, Response, Depends, Request
 from sqlalchemy.orm import Session
 from models.database import get_db
@@ -59,8 +63,13 @@ async def read_history(request: HistoryReadRequest, db: Session = Depends(get_db
         date=conversation.date.isoformat()
     )
 
+from core.authentication import get_current_user
+
 @router.post("/generate")
-async def generate_history(request: Request, db: Session = Depends(get_db)):
+async def generate_history(request: Request, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    print("DEBUG: HANDLE HISTORY REQUEST START")
+    import sys
+    sys.stdout.flush()
     """
     Generate AI response for chat messages.
     Saves conversation to database and returns AI response.
@@ -80,10 +89,17 @@ async def generate_history(request: Request, db: Session = Depends(get_db)):
     
     debug_logger.info("Generate history endpoint called")
     
+    if not current_user:
+        logger.warning("Auth - UNAUTHORIZED access to /history/generate")
+        raise HTTPException(status_code=401, detail="Authentication required")
+    
     try:
         # Parse request body
         try:
             body = await request.json()
+            print(f"DEBUG: BODY: {body}")
+            import sys
+            sys.stdout.flush()
             debug_logger.info(f"Generate history request body: {body}")
         except Exception as e:
             debug_logger.error(f"Failed to parse request body: {e}")
@@ -151,23 +167,37 @@ async def generate_history(request: Request, db: Session = Depends(get_db)):
         
         # Generate AI response using Gemini
         try:
+            print("DEBUG: Importing GeminiService...")
             from services.gemini_service import GeminiService
+            import inspect
+            try:
+                source = inspect.getsource(GeminiService.generate_response)
+                print(f"DEBUG: GeminiService.generate_response SOURCE START:\n{source[:200]}")
+            except Exception as e:
+                print(f"DEBUG: Could not get source: {e}")
+            import services.gemini_service
+            print(f"DEBUG: GeminiService FILE: {services.gemini_service.__file__}")
+            print("DEBUG: Initializing GeminiService...")
             gemini_service = GeminiService(db)
             
             # Prepare history for Gemini
             history = [{"role": msg.get("role"), "content": msg.get("content")} for msg in messages_data]
-            context = {"user_id": "test-user", "conversation_id": conversation_id}
+            context = {"user_id": current_user.id, "conversation_id": conversation_id}
             
+            print("DEBUG: Calling generate_response...")
             debug_logger.info("Calling Gemini service...")
             # Get response from Gemini
             response_text = await gemini_service.generate_response(history, context)
+            print("DEBUG: Gemini response received")
             debug_logger.info("Gemini response received")
             
         except Exception as e:
-            debug_logger.error(f"Gemini service error: {e}")
+            print(f"DEBUG: EXCEPTION IN HISTORY GEN: {e}")
+            import traceback
             traceback.print_exc()
+            debug_logger.error(f"Gemini service error: {e}")
             # Fallback response if Gemini fails
-            response_text = "I apologize, but I'm having trouble connecting to my AI services right now. Please try again in a moment."
+            response_text = f"I apologize, but I'm having trouble connecting to my AI services right now. Error: {e}"
         
         # Create and save AI response message
         response_message_id = str(uuid.uuid4())
@@ -222,6 +252,12 @@ async def generate_history(request: Request, db: Session = Depends(get_db)):
     except Exception as e:
         debug_logger.error(f"Unhandled error in generate_history: {e}")
         traceback.print_exc()
+        try:
+            with open("critical_error.log", "a") as f:
+                f.write(f"CRITICAL ERROR: {str(e)}\n")
+                traceback.print_exc(file=f)
+        except:
+             pass
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/update")
@@ -257,9 +293,15 @@ async def delete_history(request: HistoryDeleteRequest, db: Session = Depends(ge
 
 @router.delete("/delete_all")
 async def delete_all_history(db: Session = Depends(get_db)):
-    db.query(DBConversation).delete()
-    db.commit()
-    return {"success": True}
+    try:
+        # Delete messages first to avoid FK constraint violations
+        db.query(DBMessage).delete()
+        db.query(DBConversation).delete()
+        db.commit()
+        return {"success": True}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/clear")
 async def clear_history(request: HistoryClearRequest, db: Session = Depends(get_db)):
