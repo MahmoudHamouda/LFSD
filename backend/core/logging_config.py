@@ -82,15 +82,8 @@ def setup_logging():
                 "format": "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level> | {extra}"
             },
             {
-                "sink": "app.log",
-                "rotation": "500 MB",
-                "retention": "10 days",
-                "level": "INFO",
-                "serialize": True
-            },
-            {
                 "sink": DatabaseSink(),
-                "level": "WARNING", # Only log WARNING and above to DB to prevent noise
+                "level": "INFO", # Log INFO and above to DB (replaced file logging)
                 "enqueue": True # Run in background thread to avoid blocking
             }
         ]
