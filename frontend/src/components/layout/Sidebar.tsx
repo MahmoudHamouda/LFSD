@@ -13,7 +13,7 @@ import {
     LogOut
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
-import helmHDark from '../../assets/brand/helm/helm_final_h_dark.svg';
+
 
 interface SidebarProps {
     isOpen: boolean;
@@ -71,8 +71,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onToggle, onTogg
             <div className={`${styles.header} ${isCollapsed ? styles.collapsed : ''}`}>
                 {/* Brand Logo - H Mark only */}
                 {!isCollapsed && (
-                    <Link to="/" style={{ display: 'flex', alignItems: 'center' }}>
-                        <img src={helmHDark} alt="HELM" style={{ height: '32px', marginRight: '16px' }} />
+                    <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+                        <h1 style={{ margin: 0, marginRight: '16px', fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--font-heading)' }}>H</h1>
                     </Link>
                 )}
 

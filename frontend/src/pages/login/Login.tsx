@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthProvider';
 import styles from './Login.module.css';
-import helmLogo from '../../assets/brand/Helm/helm_final_wordmark.svg';
+
 import googleIcon from '../../assets/icons/google.svg';
 import facebookIcon from '../../assets/icons/facebook.svg';
 
@@ -202,7 +202,7 @@ const Login: React.FC = () => {
         <div className={styles.container}>
             <div className={styles.card}>
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                    <img src={helmLogo} alt="HELM" style={{ height: '50px' }} />
+                    <h1 style={{ margin: 0, fontSize: '32px', fontWeight: 'bold' }}>HELM</h1>
                 </div>
                 <AuthTabs mode={mode} setMode={setMode} />
 
