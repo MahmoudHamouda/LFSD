@@ -4,8 +4,7 @@ import { ChatMessage as ChatMessageType } from '../../api/models';
 import ChatMessage from '../../components/chat/ChatMessage';
 import ChatInput from '../../components/chat/ChatInput';
 import styles from './Chat.module.css';
-import helmWordmarkLight from '../../assets/brand/helm/helm_final_wordmark.svg';
-import helmWordmarkDark from '../../assets/brand/helm/helm_final_wordmark_dark.svg';
+
 
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -155,16 +154,7 @@ const Chat = () => {
       <div className={styles.chatArea}>
         {messages.length === 0 ? (
           <div className={styles.welcomeContainer}>
-            <img
-              src={helmWordmarkLight}
-              alt="HELM"
-              className={`${styles.logo} ${styles.logoLight}`}
-            />
-            <img
-              src={helmWordmarkDark}
-              alt="HELM"
-              className={`${styles.logo} ${styles.logoDark}`}
-            />
+            <h1 className={styles.welcomeTitle}>HELM</h1>
             <h2 className={styles.welcomeTitle}>How can I help you today?</h2>
           </div>
         ) : (

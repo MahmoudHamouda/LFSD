@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './ChatMessage.module.css';
-import helmH from '../../assets/brand/helm/helm_final_h.svg';
+
 import RideOptions from './RideOptions';
 import FinancialSummary from './FinancialSummary';
 import TradeoffCard from './TradeoffCard';
@@ -424,7 +424,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend }) => {
                     <div className={styles.userAvatar}>U</div>
                 ) : (
                     <div className={styles.assistantAvatar}>
-                        <img src={helmH} alt="AI" onError={(e) => e.currentTarget.style.display = 'none'} />
                         <span className={styles.fallbackAvatar}>AI</span>
                     </div>
                 )}
