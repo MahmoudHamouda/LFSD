@@ -1,11 +1,11 @@
 .container {
   display: flex;
   flex-direction: column;
-  padding: 24px;
+  padding: 23px;
   background-color: var(--bg-secondary);
   color: var(--text-primary);
   min-height: 100vh;
-  gap: 24px;
+  gap: 23px;
 }
 
 .header {
@@ -17,7 +17,7 @@
 
 .title {
   font-family: 'Inter', sans-serif;
-  font-size: 28px;
+  font-size: 27px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -31,15 +31,15 @@
 /* Indexes Grid */
 .indexesGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 23px;
   width: 100%;
 }
 
 .indexCard {
   background: var(--bg-card);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 15px;
+  padding: 23px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
@@ -54,13 +54,13 @@
 }
 
 .scoreCircle {
-  width: 120px;
-  height: 120px;
+  width: 114px;
+  height: 114px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 800;
   margin: 16px 0;
   position: relative;
@@ -94,7 +94,7 @@
 
 /* Activity Feed */
 .sectionTitle {
-  font-size: 20px;
+  font-size: 19px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 32px 0 16px 0;

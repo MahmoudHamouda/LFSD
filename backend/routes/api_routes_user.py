@@ -12,8 +12,9 @@ from datetime import datetime
 import json
 
 from models.database import get_db
-from models.models import DBUser, DBFinancial
+from models.models import DBUser, DBFinancial, HealthDailySummary
 from models.models_health import DBUserIndex, DBHealthConnection, DBHealthMetric
+from core.authentication import get_current_user
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/user", tags=["user"])
@@ -187,7 +188,10 @@ def get_user_indexes(user_id: str, db: Session) -> UserIndexes:
 # ============================================================================
 
 @router.get("/me")
-async def get_current_user(db: Session = Depends(get_db)):
+async def get_user_profile(
+    current_user: DBUser = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
     """
     Get current user data including all profiles and indexes.
     
@@ -198,25 +202,55 @@ async def get_current_user(db: Session = Depends(get_db)):
     - Engagement profile
     - Calculated indexes
     """
-    # For now, using a default user ID (in production, get from auth token)
-    user_id = "default_user"
-    
-    # Get user from models.database
-    db_user = db.query(DBUser).filter(DBUser.id == user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
+    user_id = current_user.id
     
     # Get financial data
     db_financial = db.query(DBFinancial).filter(DBFinancial.user_id == user_id).first()
     if not db_financial:
-        raise HTTPException(status_code=404, detail="Financial data not found")
+        # Create default financial profile if not exists
+        db_financial = DBFinancial(user_id=user_id, income=0, expenses=0, savings=0, debts=0)
+        db.add(db_financial)
+        db.commit()
+    
+    # Calculate Streaks
+    # 1. Daily Check-in: Consecutive days with HealthDailySummary or VivLog
+    # (Using HealthDailySummary as proxy for activity for now)
+    summary_dates = db.query(HealthDailySummary.date).filter(
+        HealthDailySummary.user_id == user_id
+    ).order_by(HealthDailySummary.date.desc()).limit(30).all()
+    
+    check_in_streak = 0
+    if summary_dates:
+        import datetime as dt
+        today = dt.date.today()
+        dates = [d[0] for d in summary_dates]
+        
+        # Check if today or yesterday exists to start streak
+        if today in dates or (today - dt.timedelta(days=1)) in dates:
+            current = today
+            # If today missing but yesterday present, start from yesterday
+            if today not in dates:
+                current = today - dt.timedelta(days=1)
+            
+            check_in_streak = 0
+            # Iterate backwards
+            while current in dates:
+                check_in_streak += 1
+                current -= dt.timedelta(days=1)
+    
+    # 2. Financial Review: Consecutive weeks with UserIndex
+    # Simple proxy: Count UserIndex records in separate weeks
+    # For MVP, we'll just check if there's an index for this week and last week
+    # or just use a mock logic based on index count for stability
+    index_count = db.query(DBUserIndex).filter(DBUserIndex.user_id == user_id).count()
+    financial_streak = min(index_count, 52) # Cap at 52 weeks
     
     # Build user object
     user = User(
         identity=UserIdentity(
-            id=db_user.id,
-            username=db_user.username,
-            email=db_user.email,
+            id=current_user.id,
+            username=current_user.username,
+            email=current_user.email,
             avatar=None,
             locale="en-US",
             timezone="UTC"
@@ -236,7 +270,7 @@ async def get_current_user(db: Session = Depends(get_db)):
         ),
         engagement=UserEngagementProfile(
             lastActive=datetime.utcnow().isoformat(),
-            streaks=UserStreaks(dailyCheckIn=0, financialReview=0),
+            streaks=UserStreaks(dailyCheckIn=check_in_streak, financialReview=financial_streak),
             mostUsedJourneys=[]
         ),
         indexes=get_user_indexes(user_id, db)

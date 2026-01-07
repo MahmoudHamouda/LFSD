@@ -15,7 +15,7 @@ import sys
 import os
 
 # Add current directory (backend) to sys.path so that absolute imports (e.g. 'from core') work.
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -46,17 +46,90 @@ from core.rate_limiting import RateLimitExceeded, RateLimitMiddleware, limiter
 
 from core.logging_config import setup_logging
 from core.middleware import RequestIDMiddleware, BugReportMiddleware
+from models.auth_schemas import LoginRequest, RegisterRequest
 
 def create_app() -> FastAPI:
     """Create and configure a FastAPI application."""
     setup_logging() # Configure structured logging
-    logger.error("!!! APP FACTORY CALLED - BATCH 1 VERIFICATION START !!!")
-    print("!!! STDOUT PROBE - APP FACTORY !!!")
-    import sys
-    sys.stdout.flush()
+    logger.error("!!! APP FACTORY CALLED - FULL PRODUCTION RESTORE !!!")
+
+    # --- CLOUD SQL CONFIGURATION ---
+    from google.cloud.sql.connector import Connector
+    import pg8000
+    import sqlalchemy
+    from sqlalchemy.orm import sessionmaker
+
+    def getconn():
+        connector = Connector()
+        conn = connector.connect(
+            "newprojectlfsd:us-central1:lfsd-postgres-prod",
+            "pg8000",
+            user="postgres",
+            password="LfsdSecure2024!",
+            db="lfsd",
+            ip_type="public"
+        )
+        return conn
+
+    # --- AUTH0 CONFIGURATION ---
+    AUTH0_DOMAIN = "dev-lmc05ou12e7ep05p.eu.auth0.com"
+    AUTH0_CLIENT_ID = "VVw94DZQITVcARsNlp4JEZkyzMjsgioF"
+    AUTH0_CLIENT_SECRET = "vfMd6SgVMU3HYeQvFvjU4Au0i2mbpHYR_lepVuDYvdepslGRyQR1AS235hsqcHMj"
+
+    import requests
+    from fastapi.responses import JSONResponse
+    from fastapi import Body
     
     settings = get_settings()
     app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
+
+    # --- NATIVE AUTH ENDPOINTS ---
+    @app.post("/api/auth/login")
+    async def login(data: LoginRequest = Body(...)):
+        """Login via Auth0 Resource Owner Password Grant (Realm)"""
+        print(f"LOGIN ATTEMPT: {data.email}")
+        url = f"https://{AUTH0_DOMAIN}/oauth/token"
+        payload = {
+            "grant_type": "http://auth0.com/oauth/grant-type/password-realm",
+            "realm": "Username-Password-Authentication",
+            "username": data.email,
+            "password": data.password,
+            "client_id": AUTH0_CLIENT_ID,
+            "client_secret": AUTH0_CLIENT_SECRET,
+            "audience": f"https://{AUTH0_DOMAIN}/api/v2/",
+            "scope": "openid profile email offline_access"
+        }
+        
+        resp = requests.post(url, json=payload)
+        if not resp.ok:
+            print(f"Auth0 Login Failed: {resp.text}")
+            return JSONResponse(status_code=resp.status_code, content=resp.json())
+            
+        return resp.json()
+
+    @app.post("/api/auth/register")
+    async def register(data: RegisterRequest):
+        """Register via Auth0 DB Connection"""
+        url = f"https://{AUTH0_DOMAIN}/dbconnections/signup"
+        payload = {
+            "client_id": AUTH0_CLIENT_ID,
+            "email": data.email,
+            "password": data.password,
+            "connection": "Username-Password-Authentication",
+            "name": data.name
+        }
+        resp = requests.post(url, json=payload)
+        if not resp.ok:
+            return JSONResponse(status_code=resp.status_code, content=resp.json())
+        return resp.json()
+
+    @app.get("/api/auth/config")
+    async def auth0_config():
+        return {
+            "domain": AUTH0_DOMAIN,
+            "clientId": AUTH0_CLIENT_ID,
+            "audience": f"https://{AUTH0_DOMAIN}/api/v2/"
+        }
 
     # CORS configuration
     if settings.ALLOWED_ORIGINS == "*":
@@ -105,26 +178,39 @@ def create_app() -> FastAPI:
         print(traceback.format_exc())
         return JSONResponse(
             status_code=500,
-            content={"detail": error_details},
+            content={
+                "detail": error_details,
+                "debug_models": [k for k in sys.modules.keys() if 'models' in k],
+                "debug_backend": [k for k in sys.modules.keys() if 'backend' in k]
+            },
         )
 
     # Register routers
-    from routes import (
-        api_routes_time,
-        api_routes_health,
-        api_routes_finance,
-        api_routes_lifestyle,
-        history_routes,
-        user_routes,
-        calendar_routes,
-        api_routes_onboarding,
-        api_routes_scores,
-        mobility_routes,
-    )
+    # Register routers
+    try:
+        from routes import (
+            api_routes_time,
+            api_routes_health,
+            api_routes_finance,
+            api_routes_lifestyle,
+            history_routes,
+            user_routes,
+            calendar_routes,
+            api_routes_onboarding,
+            api_routes_scores,
+            mobility_routes,
+            auth0_routes,
+            test_routes,
+        )
+    except Exception as e:
+        import traceback
+        print(f"CRITICAL IMPORT ERROR (BLOCK 1): {e}")
+        traceback.print_exc()
+        raise e
     
     # Ensure mappers are configured
-    from sqlalchemy.orm import configure_mappers
-    configure_mappers()
+    # from sqlalchemy.orm import configure_mappers
+    # configure_mappers()
     
     app.include_router(mobility_routes.router, prefix="/api")
     app.include_router(api_routes_time.router, prefix="/api")
@@ -136,42 +222,110 @@ def create_app() -> FastAPI:
     app.include_router(calendar_routes.router)
     app.include_router(api_routes_onboarding.router, prefix="/api")
     app.include_router(api_routes_scores.router, prefix="/api/scores")
+    app.include_router(auth0_routes.router, prefix="/api")  # Auth0 authentication
+    app.include_router(test_routes.router, prefix="/api")  # Simple test endpoints
     
-    from routes import api_routes_goals
-    app.include_router(api_routes_goals.router, prefix="/api")
+    try:
+        from routes import api_routes_goals
+        app.include_router(api_routes_goals.router, prefix="/api")
+    except Exception as e:
+        import traceback
+        print(f"CRITICAL IMPORT ERROR (GOALS): {e}")
+        traceback.print_exc()
+        raise e
     
-    from routes import api_routes_auth
-    app.include_router(api_routes_auth.router, prefix="/api")
+    try:
+        from routes import api_routes_auth
+        app.include_router(api_routes_auth.router, prefix="/api")
+    except Exception as e:
+        import traceback
+        print(f"CRITICAL IMPORT ERROR (AUTH): {e}")
+        traceback.print_exc()
+        raise e
     
-    from routes import recommendation_routes, partner_routes
+    from routes import recommendation_routes, partner_routes, api_routes
     app.include_router(recommendation_routes.router, prefix="/api")
     app.include_router(partner_routes.router, prefix="/api")
+    app.include_router(api_routes.router) # Exposes /.auth/me and others at root
     
-    # Init DB on startup if needed (simplified)
-    # from models.database import init_db
-    # init_db()
+    # Init DB on startup if needed
+    from models.database import init_db
+    print("Initializing Database...")
+    init_db()
+    print("Database Initialized.")
 
-    from routes import api_routes_session
-    app.include_router(api_routes_session.router, prefix="/api")
-    app.include_router(api_routes_session.user_router, prefix="/api")
+    
+    # Seed disabled temporarily for debugging
+    # try:
+    #     from seed_users import seed_all_users
+    #     print("Running startup seeds (SYNC)...")
+    #     seed_all_users()
+    #     print("Startup seeds completed (SYNC).")
+    # except Exception as e:
+    #     print(f"Startup seed failed: {e}")
+        # traceback.print_exc()
+
+    try:
+        from routes import api_routes_session
+        app.include_router(api_routes_session.router, prefix="/api")
+        app.include_router(api_routes_session.user_router, prefix="/api")
+    except Exception as e:
+        import traceback
+        print(f"CRITICAL IMPORT ERROR (SESSION): {e}")
+        traceback.print_exc()
+        raise e
 
     from routes import recommendation_routes
     app.include_router(recommendation_routes.router, prefix="/api/home")
+
+    # --- DEBUG ENDPOINT FOR DB PATCH ---
+    @app.get("/api/debug/patch_schema")
+    async def debug_patch_schema():
+        try:
+            from models.database import SessionLocal
+            from sqlalchemy import text
+            with SessionLocal() as db:
+                print("DEBUG: Attempting to add pillar column...")
+                db.execute(text("ALTER TABLE life_goals ADD COLUMN IF NOT EXISTS pillar VARCHAR DEFAULT 'finance';"))
+                db.commit()
+                return {"status": "success", "message": "Schema patch executed."}
+        except Exception as e:
+            return {"status": "error", "message": str(e)}
 
     # Initialize Scheduler
     from services.scheduler_service import SchedulerService
     scheduler = SchedulerService()
     
+    
     @app.on_event("startup")
     async def startup_event():
-        # scheduler.start()
-        pass
+        print("Startup event fired.")
+        # Auto-migrate: Add auth0_id if missing
+        try:
+            from models.database import SessionLocal
+            from sqlalchemy import text
+            with SessionLocal() as db:
+                print("Checking schema for auth0_id...")
+                db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS auth0_id VARCHAR;"))
+                print("Checking schema for life_goals.pillar...")
+                # Try adding pillar column; ignore errors if exists (using exception handling as IF NOT EXISTS for column is Postgres 9.6+, safe to just catch)
+                try:
+                    db.execute(text("ALTER TABLE life_goals ADD COLUMN IF NOT EXISTS pillar VARCHAR DEFAULT 'finance';"))
+                except Exception as ex:
+                    print(f"Migration note: {ex}")
+                db.commit()
+                print("Schema check/migration completed successfully.")
+        except Exception as e:
+            print(f"Schema migration warning: {e}") 
         
     @app.on_event("shutdown")
     async def shutdown_event():
         scheduler.stop()
 
+    print("App Factory Completed.")
     return app
+
+app = create_app()
 
 if __name__ == "__main__":
     import uvicorn
@@ -183,3 +337,4 @@ if __name__ == "__main__":
         port=8003,
         reload=True,
     )
+# Force Reload Triggered by Agent

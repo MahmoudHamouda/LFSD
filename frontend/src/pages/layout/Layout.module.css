@@ -24,11 +24,14 @@
 }
 
 /* Light mode override if needed */
-@media (prefers-color-scheme: light) {
-  :global([data-theme='light']) .backNav {
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-  }
+/* Light mode override */
+:global([data-theme='light']) .backNav {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+:global([data-theme='light']) .backLink {
+  color: #333;
 }
 
 
@@ -56,6 +59,7 @@
   min-height: 100vh;
   box-sizing: border-box;
   overflow-y: auto;
+  min-width: 0;
   /* Enable vertical scrolling */
 }
 

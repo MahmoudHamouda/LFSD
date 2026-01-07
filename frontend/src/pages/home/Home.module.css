@@ -2,7 +2,7 @@
     max-width: 95%;
     width: 100%;
     margin: 0 auto;
-    padding: 24px;
+    padding: 23px;
 }
 
 .loading {
@@ -16,36 +16,49 @@
 
 /* Hero Section */
 .heroSection {
-    margin-bottom: 40px;
+    margin-bottom: 38px;
     text-align: center;
 }
 
 .pillarGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 24px;
-    margin-top: 32px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 19px;
+    margin-top: 27px;
     text-align: left;
     /* Reset text align from hero */
 }
 
+/* Responsive breakpoints for pillar grid */
+@media (max-width: 900px) {
+    .pillarGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .pillarGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .welcomeTitle {
-    font-size: 32px;
+    font-size: 30px;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0 0 8px 0;
 }
 
 .welcomeSubtitle {
-    font-size: 16px;
+    font-size: 15px;
     color: var(--text-secondary);
-    margin: 0 0 32px 0;
+    margin: 0 0 30px 0;
 }
 
 /* Chat Prompt */
 .chatPromptContainer {
     max-width: 700px;
-    margin: 0 auto 40px auto;
+    margin: 0 auto 38px auto;
 }
 
 .chatInputWrapper {
@@ -108,7 +121,7 @@
 }
 
 .sectionTitle {
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
@@ -119,7 +132,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 19px;
 }
 
 .toggleContainer {
@@ -165,8 +178,8 @@
 
 .highlightCard {
     background: var(--bg-surface);
-    border-radius: 16px;
-    padding: 24px;
+    border-radius: 15px;
+    padding: 23px;
     box-shadow: var(--shadow-sm);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     border: 1px solid var(--border-color);
@@ -252,8 +265,8 @@
     justify-content: center;
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 11px;
+    padding: 23px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -268,6 +281,13 @@
 .quickActionIcon {
     font-size: 28px;
     margin-bottom: 12px;
+    color: #1e293b;
+    /* Force Dark Color for Light Mode */
+}
+
+.quickActionIcon svg {
+    stroke: #1e293b;
+    /* Explicitly set stroke due to Lucide behavior */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -381,14 +401,14 @@
 .streaksGrid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+    gap: 19px;
 }
 
 .streakCard {
     background: var(--bg-surface);
     border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 24px;
+    border-radius: 11px;
+    padding: 23px;
     text-align: center;
     color: var(--text-primary);
     box-shadow: var(--shadow-sm);
@@ -399,7 +419,7 @@
 }
 
 .streakNumber {
-    font-size: 48px;
+    font-size: 46px;
     font-weight: 700;
     margin-bottom: 8px;
     color: var(--color-accent-blue);

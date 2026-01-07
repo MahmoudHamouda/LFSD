@@ -6,7 +6,7 @@ import logging
 
 from models.models import (
     RecurringBill, 
-    Transaction, 
+    FinancialTransaction, 
     MobilityTrip, 
     HealthDailySummary, 
     Workout,

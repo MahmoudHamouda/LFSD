@@ -6,7 +6,8 @@ import logging
 
 from models.models import (
     VivIndex,
-    User
+    User,
+    HealthDailySummary
 )
 
 logger = logging.getLogger(__name__)
@@ -59,4 +60,37 @@ def compute_treats(user_id: str, db: Session) -> List[Dict[str, Any]]:
             "icon": "map"
         })
         
+    # -------------------------------------------------------------------------
+    # DATA-DRIVEN FALLBACKS (If scores are missing or specific behaviors detected)
+    # -------------------------------------------------------------------------
+
+    # 4. Behavior: High Steps (Health)
+    # Check yesterday's summary
+    yesterday = datetime.utcnow().date() - timedelta(days=1)
+    summary = db.query(HealthDailySummary).filter(
+        HealthDailySummary.user_id == user_id,
+        HealthDailySummary.date == yesterday
+    ).first()
+    
+    if summary and (summary.steps_count or 0) > 8000:
+        completed_treats.append({
+            "id": "treat_health_steps",
+            "category": "HEALTH",
+            "title": "Active Day Reward",
+            "body": f"You hit {summary.steps_count} steps yesterday! Treat your feet to a relaxing soak.",
+            "cta": {"label": "wellness", "href": "/health"},
+            "icon": "activity"
+        })
+
+    # 5. Behavior: Good Sleep (Health)
+    if summary and (summary.sleep_duration_minutes or 0) > 420: # > 7 hours
+        completed_treats.append({
+            "id": "treat_health_sleep",
+            "category": "HEALTH",
+            "title": "Rest Master",
+            "body": "Great sleep last night. Keep the momentum with a calm evening reading session.",
+            "cta": {"label": "Relax", "href": "/health/sleep"},
+            "icon": "moon"
+        })
+
     return completed_treats

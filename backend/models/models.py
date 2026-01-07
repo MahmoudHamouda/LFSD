@@ -17,10 +17,12 @@ def generate_uuid():
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    auth0_id = Column(String, unique=True, index=True, nullable=True)  # Auth0 user ID
+    hashed_password = Column(String, nullable=True)  # Now optional for Auth0 users
     profile_json = Column(JSON, nullable=True)  # Unstructured bio data
     viv_preferences = Column(JSON, nullable=True)  # Risk tolerance, comm style, etc.
     
@@ -40,8 +42,7 @@ class User(Base):
     viv_indexes = relationship("VivIndex", back_populates="user", cascade="all, delete-orphan")
     life_goals = relationship("LifeGoal", back_populates="user", cascade="all, delete-orphan")
     financial_accounts = relationship("FinancialAccount", back_populates="user", cascade="all, delete-orphan")
-    transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
-    orders = relationship("Order", back_populates="user", cascade="all, delete-orphan")
+    transactions = relationship("FinancialTransaction", back_populates="user", cascade="all, delete-orphan")
     health_daily_summaries = relationship("HealthDailySummary", back_populates="user", cascade="all, delete-orphan")
     sleep_sessions = relationship("SleepSession", back_populates="user", cascade="all, delete-orphan")
     workouts = relationship("Workout", back_populates="user", cascade="all, delete-orphan")
@@ -50,16 +51,15 @@ class User(Base):
     viv_logs = relationship("VivLog", back_populates="user", cascade="all, delete-orphan")
     connections = relationship("Connection", back_populates="user", cascade="all, delete-orphan")
     statements = relationship("Statement", back_populates="user", cascade="all, delete-orphan")
-    # lifestyle_events = relationship("LifestyleEvent", back_populates="user", cascade="all, delete-orphan")
-    # nutrition_logs = relationship("NutritionLog", back_populates="user", cascade="all, delete-orphan")
-    # investment_portfolios = relationship("InvestmentPortfolio", back_populates="user", cascade="all, delete-orphan")
     financial_scores = relationship("FinancialScore", back_populates="user", cascade="all, delete-orphan")
+    time_scores = relationship("TimeScore", back_populates="user", cascade="all, delete-orphan")
     health_data_samples = relationship("HealthDataSample", back_populates="user", cascade="all, delete-orphan")
 
 
 class Connection(Base):
     """Stores OAuth credentials and status for external providers."""
     __tablename__ = "connections"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -84,6 +84,7 @@ class Connection(Base):
 class HealthDataSample(Base):
     """Normalized health data from external providers."""
     __tablename__ = "health_data_samples"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -110,6 +111,7 @@ class VivIndex(Base):
     __tablename__ = "viv_indexes"
     __table_args__ = (
         Index('idx_viv_index_user_timestamp', 'user_id', 'timestamp'),
+        {'extend_existing': True}
     )
 
     id = Column(String, primary_key=True, default=generate_uuid)
@@ -129,6 +131,7 @@ class VivIndex(Base):
 class LifeGoal(Base):
     """Crucial for decision making."""
     __tablename__ = "life_goals"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -154,6 +157,7 @@ class LifeGoal(Base):
 
 class FinancialAccount(Base):
     __tablename__ = "financial_accounts"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -164,22 +168,24 @@ class FinancialAccount(Base):
     limit = Column(Float, nullable=True)
 
     user = relationship("User", back_populates="financial_accounts")
-    transactions = relationship("Transaction", back_populates="account", cascade="all, delete-orphan")
+    transactions = relationship("FinancialTransaction", back_populates="account", cascade="all, delete-orphan")
 
 
 from .logging_models import SystemLog, BugReport, LogLevel, BugStatus
 
 __all__ = [
     "User", "Connection", "VivIndex", "LifeGoal", "FinancialAccount", 
-    "Transaction", "HealthDailySummary", "SleepSession", "Workout", 
+    "FinancialTransaction", "HealthDailySummary", "SleepSession", "Workout", 
     "CalendarEvent", "MobilityTrip", "VivLog", "DBConversation", "DBMessage",
-    "SystemLog", "BugReport", "Recommendation", "ActivityFeed", "OnboardingSession"
+    "SystemLog", "BugReport", "Recommendation", "ActivityFeed", "OnboardingSession",
+    "Order"
 ]
 
 
 class Statement(Base):
     """Stores metadata for uploaded bank statements."""
     __tablename__ = "statements"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True)
@@ -193,14 +199,15 @@ class Statement(Base):
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="statements")
-    transactions = relationship("Transaction", back_populates="statement", cascade="all, delete-orphan")
+    transactions = relationship("FinancialTransaction", back_populates="statement", cascade="all, delete-orphan")
 
 
-class Transaction(Base):
+class FinancialTransaction(Base):
     """The Deep Dive into spending."""
     __tablename__ = "transactions"
     __table_args__ = (
         Index('idx_transactions_user_date', 'user_id', 'transaction_date'),
+        {'extend_existing': True}
     )
 
     id = Column(String, primary_key=True, default=generate_uuid)
@@ -234,6 +241,7 @@ class Transaction(Base):
 class RecurringBill(Base):
     """Verified recurring commitments."""
     __tablename__ = "recurring_bills"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -257,6 +265,7 @@ class HealthDailySummary(Base):
     __tablename__ = "health_daily_summaries"
     __table_args__ = (
         Index('idx_health_summary_user_date', 'user_id', 'date'),
+        {'extend_existing': True}
     )
 
     id = Column(String, primary_key=True, default=generate_uuid) # Added ID for consistency
@@ -274,6 +283,7 @@ class HealthDailySummary(Base):
 
 class SleepSession(Base):
     __tablename__ = "sleep_sessions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -290,6 +300,7 @@ class SleepSession(Base):
 
 class Workout(Base):
     __tablename__ = "workouts"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -313,6 +324,7 @@ class CalendarEvent(Base):
     __tablename__ = "calendar_events"
     __table_args__ = (
         Index('idx_calendar_events_user_start', 'user_id', 'start_time'),
+        {'extend_existing': True}
     )
 
     id = Column(String, primary_key=True, default=generate_uuid)
@@ -331,6 +343,7 @@ class CalendarEvent(Base):
 
 class MobilityTrip(Base):
     __tablename__ = "mobility_trips"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -358,6 +371,7 @@ class MobilityTrip(Base):
 class VivLog(Base):
     """Tracks WHY Viv gave specific advice."""
     __tablename__ = "viv_logs"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -373,6 +387,7 @@ class VivLog(Base):
 
 class Recommendation(Base):
     __tablename__ = "recommendations"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -389,6 +404,7 @@ class Recommendation(Base):
 
 class ActivityFeed(Base):
     __tablename__ = "activity_feed"
+    __table_args__ = {'extend_existing': True}
     
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -408,6 +424,7 @@ class ActivityFeed(Base):
 
 class DBConversation(Base):
     __tablename__ = "conversations"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     title = Column(String, nullable=True)
@@ -417,6 +434,7 @@ class DBConversation(Base):
 
 class DBMessage(Base):
     __tablename__ = "messages"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     conversation_id = Column(String, ForeignKey("conversations.id"), nullable=False, index=True)
@@ -428,7 +446,7 @@ class DBMessage(Base):
     conversation = relationship("DBConversation", back_populates="messages")
 
 # Aliases for backward compatibility with history_routes
-DBTransaction = Transaction
+DBTransaction = FinancialTransaction
 DBFinancial = FinancialAccount
 DBActivity = Workout
 # Placeholders for missing models to prevent ImportErrors
@@ -438,6 +456,7 @@ class Order(Base):
     Acts as the 'Truth' for external actions.
     """
     __tablename__ = "orders"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -465,20 +484,22 @@ class Order(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    user = relationship("User", back_populates="orders")
-    transaction = relationship("Transaction", back_populates="order")
+    user = relationship("User")
+    transaction = relationship("FinancialTransaction", back_populates="order")
 
 # Alias for backward compatibility if needed, but we prefer Order
 DBOrder = Order
 
 class DBNotification(Base):
     __tablename__ = "notifications"
+    __table_args__ = {'extend_existing': True}
     id = Column(String, primary_key=True, default=generate_uuid)
 
 
 class OnboardingSession(Base):
     """Temporary storage for onboarding data before user creation."""
     __tablename__ = "onboarding_sessions"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     data_json = Column(JSON, nullable=True) # Stores parsed statement data, income, etc.
@@ -490,6 +511,7 @@ class FinancialScore(Base):
     Detailed breakdown of the Financial Wellbeing Score (8 Pillars).
     """
     __tablename__ = "financial_scores"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -521,9 +543,45 @@ class FinancialScore(Base):
     user = relationship("User", back_populates="financial_scores")
 
 
+class TimeScore(Base):
+    """
+    Detailed breakdown of the Time Management Score (7 Pillars).
+    """
+    __tablename__ = "time_scores"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+
+    overall_score = Column(Float, default=0.0)
+    
+    # The 7 Time Pillars
+    schedule_coverage_score = Column(Float, default=0.0)  # % of day with scheduled events
+    planning_habit_score = Column(Float, default=0.0)     # consistency of planning ahead
+    focus_blocks_score = Column(Float, default=0.0)       # presence of uninterrupted work time
+    meeting_load_score = Column(Float, default=0.0)       # % of time in meetings (inverse)
+    context_switching_score = Column(Float, default=0.0)  # frequency of task changes (inverse)
+    weekly_rhythm_score = Column(Float, default=0.0)      # consistency week-to-week
+    time_alignment_score = Column(Float, default=0.0)     # events aligned with priorities
+
+    # Metadata
+    time_window = Column(String, default="last_30_days")
+    data_sources_json = Column(JSON, nullable=True)  # {"calendar": true, "manual": true}
+
+    # Snapshot Metrics
+    total_scheduled_hours = Column(Float, default=0.0)
+    total_meeting_hours = Column(Float, default=0.0)
+    total_focus_hours = Column(Float, default=0.0)
+    avg_events_per_day = Column(Float, default=0.0)
+
+    user = relationship("User", back_populates="time_scores")
+
+
 class FeatureInterest(Base):
     """Tracks user interest in upcoming features."""
     __tablename__ = "feature_interests"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -539,6 +597,7 @@ User.feature_interests = relationship("FeatureInterest", back_populates="user", 
 class HealthProfile(Base):
     """Stores persistent health attributes and habits."""
     __tablename__ = "health_profiles"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -562,6 +621,7 @@ User.health_profile = relationship("HealthProfile", uselist=False, back_populate
 class TimeProfile(Base):
     """Manual inputs for Time & Productivity."""
     __tablename__ = "time_profiles"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -593,6 +653,7 @@ class TimeProfile(Base):
 class TimeEvent(Base):
     """Normalized calendar events."""
     __tablename__ = "time_events"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
@@ -612,31 +673,9 @@ class TimeEvent(Base):
     user = relationship("User", back_populates="time_events")
 
 
-class TimeScore(Base):
-    """Detailed breakdown of Time & Productivity Score."""
-    __tablename__ = "time_scores"
-
-    id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
-
-    overall_score = Column(Float, default=0.0)
-    
-    # Sub-scores
-    structure_score = Column(Float, default=0.0)
-    load_score = Column(Float, default=0.0)
-    focus_score = Column(Float, default=0.0)
-    friction_score = Column(Float, default=0.0)
-    stress_score = Column(Float, default=0.0)
-
-    # Metadata
-    confidence = Column(Float, default=0.0)
-    band = Column(String, nullable=True)
-    metrics_json = Column(JSON, nullable=True) # The fused metrics used
-
-    user = relationship("User", back_populates="time_scores")
-
 # Add relationships to User
+User.feature_interests = relationship("FeatureInterest", back_populates="user", cascade="all, delete-orphan")
+User.health_profile = relationship("HealthProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
 User.time_profile = relationship("TimeProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
 User.time_events = relationship("TimeEvent", back_populates="user", cascade="all, delete-orphan")
 User.time_scores = relationship("TimeScore", back_populates="user", cascade="all, delete-orphan")

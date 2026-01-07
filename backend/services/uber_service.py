@@ -208,7 +208,7 @@ class UberService:
         details: Dict[str, Any],
         conversation_id: Optional[str] = None
     ) -> None:
-        """Log user interaction to database using VivLog."""
+        """Log user interaction to database using chat log."""
         try:
             db = SessionLocal()
             # Map to VivLog

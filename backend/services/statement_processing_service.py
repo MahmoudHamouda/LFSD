@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 import google.generativeai as genai
 
-from models.models import Statement, Transaction, User
+from models.models import Statement, FinancialTransaction, User
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -309,7 +309,7 @@ class StatementService:
                 # 2. Clear existing transactions for default_user to ensure fresh data
                 if user_id == "default_user":
                     logger.info("Clearing existing transactions for default_user")
-                    self.db.query(Transaction).filter(Transaction.user_id == user_id).delete()
+                    self.db.query(FinancialTransaction).filter(FinancialTransaction.user_id == user_id).delete()
                     self.db.query(Statement).filter(Statement.user_id == user_id).delete()
                     self.db.commit()
 
@@ -344,16 +344,16 @@ class StatementService:
                     dedup_key = hashlib.sha256(raw_str.encode()).hexdigest()
                     
                     # Check existence
-                    exists = self.db.query(Transaction).filter(
-                        Transaction.deduplication_key == dedup_key,
-                        Transaction.user_id == user_id
+                    exists = self.db.query(FinancialTransaction).filter(
+                        FinancialTransaction.deduplication_key == dedup_key,
+                        FinancialTransaction.user_id == user_id
                     ).first()
                     
                     if exists:
                         duplicates_count += 1
                         continue
 
-                    transaction = Transaction(
+                    transaction = FinancialTransaction(
                         user_id=user_id,
                         statement_id=statement.id,
                         transaction_date=tx.date,

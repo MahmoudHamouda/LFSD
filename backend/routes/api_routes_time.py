@@ -176,6 +176,33 @@ async def upload_calendar_screenshot(user_id: str, file: UploadFile = File(...),
              traceback.print_exc(file=f)
         raise HTTPException(status_code=500, detail=f"OCR Failed: {str(e)}")
 
+from core.authentication import get_current_user
+
+# 5. Get Events Endpoint (Session-based)
+@router.get("/events")
+async def get_time_events(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Get all calendar events for the logged-in user."""
+    from models.models import CalendarEvent
+    events = db.query(CalendarEvent).filter(CalendarEvent.user_id == current_user.id).all()
+    
+    return {
+        "status": "success",
+        "data": [
+            {
+                "id": e.id,
+                "title": e.title,
+                "start": e.start_time,
+                "end": e.end_time,
+                "category": "Meeting" if getattr(e, "is_meeting", False) else "Work",
+                "is_all_day": False
+            }
+            for e in events
+        ]
+    }
+
 # 4. Time Score Endpoint
 @router.get("/users/{user_id}/score")
 async def get_time_score(user_id: str, db: Session = Depends(get_db)):

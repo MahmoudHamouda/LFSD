@@ -424,7 +424,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend }) => {
                     <div className={styles.userAvatar}>U</div>
                 ) : (
                     <div className={styles.assistantAvatar}>
-                        <span className={styles.fallbackAvatar}>AI</span>
+                        <span className={styles.fallbackAvatar} style={{ display: 'block' }}>H</span>
                     </div>
                 )}
             </div>

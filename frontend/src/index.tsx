@@ -17,7 +17,9 @@ import AuthCallback from './pages/health/AuthCallback';
 import TimeDashboard from './pages/time/TimeDashboard';
 import FinanceDashboard from './pages/financials/FinanceDashboard';
 import Onboarding from './pages/onboarding/Onboarding';
-import Login from './pages/login/Login';
+import Login from './pages/login/LoginNative';
+// import LoginAuth0 from './pages/login/LoginAuth0';
+import { CallbackPage } from './pages/CallbackPage';
 import ForgotPassword from './pages/login/ForgotPassword';
 import ResetPassword from './pages/login/ResetPassword';
 
@@ -34,80 +36,86 @@ initializeIcons();
 // Auth & Guards
 import { AuthProvider } from './context/AuthProvider';
 import { ProtectedRoute, PublicOnlyRoute, OnboardingRoute } from './components/auth/RouteGuards';
+import { Auth0Wrapper } from './components/Auth0Wrapper';
 
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppStateProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Login Page - Public Only */}
-            <Route path="/login" element={
-              <PublicOnlyRoute>
-                <Login />
-              </PublicOnlyRoute>
-            } />
-            <Route path="/forgot-password" element={
-              <PublicOnlyRoute>
-                <ForgotPassword />
-              </PublicOnlyRoute>
-            } />
-            <Route path="/reset-password" element={
-              <PublicOnlyRoute>
-                <ResetPassword />
-              </PublicOnlyRoute>
-            } />
+    <Auth0Wrapper>
+      <AuthProvider>
+        <AppStateProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Auth0 Callback Route */}
+              <Route path="/callback" element={<CallbackPage />} />
 
-            {/* Onboarding - Protected but for incomplete users */}
-            <Route path="/onboarding" element={
-              <OnboardingRoute>
-                <Onboarding />
-              </OnboardingRoute>
-            } />
+              {/* Login Page - Public Only */}
+              <Route path="/login" element={
+                <PublicOnlyRoute>
+                  <Login />
+                </PublicOnlyRoute>
+              } />
+              <Route path="/forgot-password" element={
+                <PublicOnlyRoute>
+                  <ForgotPassword />
+                </PublicOnlyRoute>
+              } />
+              <Route path="/reset-password" element={
+                <PublicOnlyRoute>
+                  <ResetPassword />
+                </PublicOnlyRoute>
+              } />
 
-            {/* Main Layout - Protected */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }>
-              {/* Default Route - Home page */}
-              <Route index element={<Home />} />
+              {/* Onboarding - Protected but for incomplete users */}
+              <Route path="/onboarding" element={
+                <OnboardingRoute>
+                  <Onboarding />
+                </OnboardingRoute>
+              } />
 
-              {/* History Page */}
-              <Route path="history" element={<History />} />
+              {/* Main Layout - Protected */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Layout />
+                </ProtectedRoute>
+              }>
+                {/* Default Route - Home page */}
+                <Route index element={<Home />} />
 
-              {/* Time Pages */}
-              <Route path="time" element={<TimeDashboard />} />
+                {/* History Page */}
+                <Route path="history" element={<History />} />
 
-              {/* Health Pages */}
-              <Route path="health" element={<HealthDashboard />} />
-              <Route path="health/connect" element={<HealthConnect />} />
-              <Route path="health/google/callback" element={<AuthCallback />} />
+                {/* Time Pages */}
+                <Route path="time" element={<TimeDashboard />} />
 
-              {/* Finance Pages */}
-              <Route path="finance" element={<FinanceDashboard />} />
+                {/* Health Pages */}
+                <Route path="health" element={<HealthDashboard />} />
+                <Route path="health/connect" element={<HealthConnect />} />
+                <Route path="health/google/callback" element={<AuthCallback />} />
 
-              {/* Chat Page */}
-              <Route path="chat" element={<Chat />} />
+                {/* Finance Pages */}
+                <Route path="finance" element={<FinanceDashboard />} />
 
-              {/* Dashboard Page (Legacy) */}
-              <Route path="dashboard" element={<Dashboard />} />
+                {/* Chat Page */}
+                <Route path="chat" element={<Chat />} />
 
-              {/* Recommendations Page */}
-              <Route path="recommendations" element={<Recommendations />} />
+                {/* Dashboard Page (Legacy) */}
+                <Route path="dashboard" element={<Dashboard />} />
 
-              {/* User Profile Page */}
-              <Route path="profile" element={<UserProfile />} />
+                {/* Recommendations Page */}
+                <Route path="recommendations" element={<Recommendations />} />
 
-              {/* Catch-All Route for 404s */}
-              <Route path="*" element={<NoPage />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </AppStateProvider>
-    </AuthProvider>
+                {/* User Profile Page */}
+                <Route path="profile" element={<UserProfile />} />
+
+                {/* Catch-All Route for 404s */}
+                <Route path="*" element={<NoPage />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </AppStateProvider>
+      </AuthProvider>
+    </Auth0Wrapper>
   );
 }
 

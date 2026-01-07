@@ -83,7 +83,9 @@ const ProgressivePillarCard: React.FC<ProgressivePillarCardProps> = ({
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 position: 'relative',
-                minHeight: '220px'
+                minHeight: '220px',
+                width: '100%',
+                boxSizing: 'border-box'
             }}
             className="hover:shadow-md"
         >
@@ -92,19 +94,20 @@ const ProgressivePillarCard: React.FC<ProgressivePillarCardProps> = ({
                 <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: 0, maxWidth: '70%' }}>
                     {title}
                 </h3>
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                    padding: '4px 8px', borderRadius: '12px',
-                    backgroundColor: state === 'AT_RISK' ? 'var(--bg-badge-error)' : state === 'STABLE' ? 'var(--bg-badge-success)' : 'var(--bg-badge-neutral)',
-                    border: '1px solid var(--border-light)'
-                }}>
-                    {state === 'LEARNING' && <Clock size={12} color={config.color} />}
-                    {state === 'STABLE' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }} />}
-                    {state === 'AT_RISK' && <AlertTriangle size={12} color={config.color} />}
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: config.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {config.badge}
-                    </span>
-                </div>
+                {state !== 'LEARNING' && (
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        padding: '4px 8px', borderRadius: '12px',
+                        backgroundColor: state === 'AT_RISK' ? 'var(--bg-badge-error)' : state === 'STABLE' ? 'var(--bg-badge-success)' : 'var(--bg-badge-neutral)',
+                        border: '1px solid var(--border-light)'
+                    }}>
+                        {state === 'STABLE' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }} />}
+                        {state === 'AT_RISK' && <AlertTriangle size={12} color={config.color} />}
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: config.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            {config.badge}
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* BODY - PRIMARY (Score Ring) */}
@@ -162,7 +165,7 @@ const ProgressivePillarCard: React.FC<ProgressivePillarCardProps> = ({
             <div style={{ borderTop: '1px solid var(--border-light)', paddingTop: '16px', marginTop: 'auto' }}>
                 {state === 'LEARNING' ? (
                     <div style={{ display: 'flex', alignItems: 'center', color: 'var(--color-accent-blue)', fontSize: '13px', fontWeight: 500 }}>
-                        Add data <ArrowRight size={14} style={{ marginLeft: '4px' }} />
+                        Upload statement to unlock analysis <ArrowRight size={14} style={{ marginLeft: '4px' }} />
                     </div>
                 ) : (
                     <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 500 }}>

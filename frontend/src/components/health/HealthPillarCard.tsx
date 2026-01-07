@@ -104,19 +104,20 @@ const HealthPillarCard: React.FC<HealthPillarCardProps> = ({
                 <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', margin: 0, maxWidth: '70%', lineHeight: '1.2' }}>
                     {title}
                 </h3>
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: '4px',
-                    padding: '4px 8px', borderRadius: '12px',
-                    backgroundColor: state === 'AT_RISK' ? 'var(--bg-badge-error)' : state === 'STABLE' ? 'var(--bg-badge-success)' : 'var(--bg-badge-neutral)',
-                    border: '1px solid var(--border-light)'
-                }}>
-                    {state === 'LEARNING' && <Clock size={12} color={config.color} />}
-                    {state === 'STABLE' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }} />}
-                    {state === 'AT_RISK' && <AlertTriangle size={12} color={config.color} />}
-                    <span style={{ fontSize: '11px', fontWeight: 600, color: config.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {config.badge}
-                    </span>
-                </div>
+                {state !== 'LEARNING' && (
+                    <div style={{
+                        display: 'flex', alignItems: 'center', gap: '4px',
+                        padding: '4px 8px', borderRadius: '12px',
+                        backgroundColor: state === 'AT_RISK' ? 'var(--bg-badge-error)' : state === 'STABLE' ? 'var(--bg-badge-success)' : 'var(--bg-badge-neutral)',
+                        border: '1px solid var(--border-light)'
+                    }}>
+                        {state === 'STABLE' && <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }} />}
+                        {state === 'AT_RISK' && <AlertTriangle size={12} color={config.color} />}
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: config.color, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            {config.badge}
+                        </span>
+                    </div>
+                )}
             </div>
 
             {/* BODY - PRIMARY (Score Ring) */}
@@ -187,7 +188,7 @@ const HealthPillarCard: React.FC<HealthPillarCardProps> = ({
                             Let's keep "Add data" but implementation will redirect. 
                             Wait, User Req said: "Replace ALL of the above with: CTA text: 'Manage data ->'"
                         */}
-                        Manage data <ArrowRight size={14} style={{ marginLeft: '4px' }} />
+                        Connect wearable device to unlock analysis <ArrowRight size={14} style={{ marginLeft: '4px' }} />
                     </div>
                 ) : (
                     <div style={{ display: 'flex', alignItems: 'center', color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 500 }}>

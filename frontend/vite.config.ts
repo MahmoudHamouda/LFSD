@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
-  base: "/LFSD/",
   plugins: [react(), tsconfigPaths()],
   build: {
     outDir: "dist",
@@ -13,18 +12,18 @@ export default defineConfig({
     host: true,
     port: 3000,
     proxy: {
-      '/history': 'http://127.0.0.1:8003',
-      '/conversation': 'http://127.0.0.1:8003',
-      '/.auth': 'http://127.0.0.1:8003',
-      '/frontend_settings': 'http://127.0.0.1:8003',
+      '/history': 'https://lfsd-backend-692544481281.us-central1.run.app',
+      '/conversation': 'https://lfsd-backend-692544481281.us-central1.run.app',
+      '/.auth': 'https://lfsd-backend-692544481281.us-central1.run.app',
+      '/frontend_settings': 'https://lfsd-backend-692544481281.us-central1.run.app',
       '/api': {
-        target: 'http://127.0.0.1:8003',
+        target: 'https://lfsd-backend-692544481281.us-central1.run.app',
         changeOrigin: true,
         secure: false,
-        timeout: 300000, // 5 minutes
+        timeout: 300000,
         proxyTimeout: 300000,
       },
-      '/user': 'http://127.0.0.1:8003',
+      '/user': 'https://lfsd-backend-692544481281.us-central1.run.app',
     },
   },
 });

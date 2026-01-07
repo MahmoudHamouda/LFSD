@@ -9,7 +9,8 @@ import { User, UserIdentity, VivPreferences, OnboardingData } from '../../types/
 import { CurrencyInput, Pill, SectionCard } from '../onboarding/OnboardingSteps';
 import ConnectionModal from '../../components/modals/ConnectionModal';
 import StatementUploadModal from '../../components/modals/StatementUploadModal';
-import { useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthProvider';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 type Tab = 'account' | 'financial' | 'health' | 'time' | 'updates' | 'faq';
 
@@ -35,12 +36,16 @@ const CONNECTIONS_DATA: Connector[] = [
 ];
 
 const UserProfile: React.FC = () => {
+    const { user: contextUser, status: authStatus } = useAuth();
+    // Start with null user/loading true to force full fetch. 
+    // contextUser is only used for redirection logic now.
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('account');
     const [theme, setTheme] = useState<'light' | 'dark'>(getStoredTheme());
     const location = useLocation();
+    const navigate = useNavigate();
 
     // Connection Logic
     const [selectedConnector, setSelectedConnector] = useState<Connector | null>(null);
@@ -53,7 +58,10 @@ const UserProfile: React.FC = () => {
     const [onboardingForm, setOnboardingForm] = useState<OnboardingData>({});
 
     // Load Profile Effect
+    // Load Profile Effect
     useEffect(() => {
+        // Always fetch full profile data because contextUser (from /api/auth/me) 
+        // lacks the detailed 'identity' and 'accounts' fields needed here.
         loadProfile();
 
         // Handle redirect actions (tabs)
@@ -66,6 +74,16 @@ const UserProfile: React.FC = () => {
             setIsUploadModalOpen(true);
         }
     }, [location]);
+
+    // Redirect if not logged in
+    useEffect(() => {
+        if (!loading && !user && authStatus === 'UNAUTHENTICATED') {
+            const timer = setTimeout(() => {
+                navigate('/login');
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, user, authStatus, navigate]);
 
     // Scroll Effect for Anchors
     useEffect(() => {
@@ -184,7 +202,27 @@ const UserProfile: React.FC = () => {
     };
 
     if (loading) return <div className={styles.container}>Loading Profile...</div>;
-    if (!user) return <div className={styles.container}>Please Log In</div>;
+    if (!user) return (
+        <div className={styles.container} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+            <h2>Please Log In</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                {authStatus === 'UNAUTHENTICATED' ? 'Redirecting to login...' : 'Your session may have expired.'}
+            </p>
+            <button
+                onClick={() => navigate('/login')}
+                style={{
+                    padding: '10px 20px',
+                    backgroundColor: 'var(--color-primary)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                }}
+            >
+                Go to Login
+            </button>
+        </div>
+    );
 
     return (
         <div className={styles.container}>

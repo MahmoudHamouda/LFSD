@@ -64,12 +64,14 @@
 }
 
 .fallbackAvatar {
-    display: none;
-}
-
-.assistantAvatar img[style*="display: none"]+.fallbackAvatar {
     display: block;
 }
+
+/* 
+.assistantAvatar img[style*="display: none"]+.fallbackAvatar {
+    display: block;
+} 
+*/
 
 .content {
     max-width: 80%;

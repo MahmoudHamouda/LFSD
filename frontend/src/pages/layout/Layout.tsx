@@ -6,7 +6,7 @@ import styles from './Layout.module.css';
 
 const Layout = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const location = useLocation();
 

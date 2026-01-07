@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from './DashboardHero.module.css';
-import { ArrowUp, ArrowDown, Minus, Plus, Target } from 'lucide-react';
+import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import GoalsSection from './GoalsSection';
 
 export interface DashboardHeroProps {
     title: string;
@@ -77,47 +78,15 @@ export const DashboardHero: React.FC<DashboardHeroProps> = ({
 
             {/* Right 2/3: Goal */}
             <div className={styles.goalSection}>
-                {goals && goals.length > 0 ? (
-                    <div className={styles.goalsListContainer}>
-                        <div className={styles.goalsHeader}>
-                            <span className={styles.goalLabel}>Active Goals</span>
-                            <button className={styles.miniAddButton} onClick={onAddGoal}>
-                                <Plus size={14} /> Add
-                            </button>
-                        </div>
-                        <div className={styles.goalsList}>
-                            {goals.map(g => (
-                                <div key={g.id} className={styles.goalItem}>
-                                    <div className={styles.goalItemMain}>
-                                        <Target size={14} className={styles.goalIcon} />
-                                        <span className={styles.goalItemTitle}>{g.title}</span>
-                                    </div>
-                                    <div className={styles.goalItemMeta}>
-                                        <span>Target: ${g.target_amount?.toLocaleString()}</span>
-                                        {g.saved_amount !== undefined && (
-                                            <span className={styles.goalProgress}>
-                                                • {Math.round((g.saved_amount / g.target_amount) * 100)}%
-                                            </span>
-                                        )}
-                                        {calculateTimeToReach(g) && (
-                                            <span style={{ opacity: 0.6 }}> • {calculateTimeToReach(g)}</span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <div className={styles.emptyGoal}>
-                        <span>No goal active for this pillar.</span>
-                        <button className={styles.addGoalButton} onClick={onAddGoal}>
-                            <Plus size={18} /> Add Goal
-                        </button>
+                {variant && (
+                    <div className={styles.embeddedGoals}>
+                        <GoalsSection variant={variant} />
                     </div>
                 )}
             </div>
         </div>
     );
 };
+
 
 export default DashboardHero;

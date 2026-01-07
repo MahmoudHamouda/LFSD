@@ -1,46 +1,17 @@
-version: "3.8"
+version: "3.9"
 
 services:
-  db:
-    image: postgres:16-alpine
-    container_name: lfsd_db
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-lfsd_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lfsd_pass}
-      POSTGRES_DB: ${POSTGRES_DB:-lfsd}
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     ports:
-      - "5432:5432"
+      - "8080:8080"
+    environment:
+      - GEMINI_API_KEY=AIzaSyDwhejk-FKUDtA47i5qH4HHGFJEDaX2KBw
+      - GEMINI_MODEL=gemini-2.0-flash-exp
+      - DEBUG=1
+      - PYTHONUNBUFFERED=1
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U lfsd_user -d lfsd"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  redis:
-    image: redis:7-alpine
-    container_name: lfsd_redis
-    ports:
-      - "6379:6379"
-
-  api:
-    build: .
-    container_name: lfsd_api
-    env_file:
-      - .env
-    ports:
-      - "8003:8003"
-    depends_on:
-      - redis
-      - db
-    environment:
-      DATABASE_URL: postgresql://lfsd_user:lfsd_pass@db:5432/lfsd
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8003/healthz"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-
-volumes:
-  postgres_data:
+      - ./backend:/app
+    command: uvicorn app:app --host 0.0.0.0 --port 8080 --reload

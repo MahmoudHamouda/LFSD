@@ -143,6 +143,7 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
         raise credentials_exception
 
     username: Optional[str] = None
+    # 1. Try Legacy HS256 Decode (Native Tokens)
     try:
         # Some clients might send the literal string "undefined" or "null" if JS is messy
         if active_token in ["undefined", "null", ""]:
@@ -151,10 +152,33 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
              
         payload = jwt.decode(active_token, settings.SECRET_KEY, algorithms=[settings.JWT_ALG])
         username = payload.get("sub")  # subject claim
-        logger.info(f"Auth - Decoded username: {username}")
-    except Exception as e:
-        logger.error(f"Auth failed - JWT Decode Error: {e}")
-        raise credentials_exception
+        logger.info(f"Auth - Decoded (Legacy) username: {username}")
+    except Exception as legacy_e:
+        # 2. Try Auth0 RS256 Decode (Social/Auth0 Tokens)
+        try:
+            from core.auth0_utils import verify_auth0_jwt
+            payload = verify_auth0_jwt(active_token)
+            # Auth0 'sub' is the Auth0 ID (e.g. google-oauth2|12345)
+            # We also might get email
+            auth0_id = payload.get("sub")
+            email = payload.get("email")
+            
+            # We need to resolve this to a DB User
+            # First try finding by auth0_id
+            user = db.query(DBUser).filter(DBUser.auth0_id == auth0_id).first()
+            if not user and email:
+                 # Fallback to email
+                 user = db.query(DBUser).filter(DBUser.email == email).first()
+                 
+            if user:
+                return user
+            else:
+                logger.warning(f"Auth0 Token Valid but User not found in DB. Sub: {auth0_id}")
+                raise credentials_exception
+                
+        except Exception as auth0_e:
+            logger.error(f"Auth failed - Legacy: {legacy_e} | Auth0: {auth0_e}")
+            raise credentials_exception
         
     if not username:
         logger.warning("Auth failed - No username extracted from token.")

@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Target } from 'lucide-react';
-import { getFinancialGoals, createGoal } from '../../api/financialApi';
+import { getFinancialGoals, createGoal, updateGoal } from '../../api/financialApi';
 import styles from './Dashboard.module.css';
 import DashboardCTA from '../common/DashboardCTA';
+import GoalForm from './GoalForm';
+import GoalCard from './GoalCard';
 
 interface GoalsSectionProps {
     variant?: 'finance' | 'time' | 'health' | 'all';
@@ -12,13 +14,7 @@ const GoalsSection: React.FC<GoalsSectionProps> = ({ variant = 'all' }) => {
     const [showAdd, setShowAdd] = useState(false);
     const [goals, setGoals] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [newGoal, setNewGoal] = useState({
-        title: '',
-        target_amount: 0,
-        target_date: '',
-        monthly_contribution_target: 0,
-        pillar: variant === 'all' ? 'finance' : variant
-    });
+    const [editingGoal, setEditingGoal] = useState<any>(null);
 
     useEffect(() => {
         loadGoals();
@@ -37,12 +33,25 @@ const GoalsSection: React.FC<GoalsSectionProps> = ({ variant = 'all' }) => {
         }
     };
 
-    const handleCreate = async () => {
+    const handleCreate = async (goalData: any) => {
         try {
-            const pillarToSave = variant === 'all' ? newGoal.pillar : variant;
-            await createGoal({ ...newGoal, type: 'custom', priority: 'medium', pillar: pillarToSave });
+            const pillarToSave = variant === 'all' ? goalData.pillar : variant;
+            await createGoal({ ...goalData, type: 'custom', priority: 'medium', pillar: pillarToSave });
             setShowAdd(false);
-            setNewGoal({ title: '', target_amount: 0, target_date: '', monthly_contribution_target: 0, pillar: variant === 'all' ? 'finance' : variant });
+            loadGoals();
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const handleUpdate = async (goalData: any) => {
+        try {
+            await updateGoal(goalData.id, {
+                title: goalData.title,
+                target_amount: goalData.target_amount,
+                monthly_contribution_target: goalData.monthly_contribution_target
+            });
+            setEditingGoal(null);
             loadGoals();
         } catch (e) {
             console.error(e);
@@ -83,6 +92,20 @@ const GoalsSection: React.FC<GoalsSectionProps> = ({ variant = 'all' }) => {
     const copy = getEmptyCopy();
 
     if (loading) return <div style={{ padding: '20px', color: 'var(--text-secondary)' }}>Loading goals...</div>;
+
+    // --- FORM VIEW (CREATE OR EDIT) ---
+    if (showAdd || editingGoal) {
+        return (
+            <div style={{ marginBottom: '32px' }}>
+                <GoalForm
+                    initialData={editingGoal}
+                    variant={variant}
+                    onSave={editingGoal ? handleUpdate : handleCreate}
+                    onCancel={() => { setShowAdd(false); setEditingGoal(null); }}
+                />
+            </div>
+        );
+    }
 
     // --- A) EMPTY STATE ---
     if (goals.length === 0 && !showAdd) {
@@ -128,122 +151,36 @@ const GoalsSection: React.FC<GoalsSectionProps> = ({ variant = 'all' }) => {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                     {goals.map((goal) => (
-                        <div
+                        <GoalCard
                             key={goal.id}
-                            className={styles.goalCard}
-                            style={{
-                                borderLeft: `4px solid ${getPillarColor(goal.pillar)}`,
-                                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px'
+                            goal={goal}
+                            pillar={goal.pillar}
+                            onUpdate={async (id, updates) => {
+                                // Wrapper to match signature if needed, or handle direct update
+                                // GoalsSection uses handleUpdate for full obj
+                                // But GoalCard calls onUpdate with partial
+                                // We can ignore onUpdate if we use onEdit for everything,
+                                // but GoalCard might use onUpdate for quick amount.
+                                // Let's support it:
+                                await updateGoal(id, updates);
+                                loadGoals();
                             }}
-                        >
-                            <div style={{ flex: 1, minWidth: '200px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                        <h3 className={styles.goalTitle} style={{ fontSize: '16px', fontWeight: 600 }}>{goal.title}</h3>
-                                    </div>
-                                    {variant === 'all' && (
-                                        <span style={{
-                                            fontSize: '10px', textTransform: 'uppercase', fontWeight: 700,
-                                            padding: '2px 6px', borderRadius: '4px',
-                                            color: getPillarColor(goal.pillar),
-                                            backgroundColor: `color-mix(in srgb, ${getPillarColor(goal.pillar)} 10%, transparent)`,
-                                            border: `1px solid color-mix(in srgb, ${getPillarColor(goal.pillar)} 30%, transparent)`
-                                        }}>
-                                            {goal.pillar}
-                                        </span>
-                                    )}
-                                </div>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '12px', fontSize: '13px' }}>
-                                    <div>
-                                        <span style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '2px' }}>Target</span>
-                                        <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>${goal.target_amount.toLocaleString()}</span>
-                                    </div>
-                                    <div>
-                                        <span style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '2px' }}>Current</span>
-                                        <span style={{ color: 'var(--color-accent-green)', fontWeight: 500 }}>${(goal.saved_amount || 0).toLocaleString()}</span>
-                                    </div>
-                                    <div style={{ borderLeft: '1px solid var(--border-color)', paddingLeft: '12px' }}>
-                                        <span style={{ display: 'block', color: 'var(--text-secondary)', marginBottom: '2px' }}>Time to Goal</span>
-                                        <span style={{ color: 'var(--color-accent-blue)', fontWeight: 500 }}>{calculateTimeToReach(goal)}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style={{ width: '100%', maxWidth: '120px' }}>
-                                <DashboardCTA label="View Details" targetTab={goal.pillar === 'finance' ? 'financial' : goal.pillar} targetAnchor="goals" variant="ghost" />
-                            </div>
-                        </div>
+                            onDelete={async (id) => {
+                                // Implement delete if API supports it?
+                                // GoalsSection props didn't pass onDelete logic before, 
+                                // but standard GoalCard has it.
+                                // For now, pass undefined or simple log if no delete API ready
+                                console.log("Delete not implemented in GoalsSection yet");
+                            }}
+                            onEdit={(g) => setEditingGoal(g)}
+                        />
                     ))}
                 </div>
             </div>
         );
     }
 
-    return (
-        <div className={styles.newGoalForm}>
-            <h3 className={styles.sectionTitle} style={{ marginBottom: '16px' }}>Set a New {variant === 'all' ? 'Life' : variant.charAt(0).toUpperCase() + variant.slice(1)} Goal</h3>
-            <div style={{ maxWidth: '480px' }}>
-                {variant === 'all' && (
-                    <div style={{ marginBottom: '12px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Category</label>
-                        <select
-                            className={styles.formInput}
-                            value={newGoal.pillar}
-                            onChange={e => setNewGoal({ ...newGoal, pillar: e.target.value as any })}
-                        >
-                            <option value="finance">Finance</option>
-                            <option value="time">Time</option>
-                            <option value="health">Health</option>
-                        </select>
-                    </div>
-                )}
-                <div style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Goal Name</label>
-                    <input
-                        type="text"
-                        placeholder="e.g. Emergency Fund"
-                        className={styles.formInput}
-                        value={newGoal.title}
-                        onChange={e => setNewGoal({ ...newGoal, title: e.target.value })}
-                    />
-                </div>
-                <div className={styles.formRow}>
-                    <div>
-                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Target Amount ($)</label>
-                        <input
-                            type="number"
-                            placeholder="0"
-                            className={styles.formInput}
-                            value={newGoal.target_amount || ''}
-                            onChange={e => setNewGoal({ ...newGoal, target_amount: parseFloat(e.target.value) })}
-                        />
-                    </div>
-                    <div>
-                        <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '4px' }}>Monthly Saving ($)</label>
-                        <input
-                            type="number"
-                            placeholder="0"
-                            className={styles.formInput}
-                            value={newGoal.monthly_contribution_target || ''}
-                            onChange={e => setNewGoal({ ...newGoal, monthly_contribution_target: parseFloat(e.target.value) })}
-                        />
-                    </div>
-                </div>
-
-                <div className={styles.formActions} style={{ marginTop: '24px' }}>
-                    <button
-                        onClick={handleCreate}
-                        disabled={!newGoal.title || !newGoal.target_amount}
-                        className={styles.saveButton}
-                    >
-                        Save Goal
-                    </button>
-                    <button onClick={() => setShowAdd(false)} className={styles.cancelButton}>Cancel</button>
-                </div>
-            </div>
-        </div>
-    );
+    return null;
 };
 
 export default GoalsSection;
-
-

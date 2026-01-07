@@ -8,25 +8,22 @@ import DashboardCTA from '../../components/common/DashboardCTA';
 import { Clock } from 'lucide-react';
 import { UnifiedDashboardLayout } from '../../components/layout/UnifiedDashboardLayout';
 import { DashboardHero } from '../../components/dashboard/DashboardHero';
-import { getFinancialScore, getFinancialGoals } from '../../api/financialApi';
+import { getFinancialScore } from '../../api/financialApi';
 
 const TimeDashboard: React.FC = () => {
     const [scoreData, setScoreData] = useState<any>(null);
-    const [goals, setGoals] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const isLearningMode = false;
-    const mockCoverageDays = 20;
+    const isLearningMode = false; // Forced false to show data
+    const mockCoverageDays = 20; // Forced high to unlock cards
 
     React.useEffect(() => {
         const loadData = async () => {
             try {
-                const [sData, gData] = await Promise.all([
-                    getFinancialScore('month'),
-                    getFinancialGoals('time')
+                const [sData] = await Promise.all([
+                    getFinancialScore('month')
                 ]);
                 setScoreData(sData);
-                setGoals(gData);
             } catch (e) {
                 console.error(e);
             } finally {
@@ -36,30 +33,83 @@ const TimeDashboard: React.FC = () => {
         loadData();
     }, []);
 
-    // Helper to generate mock pillar data
-    const getPillarData = (key: string) => {
-        const pillar = TIME_PILLARS[key];
-        const score = isLearningMode ? null : Math.floor(Math.random() * 40) + 60;
-        const trendData = [65, 68, 70, 72, 68, 75, 78, 80, 82, 85];
-        const earlySignal: SignalType = 'Improving';
+    // State for pillars
+    const [pillars, setPillars] = useState<any[]>([]);
 
-        return {
-            ...pillar,
-            score,
-            coverageDays: mockCoverageDays,
-            trendData: isLearningMode ? [] : trendData,
-            earlySignal
+    React.useEffect(() => {
+        const loadData = async () => {
+            try {
+                const [sData] = await Promise.all([
+                    getFinancialScore('month')
+                ]);
+                setScoreData(sData);
+
+                // Fetch real Time Score Breakdown
+                // Assuming getFinancialScore returns the unified score response which includes time data, 
+                // OR we need to call getTimeScore separately. 
+                // Let's rely on the breakdown from the unified score response first for consistency across dashboards.
+                if (sData?.breakdown?.productivity?.subscores) {
+                    const subscores = sData.breakdown.productivity.subscores;
+                    const mapPillar = (key: string, dataKey: string) => {
+                        const score = subscores[dataKey] !== undefined ? Math.round(subscores[dataKey]) : 0;
+                        const p = TIME_PILLARS[key];
+                        return {
+                            ...p,
+                            score: score,
+                            coverageDays: 20, // Default unlocked for now
+                            trendData: [65, 68, 70, 72, 68, 75, 78, 80, 82, 85], // Mock trend until API provides it
+                            earlySignal: 'Improving' as SignalType
+                        };
+                    };
+
+                    const realPillars = [
+                        mapPillar('SCHEDULE_COVERAGE', 'schedule_coverage'),
+                        mapPillar('PLANNING_HABIT', 'planning_habit'),
+                        mapPillar('FOCUS_BLOCKS', 'focus_blocks'),
+                        mapPillar('MEETING_LOAD', 'meeting_load'),
+                        mapPillar('CONTEXT_SWITCHING', 'context_switching'),
+                        mapPillar('WEEKLY_RHYTHM', 'weekly_rhythm'),
+                        mapPillar('TIME_ALIGNMENT', 'time_alignment')
+                    ];
+                    setPillars(realPillars);
+                } else if (sData?.breakdown?.productivity?.dimensions) {
+                    // Legacy fallback
+                    const dims = sData.breakdown.productivity.dimensions;
+                    const mapPillarLegacy = (key: string, dimKey: string) => {
+                        const d = dims[dimKey] || { score: 0, max: 25 };
+                        const normalizedScore = d.max ? Math.round((d.score / d.max) * 100) : 0;
+                        const p = TIME_PILLARS[key];
+                        return { ...p, score: normalizedScore, coverageDays: 20, trendData: [], earlySignal: 'Neutral' as SignalType };
+                    };
+                    const realPillars = [
+                        mapPillarLegacy('SCHEDULE_COVERAGE', 'structure'),
+                        mapPillarLegacy('PLANNING_HABIT', 'structure'),
+                        mapPillarLegacy('FOCUS_BLOCKS', 'focus'),
+                        mapPillarLegacy('MEETING_LOAD', 'load'),
+                        mapPillarLegacy('CONTEXT_SWITCHING', 'friction'),
+                        mapPillarLegacy('WEEKLY_RHYTHM', 'stress')
+                    ];
+                    setPillars(realPillars);
+                } else {
+                    // Fallback if data missing
+                    const fallbackPillars = [
+                        'SCHEDULE_COVERAGE', 'PLANNING_HABIT', 'FOCUS_BLOCKS',
+                        'MEETING_LOAD', 'CONTEXT_SWITCHING', 'WEEKLY_RHYTHM'
+                    ].map(key => {
+                        const pillar = TIME_PILLARS[key];
+                        return { ...pillar, score: 0, coverageDays: 0, trendData: [], earlySignal: 'Neutral' };
+                    });
+                    setPillars(fallbackPillars);
+                }
+
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
         };
-    };
-
-    const pillars = [
-        'SCHEDULE_COVERAGE',
-        'PLANNING_HABIT',
-        'FOCUS_BLOCKS',
-        'MEETING_LOAD',
-        'CONTEXT_SWITCHING',
-        'WEEKLY_RHYTHM'
-    ].map(key => getPillarData(key));
+        loadData();
+    }, []);
 
     if (loading) return <div className="p-8 text-white">Loading focus data...</div>;
 
@@ -72,11 +122,8 @@ const TimeDashboard: React.FC = () => {
             color="var(--color-accent-blue)"
             score={productivityScore}
             trend={scoreData?.productivity_trend || 0}
-            goals={goals}
+            // goals={goals} // Handled internally
             variant="time"
-            onAddGoal={() => {
-                window.location.href = '/profile?tab=time&anchor=goals';
-            }}
         />
     );
 

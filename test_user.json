@@ -1,0 +1,5 @@
+{
+    "email": "testuser@helm.com",
+    "auth0_id": "auth0|test12345",
+    "sub": "auth0|test12345"
+}

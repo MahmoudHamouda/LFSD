@@ -404,10 +404,12 @@ export const bookRide = async (bookingRequest: any): Promise<Response> => {
 
 
 export const getTimeEvents = async (): Promise<any[]> => {
+  const token = localStorage.getItem('token');
   const response = await fetch('/api/time/events', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
     }
   })
     .then(async (res) => {
@@ -415,7 +417,8 @@ export const getTimeEvents = async (): Promise<any[]> => {
         console.error('Failed to fetch time events');
         return [];
       }
-      return await res.json();
+      const payload = await res.json();
+      return payload.data || [];
     })
     .catch((_err) => {
       console.error('Error fetching time events');

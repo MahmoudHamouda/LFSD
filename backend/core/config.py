@@ -9,6 +9,7 @@ environment variables and can be optionally overridden by a `.env` file. See
 
 from functools import lru_cache
 from pathlib import Path
+import os
 
 # Pydantic v2 uses `pydantic_settings` for BaseSettings. Fallback to older import if needed.
 try:
@@ -32,9 +33,9 @@ class Settings(BaseSettings):
     """Configuration for the LFSD application."""
 
     APP_NAME: str = Field("lfsd", description="Human readable name of the application")
-    ENV: str = Field("dev", description="Environment name, e.g. dev/staging/prod")
-    DEBUG: bool = Field(False, description="Enable debug mode")
-    SECRET_KEY: str = Field(..., description="Secret key for JWT signing")
+    ENV: str = Field(os.environ.get("ENV", "dev"), description="Environment name, e.g. dev/staging/prod")
+    DEBUG: bool = Field(str(os.environ.get("DEBUG", "false")).lower() == "true", description="Enable debug mode")
+    SECRET_KEY: str = Field(os.environ.get("SECRET_KEY", "fallback-dev-secret-key"), description="Secret key for JWT signing")
     
     JWT_ALG: str = Field("HS256", description="Algorithm used to sign JWT tokens")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(60, description="Access token expiry window in minutes")
@@ -43,8 +44,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = Field("redis://redis:6379/0", description="Redis connection URL for rate limiting and caching")
     DATABASE_URL: str = Field("sqlite:///./lfsd_v2.db", description="Database connection URL (SQLite for dev, PostgreSQL for prod)")
     UBER_SERVER_TOKEN: str = Field("", description="Uber API Server Token for price estimates and ride requests")
-    GEMINI_API_KEY: str = Field("", description="Google Gemini API Key for chat generation")
-    GEMINI_MODEL: str = Field("gemini-flash-latest", description="Optional explicit Gemini model name (overrides auto‑detect)")
+    GEMINI_API_KEY: str = Field("AIzaSyDwhejk-FKUDtA47i5qH4HHGFJEDaX2KBw", env="GEMINI_API_KEY", description="Google Gemini API Key for chat generation")
+    GEMINI_MODEL: str = Field("gemini-2.0-flash-exp", description="Optional explicit Gemini model name (overrides auto‑detect)")
     
     # Careem Integration
     CAREEM_API_KEY: str = Field("", description="Careem API Key for booking and estimates")

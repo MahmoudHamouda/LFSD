@@ -9,6 +9,7 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
+from models.database import get_db
 
 from datetime import datetime
 from core.authentication import (
@@ -17,14 +18,13 @@ from core.authentication import (
     get_current_user,
 )
 from core.rate_limiting import limiter
-from models.database import get_db
-from models.models import FinancialAccount, Transaction, VivLog
+
 
 
 router = APIRouter(prefix="/user", tags=["User"])
 
 
-from models.models import FinancialAccount, Transaction, VivLog, User, OnboardingSession, VivIndex
+from models.models import FinancialAccount, FinancialTransaction, VivLog, User, OnboardingSession, VivIndex
 from core.authentication import get_password_hash
 import uuid
 from models.api_models import UserUpdateRequest
@@ -108,7 +108,7 @@ async def register_user(
                     except Exception:
                         pass
 
-                transaction = Transaction(
+                transaction = FinancialTransaction(
                     account_id=main_account.id,
                     user_id=new_user.id,
                     amount=float(t_data.get("amount", 0)),
@@ -315,7 +315,7 @@ async def update_user_me(
         } for a in accounts
     ]
 
-    transactions = db.query(Transaction).filter(Transaction.user_id == current_user.id).limit(5).all()
+    transactions = db.query(FinancialTransaction).filter(FinancialTransaction.user_id == current_user.id).limit(5).all()
     recent_transactions_data = [
         {
             "id": t.id,
@@ -386,7 +386,7 @@ async def get_user_snapshot(
     
     # Use new models
     accounts = db.query(FinancialAccount).filter(FinancialAccount.user_id == user_id).all()
-    transactions = db.query(Transaction).filter(Transaction.user_id == user_id).limit(10).all()
+    transactions = db.query(FinancialTransaction).filter(FinancialTransaction.user_id == user_id).limit(10).all()
     logs = db.query(VivLog).filter(VivLog.user_id == user_id).order_by(VivLog.timestamp.desc()).limit(10).all()
     
     # Calculate totals

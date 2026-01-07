@@ -13,7 +13,7 @@ from .rta_service import RTAService
 # from .bolt_service import BoltService
 # from .rta_service import RTAService
 from sqlalchemy.orm import Session
-from models.models import Order, Transaction, User
+from models.models import Order, FinancialTransaction, User
 from services.audit_service import AuditService
 import uuid
 from datetime import datetime
@@ -209,7 +209,7 @@ class MobilityAggregator:
                     
                     # 3. Create Transaction Record (If cost is known)
                     if order.amount_estimated > 0:
-                        transaction = Transaction(
+                        transaction = FinancialTransaction(
                             id=str(uuid.uuid4()),
                             user_id=user_id,
                             amount=order.amount_estimated,

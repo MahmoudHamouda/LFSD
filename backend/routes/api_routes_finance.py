@@ -51,8 +51,20 @@ async def get_transactions(
     db: Session = Depends(get_db)
 ):
     service = FinanceService(db)
-    service = FinanceService(db)
-    return {"data": service.get_transactions(current_user.id, limit)}
+    transactions = service.get_transactions(current_user.id, limit)
+    data = []
+    for t in transactions:
+        row = t.__dict__.copy()
+        if "_sa_instance_state" in row:
+            del row["_sa_instance_state"]
+        row["merchant"] = t.merchant_name or t.description or "Unknown"
+        # Fix: Frontend widget expects 'date' (YYYY-MM-DD or readable)
+        # Assuming transaction_date is date or datetime object
+        if hasattr(t, 'transaction_date') and t.transaction_date:
+             row["date"] = str(t.transaction_date).split(" ")[0] # YYYY-MM-DD
+        data.append(row)
+        
+    return {"data": data}
 
 @router.post("/upload-statement", summary="Upload bank statement")
 async def upload_statement(
@@ -159,48 +171,55 @@ async def get_category_coverage(
     WHOOP-style: Need X days of data in the last Y days.
     """
     from datetime import datetime, timedelta
-    from models.models import Transaction, RecurringBill
+    from models.models import FinancialTransaction, RecurringBill
     
-    # 1. Determine "Days with Data"
-    # For now, we count unique transaction dates in the window
-    start_date = datetime.utcnow() - timedelta(days=window_days)
-    
-    tx_dates = db.query(Transaction.transaction_date).filter(
-        Transaction.user_id == current_user.id,
-        Transaction.transaction_date >= start_date
-    ).distinct().count()
-    
-    # Logic: If manual mode (onboarding only), distinct dates might be 0 unless we track 'logins'
-    # For MVP: If verified bills exist, we count that as 'data' too.
-    
-    days_with_data = tx_dates
-    required = 20 # Unlock threshold (20 out of 30 days)
-    
-    # Override for specific categories if needed
-    if category_id == "bills_coverage":
-        # If user has verified bills, maybe lower threshold?
-        pass
+    try:
+        # 1. Determine "Days with Data"
+        start_date = datetime.utcnow() - timedelta(days=window_days)
+        
+        tx_dates = db.query(FinancialTransaction.transaction_date).filter(
+            FinancialTransaction.user_id == current_user.id,
+            FinancialTransaction.transaction_date >= start_date
+        ).distinct().count()
+        
+        days_with_data = tx_dates
+        required = 20 # Unlock threshold (20 out of 30 days)
+        
+        # Override for specific categories if needed
+        if category_id == "bills_coverage":
+            pass
 
-    has_data = days_with_data > 0
-    
-    # Simulate partial progress for 'estimated' users to encourage logging
-    # If 0 days but onboarding done, show 1 day to not look broken
-    if days_with_data == 0 and current_user.onboarding_status == "COMPLETE":
-        days_with_data = 1
-        has_data = True
+        has_data = days_with_data > 0
+        
+        if days_with_data == 0 and current_user.onboarding_status == "COMPLETE":
+            days_with_data = 1
+            has_data = True
+            
+        coverage_ratio = 1.0
+        if required > 0:
+            coverage_ratio = min(1.0, days_with_data / required)
 
-    return {
-        "category_id": category_id,
-        "window_days": window_days,
-        "days_with_data": days_with_data,
-        "required_days": required,
-        "coverage_ratio": min(1.0, days_with_data / required),
-        "has_some_data": has_data,
-        "no_data": not has_data,
-        "chart_unlocked": days_with_data >= required,
-        "remaining_days": max(0, required - days_with_data),
-        "expected_unlock_date": (datetime.utcnow() + timedelta(days=max(0, required - days_with_data))).strftime("%Y-%m-%d")
-    }
+        return {
+            "category_id": category_id,
+            "window_days": window_days,
+            "days_with_data": days_with_data,
+            "required_days": required,
+            "coverage_ratio": coverage_ratio,
+            "has_some_data": has_data,
+            "no_data": not has_data,
+            "chart_unlocked": days_with_data >= required,
+            "remaining_days": max(0, required - days_with_data),
+            "expected_unlock_date": (datetime.utcnow() + timedelta(days=max(0, required - days_with_data))).strftime("%Y-%m-%d")
+        }
+    except Exception as e:
+        import traceback
+        print(f"ERROR in coverage: {e}")
+        traceback.print_exc()
+        return {
+            "category_id": category_id,
+            "error": str(e),
+            "chart_unlocked": False
+        }
 
 @router.get("/categories/{category_id}/history")
 async def get_category_history(

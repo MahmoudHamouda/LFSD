@@ -1,5 +1,5 @@
 """
-Logic Engine for Viv.
+Logic Engine for HELM.
 Handles complex validation and business logic that requires more than just data retrieval.
 """
 from typing import Tuple, Dict, Any

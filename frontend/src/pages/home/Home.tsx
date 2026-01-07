@@ -150,6 +150,16 @@ const Home: React.FC = () => {
         subtext: 'vs last week'
     };
 
+    const getRecommendationIcon = (type: string) => {
+        switch (type) {
+            case 'finance': return <Wallet className="w-5 h-5 text-green-500" />;
+            case 'time': return <Clock className="w-5 h-5 text-blue-500" />;
+            case 'health': return <Heart className="w-5 h-5 text-red-500" />;
+            case 'mobility': return <Car className="w-5 h-5 text-purple-500" />;
+            default: return <Activity className="w-5 h-5 text-gray-500" />;
+        }
+    };
+
     return (
         <div className={styles.container}>
             {/* Hero Indexes Section */}
@@ -189,9 +199,10 @@ const Home: React.FC = () => {
                 </div>
             </section>
 
+
             {/* Main Sections Row: 2 Columns */}
             <div className={styles.sectionsRow}>
-                {/* Left Column: Streaks + Lifestyle */}
+                {/* Left Column: Streaks + Smart Recommendations */}
                 <div className={styles.columnLeft}>
                     {/* Streaks */}
                     {streaks && (
@@ -212,16 +223,11 @@ const Home: React.FC = () => {
                         </section>
                     )}
 
-                    {/* Lifestyle Section */}
-                    <section className={styles.lifestyleColumn}>
-                        <h2 className={styles.sectionTitle}>Lifestyle & Goals</h2>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <GoalsSection variant="all" />
-                        </div>
-                    </section>
+                    {/* Goals Section (Restored & Standardized) */}
+                    <GoalsSection variant="all" />
                 </div>
 
-                {/* Right Column: Quick Actions + Recommendations */}
+                {/* Right Column: Quick Actions + Treat Yourself */}
                 <div className={styles.columnRight}>
                     {/* Quick Actions */}
                     <section className={styles.quickActionsColumn}>
@@ -254,50 +260,10 @@ const Home: React.FC = () => {
                         </div>
                     </section>
 
-                    {/* Smart Recommendations */}
-                    <section className={styles.recommendationsSection}>
-                        <h2 className={styles.sectionTitle}>Smart Recommendations</h2>
-
-                        {recommendations.length > 0 ? (
-                            <div className={styles.recommendationsList}>
-                                {recommendations.map((rec) => (
-                                    <div key={rec.id} className={styles.recommendationCard}>
-                                        <div className={styles.recommendationHeader}>
-                                            <span className={styles.recommendationBadge}>
-                                                {rec.category.charAt(0) + rec.category.slice(1).toLowerCase()}
-                                            </span>
-                                            <span className={styles.recommendationTime}>
-                                                {calculateTimeAgo(rec.createdAt)}
-                                            </span>
-                                        </div>
-                                        <h3 className={styles.recommendationTitle}>
-                                            {rec.title}
-                                        </h3>
-                                        <p className={styles.recommendationDescription}>
-                                            {rec.body}
-                                        </p>
-                                        <button
-                                            className={styles.recommendationAction}
-                                            onClick={() => navigate(rec.cta.href)}
-                                        >
-                                            {rec.cta.label}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className={styles.emptyState}>
-                                <div className={styles.emptyStateIcon}>🎉</div>
-                                <p className={styles.emptyStateText}>All caught up! No new recommendations at this time.</p>
-                            </div>
-                        )}
-                    </section>
-
                     {/* Treat Yourself */}
-                    <section className={styles.recommendationsSection} style={{ marginTop: '20px' }}>
+                    <section className={styles.recommendationsSection}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                             <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Treat Yourself</h2>
-
                         </div>
 
                         <p style={{ color: 'var(--color-text-secondary)', marginBottom: '20px', fontSize: '14px' }}>
@@ -334,6 +300,42 @@ const Home: React.FC = () => {
                                 <p className={styles.emptyStateText}>No recommendations yet. Keep up the good work!</p>
                             </div>
                         )}
+                    </section>
+
+                    {/* Smart Recommendations */}
+                    <section className={styles.recommendationsSection}>
+                        <h2 className={styles.sectionTitle}>Smart Recommendations</h2>
+
+                        <div className={styles.recommendationsList}>
+                            {recommendations.length > 0 ? (
+                                recommendations.map((rec) => (
+                                    <div key={rec.id} className={styles.recommendationCard}>
+                                        <div className={styles.recommendationIconWrapper}>
+                                            <div className={styles.recommendationIcon}>
+                                                {getRecommendationIcon(rec.type)}
+                                            </div>
+                                        </div>
+                                        <div className={styles.recommendationContent}>
+                                            <h4 className={styles.recommendationTitle}>{rec.title}</h4>
+                                            <p className={styles.recommendationDescription}>{rec.body}</p> {/* Changed from rec.description to rec.body to match original data structure */}
+                                            <div className={styles.recommendationMeta}>
+                                                {/* Assuming rec.impact is available */}
+                                                {/* <span className={styles.recommendationImpact}>{rec.impact}</span> */}
+                                                <button className={styles.recommendationAction} onClick={() => navigate(rec.cta.href)}> {/* Added onClick to match original functionality */}
+                                                    {rec.cta.label} {/* Changed from "Review" to rec.cta.label */}
+                                                    {/* <ArrowRight className="w-4 h-4" /> */}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className={styles.emptyState}>
+                                    <div className={styles.emptyStateIcon}>🎉</div> {/* Added back empty state icon */}
+                                    <p className={styles.emptyStateText}>All caught up! No new recommendations at this time.</p> {/* Changed text to match original */}
+                                </div>
+                            )}
+                        </div>
                     </section>
                 </div>
             </div>

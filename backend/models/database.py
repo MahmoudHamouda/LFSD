@@ -11,10 +11,26 @@ from core.config import get_settings
 
 settings = get_settings()
 
-# Create SQLAlchemy engine
+# --- CLOUD SQL CONFIGURATION ---
+from google.cloud.sql.connector import Connector
+import pg8000
+
+def getconn():
+    connector = Connector()
+    conn = connector.connect(
+        "newprojectlfsd:us-central1:lfsd-postgres-prod",
+        "pg8000",
+        user="postgres",
+        password="LfsdSecure2024!",
+        db="lfsd",
+        ip_type="public"
+    )
+    return conn
+
+# Create SQLAlchemy engine with Cloud SQL Connector
 engine = create_engine(
-    settings.DATABASE_URL,
-    connect_args={"check_same_thread": False, "timeout": 30} if "sqlite" in settings.DATABASE_URL else {},
+    "postgresql+pg8000://",
+    creator=getconn,
     echo=settings.DEBUG,
 )
 

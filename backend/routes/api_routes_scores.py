@@ -84,8 +84,8 @@ async def submit_onboarding(payload: OnboardingPayload, db: Session = Depends(ge
         # If manual mode is explicitly requested, clear existing transactions for default_user
         if payload.is_manual_mode and user_id == "default_user":
             print("DEBUG: Clearing transactions for manual mode...")
-            from models.models import Transaction, Statement
-            db.query(Transaction).filter(Transaction.user_id == user_id).delete()
+            from models.models import FinancialTransaction, Statement
+            db.query(FinancialTransaction).filter(FinancialTransaction.user_id == user_id).delete()
             db.query(Statement).filter(Statement.user_id == user_id).delete()
             db.commit()
 
@@ -171,6 +171,16 @@ async def get_scores(
     """
     user_id = current_user.id
     
+    # Debug Info Injection (EARLY)
+    count_viv = db.query(VivIndex).filter(VivIndex.user_id == user_id).count()
+    debug_info = {
+        "user_id": user_id,
+        "viv_count": count_viv,
+        "latest_index_found": False,
+        "db_url_hint": str(db.get_bind().url)
+    }
+    print(f"DEBUG_CLOUD_RUN: {debug_info}")
+
     # Get latest VivIndex
     latest_index = db.query(VivIndex).filter(VivIndex.user_id == user_id).order_by(VivIndex.timestamp.desc()).first()
     
@@ -179,21 +189,17 @@ async def get_scores(
             financial_score=0,
             health_score=0,
             productivity_score=0,
-            financial_trend=None,
-            health_trend=None,
-            productivity_trend=None,
             has_data=False,
-            breakdown={}
+            breakdown={"debug_info": debug_info}
         )
+    
+    debug_info["latest_index_found"] = True
 
     # Calculate Trends
     days_back = 30 if period == "month" else 7
     cutoff_date = datetime.utcnow() - timedelta(days=days_back)
     
-    # Find the snapshot closest to cutoff (must be before or at cutoff)
-    # Ideally, we want the first snapshot *after* the cutoff, or the last one *before*?
-    # Actually, we want the score from `days_back` ago. So we look for the latest record that is <= cutoff.
-    # Logic: sort desc by timestamp, filter where timestamp <= cutoff, take first.
+    # ... (rest of logic) ...
     historical_index = db.query(VivIndex).filter(
         VivIndex.user_id == user_id,
         VivIndex.timestamp <= cutoff_date
@@ -218,8 +224,7 @@ async def get_scores(
     if not breakdown.get("financial"):
         latest_fs = db.query(FinancialScore).filter(FinancialScore.user_id == user_id).order_by(FinancialScore.timestamp.desc()).first()
         if latest_fs:
-            print(f"DEBUG: Recovering financial breakdown from FinancialScore table for user {user_id}")
-            breakdown["financial"] = {
+             breakdown["financial"] = {
                 "overall_score": latest_fs.overall_score,
                 "subscores": {
                     "cashflow_stability": latest_fs.cashflow_stability_score,
@@ -235,18 +240,118 @@ async def get_scores(
                      "time_window": latest_fs.time_window,
                      "data_sources": latest_fs.data_sources_json
                 }
+             }
+        
+    # Always prefer TimeScore table for productivity/time data if it exists
+    from models.models import TimeScore
+    latest_ts = db.query(TimeScore).filter(TimeScore.user_id == user_id).order_by(TimeScore.timestamp.desc()).first()
+    if latest_ts:
+         breakdown["productivity"] = {
+            "overall_score": latest_ts.overall_score,
+            "subscores": {
+                "schedule_coverage": latest_ts.schedule_coverage_score,
+                "planning_habit": latest_ts.planning_habit_score,
+                "focus_blocks": latest_ts.focus_blocks_score,
+                "meeting_load": latest_ts.meeting_load_score,
+                "context_switching": latest_ts.context_switching_score,
+                "weekly_rhythm": latest_ts.weekly_rhythm_score,
+                "time_alignment": latest_ts.time_alignment_score
+            },
+            "metadata": {
+                 "time_window": latest_ts.time_window,
+                 "data_sources": latest_ts.data_sources_json
             }
+         }
         
     # Construct Categories for Frontend Compatibility (flattened subscores)
     categories = {}
+    
+    # Populate categories with subscores and coverage data based on available data
+    # Financial subscores
     if breakdown.get("financial") and breakdown["financial"].get("subscores"):
-        for key, val in breakdown["financial"]["subscores"].items():
-            categories[key] = {"score": val, "badge": "Neutral"} # Default badge
+        from models.models import FinancialTransaction
+        
+        # Calculate coverage for financial pillars (days with transaction data)
+        window_days = 30
+        start_date = datetime.utcnow() - timedelta(days=window_days)
+        
+        tx_dates = db.query(FinancialTransaction.transaction_date).filter(
+            FinancialTransaction.user_id == user_id,
+            FinancialTransaction.transaction_date >= start_date
+        ).distinct().count()
+        
+        # All financial pillars share the same coverage (based on transaction data)
+        coverage_days = tx_dates
+        
+        # Map each subscore to categories format
+        subscores = breakdown["financial"]["subscores"]
+        for pillar_id, score in subscores.items():
+            categories[pillar_id] = {
+                "score": score,
+                "coverage": coverage_days
+            }
+    
+    # Time/Productivity subscores (if user has time/productivity data)
+    time_data = breakdown.get("productivity") or breakdown.get("time")
+    if time_data and time_data.get("subscores"):
+        from models.models import CalendarEvent
+        
+        # Calculate coverage for time pillars (days with calendar events)
+        window_days = 30
+        start_date = datetime.utcnow() - timedelta(days=window_days)
+        
+        event_dates = db.query(CalendarEvent.start_time).filter(
+            CalendarEvent.user_id == user_id,
+            CalendarEvent.start_time >= start_date
+        ).distinct().count()
+        
+        coverage_days = event_dates
+        
+        # Map time subscores
+        subscores = time_data["subscores"]
+        for pillar_id, score in subscores.items():
+            categories[pillar_id] = {
+                "score": score,
+                "coverage": coverage_days
+            }
+    
+    # Health subscores (if user has health data)
+    if breakdown.get("health") and breakdown["health"].get("subscores"):
+        from models.models import HealthDailySummary
+        
+        # Calculate coverage for health pillars (days with health data)
+        window_days = 30
+        start_date = datetime.utcnow() - timedelta(days=window_days)
+        
+        health_dates = db.query(HealthDailySummary.date).filter(
+            HealthDailySummary.user_id == user_id,
+            HealthDailySummary.date >= start_date.date()
+        ).distinct().count()
+        
+        coverage_days = health_dates
+        
+        # Map health subscores
+        subscores = breakdown["health"]["subscores"]
+        for pillar_id, score in subscores.items():
+            categories[pillar_id] = {
+                "score": score,
+                "coverage": coverage_days
+            }
+    
+    # Inject debug info into final breakdown
+    breakdown["debug_info"] = debug_info
+
+    # Use productivity score from breakdown if available (from TimeScore), otherwise fallback to VivIndex
+    productivity_score = latest_index.time_score
+    if breakdown.get("productivity") and "overall_score" in breakdown["productivity"]:
+        productivity_score = breakdown["productivity"]["overall_score"]
+    elif breakdown.get("time") and "overall_score" in breakdown["time"]:
+        productivity_score = breakdown["time"]["overall_score"]
 
     return ScoreResponse(
         financial_score=latest_index.financial_score,
         health_score=latest_index.health_score,
-        productivity_score=latest_index.time_score,
+        productivity_score=productivity_score,
         financial_trend=round(fin_trend, 1) if fin_trend is not None else None,
         health_trend=round(hlth_trend, 1) if hlth_trend is not None else None,
         productivity_trend=round(prod_trend, 1) if prod_trend is not None else None,

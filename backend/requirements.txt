@@ -1,0 +1,43 @@
+# Core Framework
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.1
+sqlalchemy>=2.0.27
+psycopg2-binary>=2.9.9
+cloud-sql-python-connector[pg8000]>=1.7.0
+pydantic-settings
+alembic
+# psycopg2-binary # This line was moved and updated with a version constraint
+
+# Utilities
+python-dotenv
+loguru
+httpx
+requests
+python-dateutil
+dateparser
+python-multipart
+apscheduler
+
+# Security & Auth
+pyjwt
+passlib[bcrypt]
+slowapi
+redis
+authlib>=1.3.0
+python-jose[cryptography]>=3.3.0
+
+# AI & Google Integration
+google-generativeai
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+
+# File Processing
+pymupdf
+pdf2image
+pytesseract
+Pillow
+
+# Testing
+pytest
+pytest-asyncio

@@ -315,6 +315,47 @@ async def disconnect_health_provider(
     
     return {"message": f"Disconnected from {provider}"}
 
+@router.get("/summaries", summary="Get recent health summaries")
+async def get_health_summaries(
+    start_date: Optional[str] = None,
+    end_date: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get list of daily health summaries.
+    """
+    query = db.query(HealthDailySummary).filter(HealthDailySummary.user_id == current_user.id)
+    
+    if start_date:
+        query = query.filter(HealthDailySummary.date >= datetime.strptime(start_date, "%Y-%m-%d").date())
+    if end_date:
+        query = query.filter(HealthDailySummary.date <= datetime.strptime(end_date, "%Y-%m-%d").date())
+        
+    # Default to last 30 days if no date range
+    if not start_date and not end_date:
+        query = query.order_by(HealthDailySummary.date.desc()).limit(30)
+    else:
+        query = query.order_by(HealthDailySummary.date.desc())
+        
+    summaries = query.all()
+    
+    # Map to frontend expected format (camelCase and units)
+    mapped_data = []
+    for s in summaries:
+        mapped_data.append({
+            "id": s.id,
+            "date": s.date.isoformat(),
+            "sleepHours": (s.sleep_duration_minutes or 0) / 60.0,
+            "sleepQualityScore": s.sleep_quality_score,
+            "stepsCount": s.steps_count or 0,
+            "hrvAverage": s.hrv_average,
+            "restingHeartRate": s.resting_heart_rate,
+            "recoveryScore": int((s.hrv_average or 0) * 2) if s.hrv_average else 50
+        })
+        
+    return {"status": "success", "data": mapped_data}
+
 @router.get("/summary", summary="Get daily health summary")
 async def get_health_summary(
     date_str: str,

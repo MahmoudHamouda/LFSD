@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import List, Optional
-from models.models import FinancialAccount, Transaction
+from models.models import FinancialAccount, FinancialTransaction
 from models.investment_portfolios import InvestmentPortfolio
 from models.database import get_db
 
@@ -34,9 +34,9 @@ class FinanceService:
             "daily_change_percent": round(weighted_change, 2)
         }
 
-    def add_transaction(self, user_id: str, transaction_data: dict) -> Transaction:
+    def add_transaction(self, user_id: str, transaction_data: dict) -> FinancialTransaction:
         """Add a manual transaction."""
-        transaction = Transaction(
+        transaction = FinancialTransaction(
             user_id=user_id,
             account_id=transaction_data.get("account_id"),
             amount=transaction_data.get("amount"),
@@ -52,11 +52,11 @@ class FinanceService:
         """Get all financial accounts."""
         return self.db.query(FinancialAccount).filter(FinancialAccount.user_id == user_id).all()
 
-    def get_transactions(self, user_id: str, limit: int = 20) -> List[Transaction]:
+    def get_transactions(self, user_id: str, limit: int = 20) -> List[FinancialTransaction]:
         """Get recent transactions."""
-        return self.db.query(Transaction).filter(
-            Transaction.user_id == user_id
-        ).order_by(Transaction.transaction_date.desc()).limit(limit).all()
+        return self.db.query(FinancialTransaction).filter(
+            FinancialTransaction.user_id == user_id
+        ).order_by(FinancialTransaction.transaction_date.desc()).limit(limit).all()
 
     def get_monthly_summary(self, user_id: str) -> dict:
         """Calculate monthly financial summary (Income, Expenses, Bills, Savings)."""
@@ -64,9 +64,9 @@ class FinanceService:
         # Simple logic: Aggregates for last 30 days
         cutoff_date = datetime.utcnow() - timedelta(days=30)
         
-        transactions = self.db.query(Transaction).filter(
-            Transaction.user_id == user_id,
-            Transaction.transaction_date >= cutoff_date
+        transactions = self.db.query(FinancialTransaction).filter(
+            FinancialTransaction.user_id == user_id,
+            FinancialTransaction.transaction_date >= cutoff_date
         ).all()
         
         current_investments = self.get_portfolio_performance(user_id)["total_value"]

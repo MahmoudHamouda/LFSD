@@ -19,18 +19,42 @@ const cardStyles: IStackStyles = {
 };
 
 export const SpendingTrends: React.FC<SpendingTrendsProps> = ({ transactions }) => {
-    // TODO: In a real implementation, aggregate daily spending from 'transactions' prop.
-    // For now, using mock data for visual demonstration if not enough real data.
+    // Aggregate daily spending for the last 7 days
+    const data = React.useMemo(() => {
+        if (!transactions || transactions.length === 0) return [];
 
-    const data = [
-        { name: 'Mon', amount: 120 },
-        { name: 'Tue', amount: 200 },
-        { name: 'Wed', amount: 150 },
-        { name: 'Thu', amount: 300 },
-        { name: 'Fri', amount: 250 },
-        { name: 'Sat', amount: 380 },
-        { name: 'Sun', amount: 190 },
-    ];
+        const today = new Date();
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date();
+            d.setDate(today.getDate() - (6 - i)); // 6 days ago to today
+            return d;
+        });
+
+        return last7Days.map(date => {
+            const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+            const dateStr = date.toISOString().split('T')[0];
+
+            // Sum negative amounts (spending) for this day
+            const amount = transactions
+                .filter(t => t.transaction_date.startsWith(dateStr) && t.amount < 0)
+                .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+            return { name: dayName, amount };
+        });
+    }, [transactions]);
+
+    if (data.length === 0) {
+        return (
+            <Stack styles={cardStyles}>
+                <Text variant="large" styles={{ root: { fontWeight: 600, color: 'var(--text-primary)' } }}>
+                    Weekly Spending Trend
+                </Text>
+                <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    No spending data available for this week.
+                </div>
+            </Stack>
+        );
+    }
 
     return (
         <Stack styles={cardStyles} tokens={{ childrenGap: 10 }}>

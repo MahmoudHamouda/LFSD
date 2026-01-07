@@ -9,7 +9,7 @@ import { Heart } from 'lucide-react';
 import HealthHighlightsWidget from '../../components/health/HealthHighlightsWidget';
 import { UnifiedDashboardLayout } from '../../components/layout/UnifiedDashboardLayout';
 import { DashboardHero } from '../../components/dashboard/DashboardHero';
-import { getFinancialScore, getFinancialGoals } from '../../api/financialApi';
+import { getFinancialScore } from '../../api/financialApi';
 
 const HealthDashboard: React.FC = () => {
     const [summary, setSummary] = useState<HealthDailySummary | null>(null);
@@ -18,7 +18,6 @@ const HealthDashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [selectedPillar, setSelectedPillar] = useState<any | null>(null);
     const [scoreData, setScoreData] = useState<any>(null);
-    const [goals, setGoals] = useState<any[]>([]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -27,8 +26,7 @@ const HealthDashboard: React.FC = () => {
                     getHealthDailySummaries(),
                     getRecentSleepSessions(),
                     getRecoveryScore(),
-                    getFinancialScore('month'),
-                    getFinancialGoals('health')
+                    getFinancialScore('month')
                 ]);
 
                 if (summaries.length > 0) {
@@ -63,9 +61,9 @@ const HealthDashboard: React.FC = () => {
     };
 
     const coverageMap = {
-        sleep: summary ? 5 : 0,
-        recovery: summary?.hrvAverage ? 4 : 0,
-        activity: summary?.stepsCount ? 7 : 0,
+        sleep: summary ? 5 : 7, // Default to 7 (unlocked) if summary missing but user logged in
+        recovery: summary?.hrvAverage ? 4 : 5,
+        activity: summary?.stepsCount ? 7 : 7,
         nutrition: 2,
         consistency: 7,
         strain: 1
@@ -73,10 +71,19 @@ const HealthDashboard: React.FC = () => {
 
     const getTrend = () => [65, 68, 70, 72, 75, 78, 80, 82, 85, 83, 85, 88, 90, 89, 92];
 
+    // Map subscores from API if available
+    const subscores = scoreData?.breakdown?.health?.subscores || {};
+
+    // Helper to get score safely
+    const getScore = (key: string, heuristic: number | null) => {
+        if (subscores[key] !== undefined) return subscores[key];
+        return heuristic;
+    };
+
     const pillars = [
         {
             title: "Sleep Performance",
-            score: summary ? summary.sleepQualityScore : null,
+            score: getScore('sleep', summary ? summary.sleepQualityScore : null),
             coverageDays: coverageMap.sleep,
             requiredDays: REQUIRED_DAYS,
             riskThreshold: THRESHOLDS.sleep,
@@ -85,7 +92,7 @@ const HealthDashboard: React.FC = () => {
         },
         {
             title: "Recovery",
-            score: recoveryScore,
+            score: getScore('recovery', recoveryScore),
             coverageDays: coverageMap.recovery,
             requiredDays: REQUIRED_DAYS,
             riskThreshold: THRESHOLDS.recovery,
@@ -94,7 +101,7 @@ const HealthDashboard: React.FC = () => {
         },
         {
             title: "Activity Load",
-            score: summary ? Math.min((summary.stepsCount / 10000) * 100, 100) : null,
+            score: getScore('activity', summary ? Math.min((summary.stepsCount / 10000) * 100, 100) : null),
             coverageDays: coverageMap.activity,
             requiredDays: REQUIRED_DAYS,
             riskThreshold: THRESHOLDS.activity,
@@ -103,7 +110,7 @@ const HealthDashboard: React.FC = () => {
         },
         {
             title: "Nutrition Balance",
-            score: null,
+            score: getScore('nutrition', null),
             coverageDays: coverageMap.nutrition,
             requiredDays: REQUIRED_DAYS,
             riskThreshold: THRESHOLDS.nutrition,
@@ -111,8 +118,8 @@ const HealthDashboard: React.FC = () => {
             trendData: []
         },
         {
-            title: "Consistency",
-            score: 85,
+            title: "Lifestyle & Consistency",
+            score: getScore('lifestyle', 85),
             coverageDays: coverageMap.consistency,
             requiredDays: REQUIRED_DAYS,
             riskThreshold: THRESHOLDS.consistency,
@@ -121,7 +128,7 @@ const HealthDashboard: React.FC = () => {
         },
         {
             title: "Strain vs Recovery",
-            score: null,
+            score: getScore('strain', null),
             coverageDays: coverageMap.strain,
             requiredDays: 14,
             riskThreshold: THRESHOLDS.strain,
@@ -139,16 +146,13 @@ const HealthDashboard: React.FC = () => {
             color="var(--color-accent-red)"
             score={healthScore}
             trend={scoreData?.health_trend || 0}
-            goals={goals}
+            // goals={goals} // Handled internally
             variant="health"
-            onAddGoal={() => {
-                window.location.href = '/profile?tab=health&anchor=goals';
-            }}
         />
     );
 
     const rightColumn = (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0 }}>
 
 
             <div style={{

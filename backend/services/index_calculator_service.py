@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import uuid
 
-from models.models import User, VivIndex, FinancialAccount, Transaction, HealthDailySummary, VivLog
+from models.models import User, VivIndex, FinancialAccount, FinancialTransaction, HealthDailySummary, VivLog
 
 # ============================================================================
 # Index Calculation Functions
@@ -32,9 +32,9 @@ def calculate_financial_wellbeing_index(user_id: str, db: Session) -> float:
     
     # Get transactions for income/expenses (last 30 days)
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    transactions = db.query(Transaction).filter(
-        Transaction.user_id == user_id,
-        Transaction.transaction_date >= thirty_days_ago
+    transactions = db.query(FinancialTransaction).filter(
+        FinancialTransaction.user_id == user_id,
+        FinancialTransaction.transaction_date >= thirty_days_ago
     ).all()
     
     income = sum(t.amount for t in transactions if t.amount > 0)
@@ -60,7 +60,7 @@ def calculate_time_saved_index(user_id: str, db: Session) -> float:
     """
     Calculate time saved index (0-100).
     
-    Based on VivLogs (automation, recommendations).
+    Based on chat logs (automation, recommendations).
     """
     # Get logs from last 30 days
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)

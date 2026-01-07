@@ -5,7 +5,7 @@
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 40px;
+    gap: 38px;
 }
 
 .header {
@@ -24,7 +24,7 @@
 }
 
 .title {
-    font-size: 30px;
+    font-size: 29px;
     font-weight: 700;
     margin-bottom: 4px;
     color: var(--text-primary);
@@ -66,7 +66,7 @@
 }
 
 .overallScore {
-    font-size: 36px;
+    font-size: 34px;
     font-weight: 700;
     font-family: monospace;
     color: var(--text-primary);
@@ -87,7 +87,7 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 700;
     color: var(--text-primary);
     margin-bottom: var(--space-6);
@@ -95,20 +95,8 @@
 
 .grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: var(--space-4);
-}
-
-@media (min-width: 768px) {
-    .grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1024px) {
-    .grid {
-        grid-template-columns: repeat(4, 1fr);
-    }
 }
 
 .infoBox {

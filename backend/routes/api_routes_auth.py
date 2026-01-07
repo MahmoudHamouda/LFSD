@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from models.database import get_db
-from models.models import User
+from models import User, Connection
 import uuid
 import secrets
 from datetime import datetime, timedelta
@@ -57,6 +57,43 @@ async def signup(payload: SignupPayload, db: Session = Depends(get_db)):
         print(f"[AUTH-ERROR] {error_msg}")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Signup failed: {str(e)}")
+
+class LoginPayload(BaseModel):
+    username: str
+    password: str
+
+@router.post("/login")
+async def login(payload: LoginPayload, db: Session = Depends(get_db)):
+    try:
+        from core.authentication import authenticate_user, create_access_token
+        print(f"[LOGIN] Attempting login for {payload.username}")
+        user = authenticate_user(db, payload.username, payload.password)
+        # user = authenticate_user(db, payload.username, "password") # FALLBACK FOR DEBUGGING IF NEEDED
+        if not user:
+            print(f"[LOGIN] Authentication failed for {payload.username}")
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        print(f"[LOGIN CRITICAL ERROR] {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Login internal error: {e}")
+    
+    access_token = create_access_token(data={"sub": user.email})
+    
+    user_data = {
+        "id": user.id,
+        "email": user.email,
+        "name": user.profile_json.get("name", "") if user.profile_json else "",
+        "onboarding_status": user.onboarding_status or "NOT_STARTED"
+    }
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user_data
+    }
 
 class CodePayload(BaseModel):
     code: str

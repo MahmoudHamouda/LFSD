@@ -2,7 +2,12 @@ import { FinancialAccount, Transaction } from '../types/finance';
 
 export async function getFinancialAccounts(): Promise<FinancialAccount[]> {
     try {
-        const response = await fetch('/api/financial/accounts');
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/finance/accounts', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         if (!response.ok) {
             return [];
         }
@@ -16,7 +21,12 @@ export async function getFinancialAccounts(): Promise<FinancialAccount[]> {
 
 export async function getTransactions(limit: number = 20): Promise<Transaction[]> {
     try {
-        const response = await fetch(`/api/financial/transactions?limit=${limit}`);
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/finance/transactions?limit=${limit}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
         if (!response.ok) {
             return [];
         }

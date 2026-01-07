@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { getFinancialScore, getFinancialGoals } from '../../api/financialApi';
+import { getFinancialScore } from '../../api/financialApi';
 import ProgressivePillarCard from '../../components/finance/ProgressivePillarCard';
 // import TrendCard from '../../components/dashboard/TrendCard'; // Removed in favor of TrendPanel
 import TrendPanel from '../../components/common/TrendPanel';
@@ -17,7 +17,6 @@ const FinanceDashboard: React.FC = () => {
     const [scoreData, setScoreData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-    const [goals, setGoals] = useState<any[]>([]);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -26,12 +25,10 @@ const FinanceDashboard: React.FC = () => {
 
     const loadData = async () => {
         try {
-            const [score, goalsData] = await Promise.all([
-                getFinancialScore('month'),
-                getFinancialGoals('finance')
+            const [score] = await Promise.all([
+                getFinancialScore('month')
             ]);
             setScoreData(score);
-            setGoals(goalsData);
         } catch (e) {
             console.error(e);
         } finally {
@@ -66,16 +63,13 @@ const FinanceDashboard: React.FC = () => {
             color="var(--color-accent-green)"
             score={overallScore}
             trend={+2.5}
-            goals={goals}
+            // goals={goals} // Handled internally
             variant="finance"
-            onAddGoal={() => {
-                navigate('/profile?tab=financial&anchor=goals');
-            }}
         />
     );
 
     const pillarsSection = (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0 }}>
 
 
             {/* Core Pillars Grid */}
@@ -93,8 +87,9 @@ const FinanceDashboard: React.FC = () => {
 
                 <div className={styles.grid}>
                     {pillarsList.map(pillar => {
-                        const catData = categories[pillar.id] || { score: 0 };
-                        const simulatedCoverage = catData.score > 0 ? 30 : 5;
+                        const catData = categories[pillar.id] || { score: 0, coverage: 0 };
+                        // Use real coverage if valid, else default to 0 for "Learning"
+                        const coverageDays = catData.coverage !== undefined ? catData.coverage : 0;
                         const trendData = [65, 68, 66, 70, 72, 71, 75, 78, 80, 82, 81, 85, 88, 87, 90];
 
                         return (
@@ -103,13 +98,13 @@ const FinanceDashboard: React.FC = () => {
                                 title={pillar.title}
                                 description={pillar.desc}
                                 score={catData.score}
-                                coverageDays={simulatedCoverage}
+                                coverageDays={coverageDays}
                                 requiredDays={20}
                                 riskThreshold={50}
                                 profileLink={`/profile#${pillar.id}`}
                                 trendData={trendData}
                                 onClick={() => {
-                                    if (simulatedCoverage >= 20) {
+                                    if (coverageDays >= 20) {
                                         setSelectedCategory(pillar.id);
                                     } else {
                                         window.location.href = `/profile?tab=financial&anchor=connections`;

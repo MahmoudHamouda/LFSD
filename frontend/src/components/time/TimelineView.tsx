@@ -36,7 +36,14 @@ export const TimelineView: React.FC = () => {
         const fetchEvents = async () => {
             try {
                 const data = await getTimeEvents();
-                setEvents(data);
+                // Filter for today's events
+                const today = new Date().toDateString();
+                const todaysEvents = data.filter((e: any) => {
+                    // Support both start_time (backend) and start (frontend mapping)
+                    const dateStr = e.start_time || e.start;
+                    return new Date(dateStr).toDateString() === today;
+                });
+                setEvents(todaysEvents);
             } catch (error) {
                 console.error("Error loading events", error);
             } finally {
