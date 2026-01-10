@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
 
       # Step 3: Install Frontend Dependencies
       - name: Install Frontend Dependencies
@@ -61,14 +61,13 @@ jobs:
           gcloud components install gke-gcloud-auth-plugin
 
       - name: Get credentials for the cluster (disabled)
-        if: ${{ false }}         # ← paste this line under the name (same indentation)
+        if: ${{ false }} # ← paste this line under the name (same indentation)
         run: |
-         gcloud container clusters get-credentials my-cluster-lfsd --zone us-central1-a --project ${{ env.PROJECT_ID }}
-         export USE_GKE_GCLOUD_AUTH_PLUGIN=True
-         kubectl config set-credentials "${{ env.PROJECT_ID }}" --exec-command="$(gcloud info --format='value(basic.python_location)')/bin/gke-gcloud-auth-plugin"
-         kubectl config current-context
+          gcloud container clusters get-credentials my-cluster-lfsd --zone us-central1-a --project ${{ env.PROJECT_ID }}
+          export USE_GKE_GCLOUD_AUTH_PLUGIN=True
+          kubectl config set-credentials "${{ env.PROJECT_ID }}" --exec-command="$(gcloud info --format='value(basic.python_location)')/bin/gke-gcloud-auth-plugin"
+          kubectl config current-context
 
-          
       # Step 7: Deploy Kubernetes Resources
       - name: Deploy Kubernetes Resources
         if: ${{ false }}
@@ -77,7 +76,6 @@ jobs:
           kubectl apply -f k8s/volumes.yaml  --validate=false
           kubectl apply -f k8s/databases.yaml  --validate=false
           kubectl apply -f k8s/deployment.yaml  --validate=false
-          
 
       # Step 8: Log in to Docker Hub
       - name: Log in to Docker Hub
@@ -86,18 +84,41 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 9: Build and Push Docker Images
+      # Step 9: Make Short SHA available
+      - name: Get Short SHA
+        id: slug
+        run: echo "sha8=$(echo ${GITHUB_SHA} | cut -c1-8)" >> $GITHUB_OUTPUT
+
+      # Step 10: Build and Push Docker Images
       - name: Build and Push Docker Images
         run: |
-          IMAGE_TAG=$(echo $GITHUB_SHA | head -c7)
+          export IMAGE_TAG=${{ steps.slug.outputs.sha8 }}
 
-          # Build and push to Google Container Registry
+          # Build and push Frontend to Google Container Registry
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG -f docker/Dockerfile.lfsd .
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG
 
-          # Tag and push to Docker Hub
+          # Build and push Backend to Google Container Registry
+          docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:$IMAGE_TAG -f backend/Dockerfile backend
+          docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:$IMAGE_TAG
+
+          # Tag and push Frontend to Docker Hub
           docker tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG hamoum/lfsd:latest
           docker push hamoum/lfsd:latest
+
+      # Step 11: Deploy Backend to Cloud Run
+      - name: Deploy Backend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v1
+        with:
+          service: lfsd-backend
+          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:${{ steps.slug.outputs.sha8 }}
+          region: us-central1
+          env_vars: |
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_HOST=${{ secrets.DB_HOST }}
+            GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
 
       # Optional: Notify Success
       - name: Notify Success
