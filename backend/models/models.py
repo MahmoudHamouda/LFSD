@@ -26,6 +26,10 @@ class User(Base):
     profile_json = Column(JSON, nullable=True)  # Unstructured bio data
     viv_preferences = Column(JSON, nullable=True)  # Risk tolerance, comm style, etc.
     
+    # Account Status
+    account_status = Column(String, default="ACTIVE") # ACTIVE, LOCKED
+    role = Column(String, default="user") # user, admin
+    
     # Onboarding State Machine
     onboarding_status = Column(String, default="NOT_STARTED") # NOT_STARTED, IN_PROGRESS, COMPLETE
     onboarding_step = Column(String, nullable=True)
@@ -50,10 +54,14 @@ class User(Base):
     mobility_trips = relationship("MobilityTrip", back_populates="user", cascade="all, delete-orphan")
     viv_logs = relationship("VivLog", back_populates="user", cascade="all, delete-orphan")
     connections = relationship("Connection", back_populates="user", cascade="all, delete-orphan")
+    notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
+    limit_overrides = relationship("UserLimitOverride", back_populates="user", cascade="all, delete-orphan")
     statements = relationship("Statement", back_populates="user", cascade="all, delete-orphan")
     financial_scores = relationship("FinancialScore", back_populates="user", cascade="all, delete-orphan")
     time_scores = relationship("TimeScore", back_populates="user", cascade="all, delete-orphan")
     health_data_samples = relationship("HealthDataSample", back_populates="user", cascade="all, delete-orphan")
+    subscription = relationship("Subscription", uselist=False, back_populates="user", cascade="all, delete-orphan")
+    conversations = relationship("DBConversation", back_populates="user", cascade="all, delete-orphan")
 
 
 class Connection(Base):
@@ -171,7 +179,7 @@ class FinancialAccount(Base):
     transactions = relationship("FinancialTransaction", back_populates="account", cascade="all, delete-orphan")
 
 
-from .logging_models import SystemLog, BugReport, LogLevel, BugStatus
+from .logging_models import SystemLog, BugReport, LogLevel, BugStatus, ActivityFeed, AuditLog, Notification
 
 __all__ = [
     "User", "Connection", "VivIndex", "LifeGoal", "FinancialAccount", 
@@ -402,21 +410,7 @@ class Recommendation(Base):
     user = relationship("User", back_populates="recommendations")
 
 
-class ActivityFeed(Base):
-    __tablename__ = "activity_feed"
-    __table_args__ = {'extend_existing': True}
-    
-    id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
-    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
-    
-    action_type = Column(String, nullable=False) # RECOMMENDATION_CREATED, etc.
-    description = Column(String, nullable=False)
-    metadata_json = Column(JSON, nullable=True) # Linked entity ID, etc.
-    
-    is_read = Column(Boolean, default=False)
-    
-    user = relationship("User", back_populates="activity_feed")
+
 
 # ============================================================================
 # 5. Chat & Conversation Models
@@ -427,10 +421,12 @@ class DBConversation(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True) # Optional for now, but suggested for usage tracking
     title = Column(String, nullable=True)
     date = Column(DateTime, default=datetime.utcnow)
     
     messages = relationship("DBMessage", back_populates="conversation", cascade="all, delete-orphan")
+    user = relationship("User", back_populates="conversations")
 
 class DBMessage(Base):
     __tablename__ = "messages"
@@ -438,12 +434,19 @@ class DBMessage(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     conversation_id = Column(String, ForeignKey("conversations.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True) # Tracking which user sent it (or system)
     role = Column(String, nullable=False) # "user", "assistant", "system"
     content = Column(Text, nullable=False)
     date = Column(DateTime, default=datetime.utcnow)
     feedback = Column(String, nullable=True) # "positive", "negative", etc.
+    
+    # Token Tracking (Growth Agent)
+    input_tokens = Column(Integer, nullable=True)
+    output_tokens = Column(Integer, nullable=True)
+    model_used = Column(String, nullable=True)
 
     conversation = relationship("DBConversation", back_populates="messages")
+    user = relationship("User")
 
 # Aliases for backward compatibility with history_routes
 DBTransaction = FinancialTransaction

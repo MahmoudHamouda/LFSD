@@ -11,7 +11,8 @@ from datetime import datetime, timedelta
 import json
 from pydantic import BaseModel
 from models.database import get_db
-from models.models import Transaction, VivLog, HealthDailySummary
+from models.models import Transaction, VivLog, HealthDailySummary, User
+from core.authentication import get_current_user
 
 router = APIRouter(prefix="/api/history", tags=["history"])
 
@@ -109,7 +110,8 @@ def group_by_date(items: List[HistoryItem]) -> List[HistoryDayGroup]:
 @router.post("/unified")
 async def get_unified_history(
     request: HistoryRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Get unified history timeline with all user activities.
@@ -119,7 +121,7 @@ async def get_unified_history(
     - Viv Logs (AI decisions)
     - Health Summaries
     """
-    user_id = "default_user"
+    user_id = current_user.id
     all_items = []
     
     # Parse date range
@@ -247,7 +249,8 @@ async def get_unified_history(
 @router.post("/generate")
 async def generate_chat_response(
     request: ConversationRequest,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     """
     Generate a chat response based on conversation history.
@@ -269,6 +272,7 @@ async def generate_chat_response(
         
         conversation = DBConversation(
             id=conversation_id,
+            user_id=current_user.id,
             title=title,
             date=datetime.utcnow()
         )
@@ -280,6 +284,7 @@ async def generate_chat_response(
         if not conversation:
              conversation = DBConversation(
                 id=conversation_id,
+                user_id=current_user.id,
                 title="New Chat",
                 date=datetime.utcnow()
             )
@@ -306,6 +311,7 @@ async def generate_chat_response(
          db_msg = DBMessage(
              id=user_msg_id,
              conversation_id=conversation_id,
+             user_id=current_user.id,
              role="user",
              content=last_user_msg.get('content', ''),
              date=datetime.utcnow()
@@ -326,7 +332,11 @@ async def generate_chat_response(
         })
     
     try:
-        response_json_str = await service.generate_response(history, request.context or {})
+        # Pass user_id in context for GeminiService usage tracking
+        gen_context = (request.context or {}).copy()
+        gen_context['user_id'] = current_user.id
+        
+        response_json_str = await service.generate_response(history, gen_context)
         response_data = json.loads(response_json_str)
         content = response_data.get('text', '')
         structured_data = response_data.get('data')
@@ -337,14 +347,36 @@ async def generate_chat_response(
 
     # 4. Persist AI Response
     ai_msg_id = str(uuid.uuid4())
+    usage = response_data.get('usage', {})
+    
     db_response = DBMessage(
         id=ai_msg_id,
         conversation_id=conversation_id,
+        user_id=current_user.id,
         role="assistant",
         content=content,
-        date=datetime.utcnow()
+        date=datetime.utcnow(),
+        input_tokens=usage.get('input_tokens', 0),
+        output_tokens=usage.get('output_tokens', 0),
+        model_used=getattr(service, 'model_name', 'gemini-1.5-flash')
     )
     db.add(db_response)
+    
+    # 5. Emit Event
+    from models.models import DBActivity
+    activity = DBActivity(
+        user_id=current_user.id,
+        type="GEMINI_USAGE_RECORDED",
+        description=f"AI Interaction: {usage.get('input_tokens', 0) + usage.get('output_tokens', 0)} tokens",
+        date=datetime.utcnow(),
+        metadata_json=json.dumps({
+            "conversation_id": conversation_id,
+            "tokens": usage.get('input_tokens', 0) + usage.get('output_tokens', 0),
+            "model": getattr(service, 'model_name', 'gemini-1.5-flash')
+        })
+    )
+    db.add(activity)
+    
     db.commit()
     
     return {

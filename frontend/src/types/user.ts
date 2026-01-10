@@ -35,6 +35,7 @@ export interface UserIdentity {
     lastName?: string;
     phoneNumber?: string;
     avatar?: string;
+    role?: 'user' | 'admin'; // Added role
 
     locale: string;
     timezone: string;

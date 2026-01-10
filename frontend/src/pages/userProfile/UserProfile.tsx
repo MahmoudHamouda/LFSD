@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Trash2, Sun, Moon } from 'lucide-react';
 import { historyDeleteAll } from '../../api/api';
@@ -9,6 +8,7 @@ import { User, UserIdentity, VivPreferences, OnboardingData } from '../../types/
 import { CurrencyInput, Pill, SectionCard } from '../onboarding/OnboardingSteps';
 import ConnectionModal from '../../components/modals/ConnectionModal';
 import StatementUploadModal from '../../components/modals/StatementUploadModal';
+import UpgradePrompt from '../../components/growth/UpgradePrompt';
 import { useAuth } from '../../context/AuthProvider';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -36,14 +36,15 @@ const CONNECTIONS_DATA: Connector[] = [
 ];
 
 const UserProfile: React.FC = () => {
-    const { user: contextUser, status: authStatus } = useAuth();
-    // Start with null user/loading true to force full fetch. 
-    // contextUser is only used for redirection logic now.
+    const { user: contextUser, status: authStatus, getAccessToken } = useAuth();
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('account');
     const [theme, setTheme] = useState<'light' | 'dark'>(getStoredTheme());
+    const [entitlements, setEntitlements] = useState<any>(null);
+    const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -57,13 +58,8 @@ const UserProfile: React.FC = () => {
     const [prefForm, setPrefForm] = useState<Partial<VivPreferences>>({});
     const [onboardingForm, setOnboardingForm] = useState<OnboardingData>({});
 
-    // Load Profile Effect
-    // Load Profile Effect
     useEffect(() => {
-        // Always fetch full profile data because contextUser (from /api/auth/me) 
-        // lacks the detailed 'identity' and 'accounts' fields needed here.
         loadProfile();
-
         // Handle redirect actions (tabs)
         const params = new URLSearchParams(location.search);
         if (params.get('tab')) {
@@ -89,7 +85,6 @@ const UserProfile: React.FC = () => {
     useEffect(() => {
         if (!loading && location.hash) {
             const id = location.hash.replace('#', '');
-            // Small timeout to allow tab switch/render
             setTimeout(() => {
                 const element = document.getElementById(id);
                 if (element) {
@@ -108,6 +103,19 @@ const UserProfile: React.FC = () => {
                 setPrefForm(userData.identity.vivPreferences || {});
                 const existingOnboarding = userData.identity.profile?.onboarding_data || {};
                 setOnboardingForm(existingOnboarding);
+            }
+
+            // Fetch entitlements
+            try {
+                const token = await getAccessToken();
+                const entRes = await fetch('/api/growth/entitlements', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (entRes.ok) {
+                    setEntitlements(await entRes.json());
+                }
+            } catch (err) {
+                console.error("Failed to load entitlements", err);
             }
         } catch (error) {
             console.error("Failed to load profile", error);
@@ -155,7 +163,7 @@ const UserProfile: React.FC = () => {
     };
 
     const handleBack = () => {
-        window.location.href = '/finance';
+        navigate('/finance');
     };
 
     const renderConnections = (categories: string[]) => {
@@ -267,6 +275,81 @@ const UserProfile: React.FC = () => {
             {/* Account Tab */}
             {activeTab === 'account' && (
                 <div className={styles.section}>
+                    {/* Subscription Section */}
+                    <SectionCard title="Subscription & Plan">
+                        <div className={styles.formGrid}>
+                            <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                        <div style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                            {entitlements?.plan === 'tier_enterprise' ? 'Enterprise' :
+                                                entitlements?.plan === 'tier_pro' ? 'Pro Plan' :
+                                                    entitlements?.plan === 'tier_plus' ? 'Plus Plan' : 'Free Plan'}
+                                        </div>
+                                        <div style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                                            {entitlements?.plan === 'tier_enterprise' || entitlements?.plan === 'tier_pro'
+                                                ? 'You have access to all premium features.'
+                                                : `Upgrade to ${entitlements?.plan === 'tier_plus' ? 'Pro' : 'Plus'} to unlock more potential.`}
+                                        </div>
+                                    </div>
+                                    {entitlements?.plan !== 'tier_pro' && entitlements?.plan !== 'tier_enterprise' && (
+                                        <button
+                                            onClick={() => setIsUpgradeOpen(true)}
+                                            style={{
+                                                padding: '8px 16px',
+                                                backgroundColor: 'var(--color-primary)',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '6px',
+                                                cursor: 'pointer',
+                                                fontWeight: 600
+                                            }}
+                                        >
+                                            Upgrade
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Detailed Usage Stats */}
+                                <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    {[
+                                        { label: 'AI Chat Calls', key: 'ai_chat_calls' },
+                                        { label: 'Smart Recos', key: 'smart_recos' },
+                                        { label: 'Executions', key: 'executions' },
+                                        { label: 'Active Goals', key: 'goals' }
+                                    ].map(metric => {
+                                        const limit = entitlements?.limits?.[metric.key] ?? (metric.key === 'goals' ? 5 : 0);
+                                        const usage = entitlements?.usage?.[metric.key] ?? 0;
+                                        const isUnlimited = limit === -1;
+                                        const percentage = isUnlimited ? 0 : Math.min(100, (usage / limit) * 100);
+
+                                        return (
+                                            <div key={metric.key}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '13px' }}>
+                                                    <span style={{ color: 'var(--text-secondary)' }}>{metric.label}</span>
+                                                    <span style={{ fontWeight: 500 }}>
+                                                        {usage} / {isUnlimited ? '∞' : limit}
+                                                    </span>
+                                                </div>
+                                                <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--bg-secondary)', borderRadius: '3px', overflow: 'hidden' }}>
+                                                    <div
+                                                        style={{
+                                                            width: isUnlimited ? '0%' : `${percentage}%`,
+                                                            height: '100%',
+                                                            backgroundColor: percentage >= 90 && !isUnlimited ? 'var(--color-accent-red)' : 'var(--color-primary)',
+                                                            transition: 'width 0.3s ease'
+                                                        }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </SectionCard>
+                    <div style={{ height: '20px' }} />
+
                     <SectionCard title="Personal Details">
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup}>
@@ -339,7 +422,6 @@ const UserProfile: React.FC = () => {
                                         onClick={async () => {
                                             if (confirm('Are you sure you want to clear all conversations from your view? This action cannot be undone.')) {
                                                 try {
-                                                    // Soft clear: Set timestamp
                                                     localStorage.setItem('lastClearedHistory', new Date().toISOString());
                                                     alert('Conversation history cleared from view.');
                                                     window.location.reload();
@@ -438,9 +520,7 @@ const UserProfile: React.FC = () => {
                             </div>
                         </div>
                     </SectionCard>
-
                     <div style={{ height: '24px' }} />
-
                     <div id="bills">
                         <SectionCard title="Monthly Commitments">
                             <div className={styles.formGrid}>
@@ -488,7 +568,6 @@ const UserProfile: React.FC = () => {
                                         />
                                     </div>
                                 ) : null}
-
                                 <div className={styles.formGroup}>
                                     <label className={styles.label}>Car Status</label>
                                     <select className={styles.select} value={onboardingForm.car_status || 'no_car'} onChange={e => updateOnboarding('car_status', e.target.value)}>
@@ -520,9 +599,7 @@ const UserProfile: React.FC = () => {
                             </div>
                         </SectionCard>
                     </div>
-
                     <div style={{ height: '24px' }} />
-
                     <SectionCard title="Financial Habits & Assets">
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup}>
@@ -564,13 +641,11 @@ const UserProfile: React.FC = () => {
                 </div>
             )}
 
-
             {/* Health (Energy) Tab */}
             {activeTab === 'health' && (
                 <div className={styles.section}>
                     {renderConnections(['health'])}
                     <div style={{ height: '24px' }} />
-
                     <SectionCard title="Sleep">
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
@@ -614,9 +689,7 @@ const UserProfile: React.FC = () => {
                             </div>
                         </div>
                     </SectionCard>
-
                     <div style={{ height: '24px' }} />
-
                     <SectionCard title="Activity & Recovery">
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
@@ -660,9 +733,7 @@ const UserProfile: React.FC = () => {
                             </div>
                         </div>
                     </SectionCard>
-
                     <div style={{ height: '24px' }} />
-
                     <SectionCard title="Nutrition & Lifestyle">
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
@@ -722,13 +793,11 @@ const UserProfile: React.FC = () => {
                 </div>
             )}
 
-
             {/* Time (Focus) Tab */}
             {activeTab === 'time' && (
                 <div className={styles.section}>
                     {renderConnections(['time', 'mobility'])}
                     <div style={{ height: '24px' }} />
-
                     <SectionCard title="Work & Structure">
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
@@ -772,9 +841,7 @@ const UserProfile: React.FC = () => {
                             </div>
                         </div>
                     </SectionCard>
-
                     <div style={{ height: '24px' }} />
-
                     <SectionCard title="Mobility & Commute">
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
@@ -792,9 +859,7 @@ const UserProfile: React.FC = () => {
                             </div>
                         </div>
                     </SectionCard>
-
                     <div style={{ height: '24px' }} />
-
                     <SectionCard title="Time Use & Drains">
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
@@ -847,9 +912,7 @@ const UserProfile: React.FC = () => {
                             </div>
                         </div>
                     </SectionCard>
-
                     <div style={{ height: '24px' }} />
-
                     <SectionCard title="Style & Pressure">
                         <div className={styles.formGrid}>
                             <div className={styles.formGroup} style={{ gridColumn: 'span 2' }}>
@@ -931,7 +994,6 @@ const UserProfile: React.FC = () => {
                 </div>
             )}
 
-
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '24px', paddingBottom: '40px' }}>
                 <button className={styles.saveButton} onClick={handleSave} disabled={saving}>
                     {saving ? 'Saving...' : 'Save Changes'}
@@ -946,6 +1008,16 @@ const UserProfile: React.FC = () => {
             <StatementUploadModal
                 isOpen={isUploadModalOpen}
                 onClose={() => setIsUploadModalOpen(false)}
+            />
+
+            <UpgradePrompt
+                isOpen={isUpgradeOpen}
+                onClose={() => setIsUpgradeOpen(false)}
+                onSuccess={() => {
+                    alert("Upgraded successfully! Refreshing...");
+                    loadProfile();
+                }}
+                currentPlan={entitlements?.plan || 'tier_free'}
             />
         </div>
     );

@@ -29,7 +29,7 @@ class FamilyMember(Base):
     family_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
     related_user_id = Column(Integer, ForeignKey("users.user_id"), nullable=True)
-    relationship = Column(String(50), nullable=True)
+    relationship_type = Column(String(50), nullable=True)
     name = Column(String(50), nullable=True)
     date_of_birth = Column(DateTime, nullable=True)
 

@@ -33,12 +33,14 @@ export const PillarSummaryCard: React.FC<PillarSummaryCardProps> = ({
 
     // Helper to format trend
     const renderTrend = (val?: number) => {
-        if (val === undefined || val === null) return null;
-        if (val === 0) return <span className={styles.trendNeutral}><Minus size={14} /> 0.0%</span>;
+        // If undefined/null or 0, showing neutral -- as requested
+        if (val === undefined || val === null || val === 0) {
+            // User said: "if there is no precentage change calculated show --"
+            // Assuming this means literally "--" text, maybe neutral color.
+            return <span className={styles.trendNeutral}>--</span>;
+        }
 
         const isPositive = val > 0;
-        // For some metrics (like debt), positive might be bad, but assuming standard scores for now.
-        // If standardized score (0-100), higher is better.
         const TrendIcon = isPositive ? ArrowUp : ArrowDown;
         const trendClass = isPositive ? styles.trendPositive : styles.trendNegative;
 
@@ -50,53 +52,100 @@ export const PillarSummaryCard: React.FC<PillarSummaryCardProps> = ({
         );
     };
 
+    // Helper to render circle progress
+    const radius = 36;
+    const circumference = 2 * Math.PI * radius;
+    // Ensure value is a number for progress, default to 0 if string
+    const numValue = typeof value === 'number' ? value : parseFloat(value as string) || 0;
+    const progressOffset = circumference - (Math.min(numValue, 100) / 100) * circumference;
+
     return (
         <div
             className={styles.card}
             style={{ '--icon-color': color } as React.CSSProperties}
             onClick={onNavigate}
         >
-            <div className={styles.header}>
-                <div className={styles.iconContainer}>
-                    {icon}
+            {/* Mobile Ring View */}
+            <div className={styles.mobileRingContainer}>
+                <div style={{ position: 'relative', width: '88px', height: '88px' }}>
+                    <svg className={styles.progressRing} width="88" height="88">
+                        <circle
+                            className={styles.progressRingBackground}
+                            stroke="#333"
+                            strokeWidth="6"
+                            fill="transparent"
+                            r={radius}
+                            cx="44"
+                            cy="44"
+                        />
+                        <circle
+                            className={styles.progressRingCircle}
+                            stroke={color}
+                            strokeWidth="6"
+                            fill="transparent"
+                            r={radius}
+                            cx="44"
+                            cy="44"
+                            style={{
+                                strokeDasharray: `${circumference} ${circumference}`,
+                                strokeDashoffset: progressOffset
+                            }}
+                        />
+                    </svg>
+                    <div className={styles.mobileRingValue}>
+                        {Math.round(numValue)}
+                    </div>
                 </div>
-                <div className={styles.title}>{title}</div>
-            </div>
-
-            <div className={styles.mainMetric}>
-                {metricLabel && <span className={styles.scoreLabel}>{metricLabel}</span>}
-                <div className={styles.scoreRow}>
-                    <span className={styles.scoreValue}>
-                        {typeof value === 'number' ? Math.round(value) : value}
-                    </span>
+                <div className={styles.mobileRingLabel}>{title}</div>
+                <div className={styles.mobileTrend}>
                     {renderTrend(trend)}
                 </div>
-                {subtext && <div className={styles.metricContext}>{subtext}</div>}
             </div>
 
-            <div className={styles.toggleContainer}>
-                <span
-                    className={`${styles.toggleOption} ${view === 'overall' ? styles.active : ''}`}
-                    onClick={(e) => { e.stopPropagation(); setView('overall'); }}
-                >
-                    Overall
-                </span>
-                <span className={styles.divider}>|</span>
-                <span
-                    className={`${styles.toggleOption} ${view === 'week' ? styles.active : ''}`}
-                    onClick={(e) => { e.stopPropagation(); setView('week'); }}
-                >
-                    This Week
-                </span>
-            </div>
+            {/* Desktop / Card View */}
+            <div className={styles.desktopContent}>
+                <div className={styles.header}>
+                    <div className={styles.iconContainer}>
+                        {icon}
+                    </div>
+                    <div className={styles.title}>{title}</div>
+                </div>
 
-            <div className={styles.footer}>
-                <button
-                    className={styles.ctaButton}
-                    onClick={onNavigate}
-                >
-                    View details <ArrowRight size={16} />
-                </button>
+                <div className={styles.mainMetric}>
+                    {metricLabel && <span className={styles.scoreLabel}>{metricLabel}</span>}
+                    <div className={styles.scoreRow}>
+                        <span className={styles.scoreValue}>
+                            {typeof value === 'number' ? Math.round(value) : value}
+                        </span>
+                        {renderTrend(trend)}
+                    </div>
+                    {subtext && <div className={styles.metricContext}>{subtext}</div>}
+                </div>
+
+                <div className={styles.toggleContainer}>
+                    <span
+                        className={`${styles.toggleOption} ${view === 'overall' ? styles.active : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setView('overall'); }}
+                    >
+                        Overall
+                    </span>
+                    <span className={styles.divider}>|</span>
+                    <span
+                        className={`${styles.toggleOption} ${view === 'week' ? styles.active : ''}`}
+                        onClick={(e) => { e.stopPropagation(); setView('week'); }}
+                    >
+                        This Week
+                    </span>
+                </div>
+
+                <div className={styles.footer}>
+                    <button
+                        className={styles.ctaButton}
+                        onClick={onNavigate}
+                    >
+                        View details <ArrowRight size={16} />
+                    </button>
+                </div>
             </div>
         </div>
     );

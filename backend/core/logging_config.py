@@ -79,12 +79,12 @@ def setup_logging():
             {
                 "sink": sys.stdout, 
                 "level": "DEBUG" if settings.DEBUG else "INFO",
-                "format": "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level> | {extra}"
+                "serialize": False, # Enforce JSON for Cloud Run
             },
-            {
-                "sink": DatabaseSink(),
-                "level": "INFO", # Log INFO and above to DB (replaced file logging)
-                "enqueue": True # Run in background thread to avoid blocking
-            }
+            # {
+            #     "sink": DatabaseSink(),
+            #     "level": "INFO", # Log INFO and above to DB (replaced file logging)
+            #     "enqueue": True # Run in background thread to avoid blocking
+            # }
         ]
     )

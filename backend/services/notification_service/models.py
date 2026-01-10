@@ -7,20 +7,18 @@ from sqlalchemy import (
     JSON,
     ForeignKey,
 )
-from sqlalchemy.ext.declarative import declarative_base
+from models.database import Base
 import datetime
-
-Base = declarative_base()
 
 
 class Notification(Base):
     __tablename__ = "notifications"
 
     notification_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"))
+    user_id = Column(String, ForeignKey("users.id"))
     message = Column(String(255), nullable=False)
     type = Column(String(50))  # e.g., "reminder", "order_status"
-    metadata = Column(JSON, nullable=True)
+    meta_data = Column(JSON, nullable=True)
     read_status = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(

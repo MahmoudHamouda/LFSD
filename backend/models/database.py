@@ -27,12 +27,22 @@ def getconn():
     )
     return conn
 
-# Create SQLAlchemy engine with Cloud SQL Connector
-engine = create_engine(
-    "postgresql+pg8000://",
-    creator=getconn,
-    echo=settings.DEBUG,
-)
+if settings.ENV == "prod":
+    # Create SQLAlchemy engine with Cloud SQL Connector
+    engine = create_engine(
+        "postgresql+pg8000://",
+        creator=getconn,
+        echo=settings.DEBUG,
+    )
+else:
+    # Use local SQLite for development
+    sqlite_url = "sqlite:///backend/lfsd.db"
+    print(f"DEBUG: Using local SQLite database at {sqlite_url}")
+    engine = create_engine(
+        sqlite_url,
+        connect_args={"check_same_thread": False},
+        echo=settings.DEBUG,
+    )
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

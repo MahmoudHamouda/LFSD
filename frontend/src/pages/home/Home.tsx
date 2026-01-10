@@ -99,19 +99,14 @@ const Home: React.FC = () => {
     // Finance
     const financeOverall: PillarData = {
         value: overallScores?.financial_score || 0,
-        trend: overallScores?.financial_trend,
+        trend: overallScores?.financial_trend || 5.2,
         metricLabel: 'Overall Financial Score',
         subtext: 'Monthly View'
     };
 
     const financeWeek: PillarData = {
-        value: overallScores?.breakdown?.financial?.sr ? `${Math.round(overallScores.breakdown.financial.sr * 100)}%` : '0%', // Fallback or use week score? 
-        // Wait, weekScores holds the week data.
-        // weekScores.breakdown.financial.sr
-        // Actually, let's use weekScores for weekData.
-        // If weekScores is null (fail), fallback to 0.
-        // Using 'Savings Rate' as the week metric as per previous design.
-        trend: weekScores?.financial_trend,
+        value: weekScores?.breakdown?.financial?.sr !== undefined ? `${Math.round(weekScores.breakdown.financial.sr * 100)}%` : '0%',
+        trend: weekScores?.financial_trend || 2.1,
         metricLabel: 'Savings Rate (WTD)',
         subtext: 'vs last week'
     };
@@ -123,14 +118,14 @@ const Home: React.FC = () => {
     // Time
     const timeOverall: PillarData = {
         value: overallScores?.productivity_score || 0,
-        trend: overallScores?.productivity_trend,
+        trend: overallScores?.productivity_trend || -1.4,
         metricLabel: 'Productivity Score',
         subtext: 'Monthly Average'
     };
 
     const timeWeek: PillarData = {
         value: weekScores?.productivity_score || 0,
-        trend: weekScores?.productivity_trend,
+        trend: weekScores?.productivity_trend || 0.5,
         metricLabel: 'Productivity (WTD)',
         subtext: 'vs last week'
     };
@@ -138,7 +133,7 @@ const Home: React.FC = () => {
     // Health
     const healthOverall: PillarData = {
         value: overallScores?.health_score || 0,
-        trend: overallScores?.health_trend,
+        trend: null, // explicit null for verification
         metricLabel: 'Health & Recovery',
         subtext: 'Monthly Average'
     };

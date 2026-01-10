@@ -162,3 +162,97 @@
     gap: 10px;
     text-decoration: underline;
 }
+
+
+/* Mobile Ring Styles - Whoop Inspired */
+.mobileRingContainer {
+    display: none;
+    /* Hidden on Desktop */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 120px;
+}
+
+.progressRing {
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+}
+
+.progressRingCircle {
+    transition: stroke-dashoffset 0.5s ease-in-out;
+}
+
+.mobileRingValue {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.mobileTrend {
+    margin-top: 4px;
+    font-size: 11px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Adjust trend container for mobile reuse */
+.mobileTrend .trendContainer {
+    font-size: 11px;
+    gap: 2px;
+}
+
+.mobileRingLabel {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: center;
+    white-space: normal;
+    text-transform: uppercase;
+    line-height: 1.2;
+    max-width: 100px;
+    /* constraining width to force wrap if needed, though grid col is restrictive enough usually */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.desktopContent {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .card {
+        padding: 8px;
+        background: transparent;
+        /* Remove card bg for cleaner look? or keep it? */
+        /* Let's keep it minimal or remove border */
+        border: none;
+        box-shadow: none;
+        min-height: auto;
+    }
+
+    .desktopContent {
+        display: none;
+    }
+
+    .mobileRingContainer {
+        display: flex;
+    }
+}

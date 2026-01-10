@@ -10,7 +10,7 @@
     position: fixed;
     left: 0;
     top: 0;
-    z-index: 1000;
+    z-index: 9999;
     transition: width 0.3s ease;
     border-right: 1px solid var(--border-default);
 }
@@ -331,16 +331,102 @@
     background: #555;
 }
 
-/* Mobile styles */
-@media (max-width: 768px) {
+/* Mobile styles - Aggressive Overrides */
+@media (max-width: 1024px) {
     .sidebar {
-        width: 100%;
-        max-width: 300px;
+        width: 280px !important;
+        transform: translateX(0);
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.5);
     }
 
+    .sidebar.closed {
+        transform: translateX(-100%);
+        width: 280px !important;
+    }
+
+    /* FORCE EXPANDED LOOK EVEN IF COLLAPSED CLASS IS PRESENT */
     .sidebar.collapsed {
-        width: 0;
-        padding: 0;
-        border: none;
+        width: 280px !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    /* Reset Header */
+    .sidebar.collapsed .header {
+        flex-direction: row !important;
+        height: 64px !important;
+        padding: 16px !important;
+        justify-content: space-between !important;
+    }
+
+    /* Force Logo visibility if it was hidden by JS (JS uses !isCollapsed check, so we can't fix that with CSS alone if element is missing. 
+       BUT, looking at Sidebar.tsx: {!isCollapsed && <Link...>} -> JS removes it. 
+       We must rely on the JS fix I made earlier to default isCollapsed=false. 
+       If that failed, the logo won't show. 
+       However, the "Plus" icon issue is CSS.
+    */
+
+    /* Reset New Chat Button */
+    .sidebar.collapsed .newChatButton {
+        justify-content: flex-start !important;
+        padding: 10px 16px !important;
+    }
+
+    /* Force text spans to show */
+    .sidebar.collapsed .newChatButton span:not(.icon),
+    .sidebar.collapsed .menuItem span:not(.icon),
+    .sidebar.collapsed .topLevelHeader span:not(.icon) {
+        display: inline-block !important;
+        /* or block/flex as needed */
+    }
+
+    /* Show connectors/categories again */
+    .sidebar.collapsed .categoryHeader,
+    .sidebar.collapsed .connectorItem,
+    .sidebar.collapsed .topLevelContent,
+    .sidebar.collapsed .divider {
+        display: block !important;
+    }
+
+    .sidebar.collapsed .connectorItem {
+        display: flex !important;
+    }
+
+    /* Hide the desktop toggle button strictly */
+    .toggleButton,
+    .sidebar.collapsed .toggleButton,
+    .desktopOnly {
+        display: none !important;
+    }
+}
+
+/* Backdrop for mobile */
+.backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    /* Below sidebar (1000) */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.backdrop.visible {
+    opacity: 1;
+}
+
+@media (max-width: 1024px) {
+    .backdrop {
+        display: block;
+        pointer-events: none;
+        /* Let clicks pass through when hidden */
+    }
+
+    .backdrop.visible {
+        pointer-events: auto;
     }
 }

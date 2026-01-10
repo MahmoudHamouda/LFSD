@@ -6,20 +6,20 @@ from sqlalchemy import (
     ForeignKey,
     Boolean,
 )
-from sqlalchemy.ext.declarative import declarative_base
+from models.database import Base
 import datetime
-
-Base = declarative_base()
 
 
 class ChatSession(Base):
     __tablename__ = "chat_sessions"
 
     session_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"))
+    user_id = Column(String, ForeignKey("users.id"))
     start_time = Column(DateTime, default=datetime.datetime.utcnow)
     end_time = Column(DateTime, nullable=True)
     context = Column(String(255), nullable=True)
+    title = Column(String(255), nullable=True)
+    mode = Column(String(50), default="advisory")  # 'advisory' or 'support'
 
 
 class ChatHistory(Base):
@@ -27,11 +27,16 @@ class ChatHistory(Base):
 
     message_id = Column(Integer, primary_key=True)
     session_id = Column(Integer, ForeignKey("chat_sessions.session_id"))
-    user_id = Column(Integer, ForeignKey("users.user_id"))
+    user_id = Column(String, ForeignKey("users.id"))
     message_type = Column(String(50))  # "user" or "assistant"
     content = Column(String(1000))
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     is_summarized = Column(Boolean, default=False)
+
+    # Token Tracking (Growth Agent)
+    input_tokens = Column(Integer, nullable=True)
+    output_tokens = Column(Integer, nullable=True)
+    model_used = Column(String(100), nullable=True)
 
 
 class ChatSummary(Base):
@@ -50,6 +55,6 @@ class Feedback(Base):
     message_id = Column(
         String(50), nullable=False
     )  # Message ID for which feedback is provided
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id"), nullable=False)
     feedback = Column(String(500), nullable=False)  # Feedback content
     created_at = Column(DateTime, default=datetime.datetime.utcnow)

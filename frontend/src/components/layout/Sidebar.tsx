@@ -70,13 +70,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onToggle, onTogg
         <aside className={`${styles.sidebar} ${!isOpen ? styles.closed : ''} ${isCollapsed ? styles.collapsed : ''}`}>
             <div className={`${styles.header} ${isCollapsed ? styles.collapsed : ''}`}>
                 {/* Brand Logo - H Mark only */}
-                {!isCollapsed && (
-                    <Link to="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
-                        <h1 style={{ margin: 0, marginRight: '16px', fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--font-heading)' }}>H</h1>
-                    </Link>
-                )}
+                {/* Brand Logo - H Mark only. Always render, hide via CSS if needed. */}
+                <Link to="/" className={styles.brandLogo} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+                    <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--font-heading)' }}>H</h1>
+                </Link>
 
-                <button className={styles.toggleButton} onClick={onToggleCollapse} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
+                <button className={`${styles.toggleButton} ${styles.desktopOnly}`} onClick={onToggleCollapse} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
                     {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                 </button>
                 <button className={styles.newChatButton} onClick={onNewChat} title="New Chat">

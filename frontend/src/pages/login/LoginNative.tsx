@@ -163,7 +163,7 @@ const LoginNative: React.FC = () => {
 
 
                 <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-                    <img src={logoUrl} alt="HELM" style={{ height: '40px', marginBottom: '12px' }} />
+                    <img src={logoUrl} alt="HELM" className={styles.logo} />
                     <p style={{ color: 'var(--color-text-secondary)', marginTop: '8px' }}>
                         {isLogin ? 'Sign in to your account' : 'Create your account'}
                     </p>

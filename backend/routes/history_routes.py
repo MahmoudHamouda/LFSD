@@ -9,6 +9,7 @@ from fastapi import APIRouter, HTTPException, Response, Depends, Request
 from sqlalchemy.orm import Session
 from models.database import get_db
 from models.models import DBConversation, DBMessage, DBFinancial, DBTransaction, DBOrder, DBNotification, DBActivity
+from core.authentication import get_current_user
 from models.api_models import (
     Conversation,
     ChatMessage,
@@ -30,9 +31,9 @@ from services.uber_service import get_uber_service
 router = APIRouter(prefix="/history")
 
 @router.get("/list")
-async def list_history(offset: int = 0, db: Session = Depends(get_db)):
-    # Query conversations ordered by date desc
-    conversations = db.query(DBConversation).order_by(DBConversation.date.desc()).all()
+async def list_history(offset: int = 0, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    # Query conversations for current user ordered by date desc
+    conversations = db.query(DBConversation).filter(DBConversation.user_id == current_user.id).order_by(DBConversation.date.desc()).all()
     return [
         HistoryListResponse(id=c.id, title=c.title, createdAt=c.date.isoformat())
         for c in conversations
@@ -120,6 +121,7 @@ async def generate_history(request: Request, db: Session = Depends(get_db), curr
             
             conversation = DBConversation(
                 id=conversation_id,
+                user_id=current_user.id,
                 title=title,
                 date=datetime.utcnow()
             )
@@ -130,6 +132,7 @@ async def generate_history(request: Request, db: Session = Depends(get_db), curr
             if not conversation:
                 conversation = DBConversation(
                     id=conversation_id,
+                    user_id=current_user.id,
                     title="New Chat",
                     date=datetime.utcnow()
                 )
@@ -149,6 +152,7 @@ async def generate_history(request: Request, db: Session = Depends(get_db), curr
                 db_msg = DBMessage(
                     id=msg_id,
                     conversation_id=conversation_id,
+                    user_id=current_user.id,
                     role=msg.get("role"),
                     content=msg.get("content") if isinstance(msg.get("content"), str) else str(msg.get("content")),
                     date=datetime.utcnow(),
@@ -169,44 +173,38 @@ async def generate_history(request: Request, db: Session = Depends(get_db), curr
         try:
             print("DEBUG: Importing GeminiService...")
             from services.gemini_service import GeminiService
-            import inspect
-            try:
-                source = inspect.getsource(GeminiService.generate_response)
-                print(f"DEBUG: GeminiService.generate_response SOURCE START:\n{source[:200]}")
-            except Exception as e:
-                print(f"DEBUG: Could not get source: {e}")
-            import services.gemini_service
-            print(f"DEBUG: GeminiService FILE: {services.gemini_service.__file__}")
-            print("DEBUG: Initializing GeminiService...")
+            import json
+            
             gemini_service = GeminiService(db)
             
             # Prepare history for Gemini
             history = [{"role": msg.get("role"), "content": msg.get("content")} for msg in messages_data]
             context = {"user_id": current_user.id, "conversation_id": conversation_id}
             
-            print("DEBUG: Calling generate_response...")
-            debug_logger.info("Calling Gemini service...")
-            # Get response from Gemini
-            response_text = await gemini_service.generate_response(history, context)
-            print("DEBUG: Gemini response received")
-            debug_logger.info("Gemini response received")
+            # Get response from Gemini (Returns JSON string now with usage)
+            response_json = await gemini_service.generate_response(history, context)
+            response_data_parsed = json.loads(response_json)
+            response_text = response_data_parsed.get("text", "")
+            usage = response_data_parsed.get("usage", {})
             
         except Exception as e:
             print(f"DEBUG: EXCEPTION IN HISTORY GEN: {e}")
-            import traceback
-            traceback.print_exc()
             debug_logger.error(f"Gemini service error: {e}")
-            # Fallback response if Gemini fails
-            response_text = f"I apologize, but I'm having trouble connecting to my AI services right now. Error: {e}"
+            response_text = f"I apologize, but I'm having trouble connecting to my AI services right now."
+            usage = {"input_tokens": 0, "output_tokens": 0}
         
         # Create and save AI response message
         response_message_id = str(uuid.uuid4())
         db_response = DBMessage(
             id=response_message_id,
             conversation_id=conversation_id,
+            user_id=current_user.id,
             role="assistant",
             content=response_text,
-            date=datetime.utcnow()
+            date=datetime.utcnow(),
+            input_tokens=usage.get("input_tokens", 0),
+            output_tokens=usage.get("output_tokens", 0),
+            model_used=getattr(gemini_service, 'model_name', 'gemini-1.5-flash')
         )
         db.add(db_response)
         

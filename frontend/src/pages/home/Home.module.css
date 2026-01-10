@@ -38,7 +38,21 @@
 
 @media (max-width: 768px) {
     .pillarGrid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 20px;
+        padding: 0;
+        /* Reset margins */
+        margin-right: 0;
+        margin-left: 0;
+        overflow: visible;
+    }
+
+    .pillarGrid>* {
+        min-width: 0;
+        /* Allow shrinking */
+        width: 100%;
     }
 }
 

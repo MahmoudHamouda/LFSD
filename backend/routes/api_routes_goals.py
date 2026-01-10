@@ -8,6 +8,7 @@ from models.database import get_db
 from models.models import User, LifeGoal, FinancialAccount, FinancialScore
 from models.api_models import GoalCreate, GoalUpdate, GoalResponse, GoalType
 from core.authentication import get_current_user
+from dependencies.growth_dependencies import check_goal_limit
 
 router = APIRouter(prefix="/finance/goals", tags=["finance-goals"])
 
@@ -41,7 +42,8 @@ async def list_goals(
 async def create_goal(
     payload: GoalCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    entitlement_check: bool = Depends(check_goal_limit)
 ):
     """Create a new life goal."""
     import uuid

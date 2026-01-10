@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, ForeignKey, Enum, Boolean
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import enum
 from datetime import datetime
@@ -65,7 +66,7 @@ class BugReport(Base):
     request_id = Column(String, index=True, nullable=True)
     endpoint = Column(String, index=True, nullable=True)
     method = Column(String, nullable=True) # GET, POST
-    user_id = Column(Integer, nullable=True)
+    user_id = Column(String, nullable=True)
     
     # Environment
     system_info = Column(JSON, nullable=True) # Python version, OS, etc.
@@ -93,5 +94,58 @@ class AuditLog(Base):
     
     changes_json = Column(JSON, nullable=True) # Before/After diff or details
     metadata_json = Column(JSON, nullable=True) # Request ID, IP, etc.
+    
+    # Traceability
+    correlation_id = Column(String, index=True, nullable=True)
 
+class ActivityFeed(Base):
+    """
+    User-facing activity feed.
+    Shows "What happened" in a friendly way.
+    """
+    __tablename__ = "activity_feed"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True) # Linked to User
+    
+    event_type = Column(String, index=True, nullable=True) # e.g. "goal_achieved", "bill_paid"
+    action_type = Column(String, nullable=True) # "ACCOUNT_UNLOCKED", etc. (Legacy/Alias)
+    title = Column(String, nullable=True) # Made nullable to support action_type only usage
+    description = Column(Text, nullable=True)
+    icon = Column(String, default="default") # Icon name for UI
+    action_link = Column(String, nullable=True) # Deep link
+    
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    correlation_id = Column(String, index=True, nullable=True)
+    metadata_json = Column(JSON, nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="activity_feed")
+
+class Notification(Base):
+    """
+    System notifications to be sent out.
+    """
+    __tablename__ = "notifications"
+    
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id"), index=True, nullable=False)
+    
+    channel = Column(String, default="in_app") # in_app, email, push
+    status = Column(String, default="pending") # pending, sent, failed
+    priority = Column(String, default="normal") # high, normal, low
+    
+    subject = Column(String, nullable=True) # For email/push title
+    body = Column(Text, nullable=True)
+
+    # Relationships
+    user = relationship("User", back_populates="notifications")
+    payload_json = Column(JSON, nullable=True) # Extra data for the notifier
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    sent_at = Column(DateTime, nullable=True)
+    
 import uuid
+from sqlalchemy import Boolean

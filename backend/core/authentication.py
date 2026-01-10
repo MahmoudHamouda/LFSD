@@ -117,6 +117,19 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
     Supports both Authorization header (Bearer token) and HttpOnly cookie (access_token).
     """
     settings = get_settings()
+    
+    # DEV BYPASS: Allow X-Test-User-Id header for testing when not in prod
+    if settings.ENV != "prod":
+        test_user_id = request.headers.get("X-Test-User-Id")
+        if test_user_id:
+            # Try by ID first, then by email
+            user = db.query(DBUser).filter(DBUser.id == test_user_id).first()
+            if not user:
+                user = db.query(DBUser).filter(DBUser.email == test_user_id).first()
+            if user:
+                return user
+            # Create user if bypass used but not found? No, just try to find.
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

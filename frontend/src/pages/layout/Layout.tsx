@@ -5,12 +5,15 @@ import SettingsModal from '../../components/modals/SettingsModal';
 import styles from './Layout.module.css';
 
 const Layout = () => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth > 768);
+  const [isCollapsed, setIsCollapsed] = useState(() => window.innerWidth > 768); // Collapsed by default on desktop, Expanded by default on mobile (when open)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const location = useLocation();
 
   const toggleSidebar = () => {
+    if (window.innerWidth <= 1024) {
+      setIsCollapsed(false);
+    }
     setIsSidebarOpen(!isSidebarOpen);
   };
 
@@ -27,6 +30,14 @@ const Layout = () => {
 
   return (
     <div className={styles.layout}>
+      {/* Mobile Backdrop */}
+      {isSidebarOpen && (
+        <div
+          className={`${styles.backdrop} ${isSidebarOpen ? styles.backdropVisible : ''}`}
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       <Sidebar
         isOpen={isSidebarOpen}
         isCollapsed={isCollapsed}
@@ -37,10 +48,13 @@ const Layout = () => {
       />
 
       <main className={`${styles.main} ${isSidebarOpen ? (isCollapsed ? styles.sidebarCollapsed : styles.sidebarOpen) : ''}`}>
-        {/* Mobile Sidebar Toggle */}
-        <button className={styles.mobileToggle} onClick={toggleSidebar}>
-          ☰
-        </button>
+        {/* Mobile Header */}
+        <div className={styles.mobileHeader}>
+          <button className={styles.mobileToggle} onClick={() => setIsSidebarOpen(true)}>
+            <span style={{ fontSize: '24px' }}>☰</span>
+          </button>
+          {/* Optional: Add Logo or Title here for mobile context if needed */}
+        </div>
 
         {location.pathname !== '/' && (
           <div className={styles.backNav}>

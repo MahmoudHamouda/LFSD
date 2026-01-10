@@ -106,7 +106,8 @@ def handle_chat(user_id):
 
     # Generate a response using OpenAI
     try:
-        response = generate_response(query, formatted_context)
+        response_data = generate_response(query, formatted_context)
+        response = response_data.get("content")
     except Exception as e:
         logger.error(
             f"Failed to generate response for user_id {user_id}: {str(e)}"

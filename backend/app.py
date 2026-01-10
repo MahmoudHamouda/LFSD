@@ -60,6 +60,8 @@ def create_app() -> FastAPI:
     from sqlalchemy.orm import sessionmaker
 
     def getconn():
+        if settings.ENV != "prod":
+            return None
         connector = Connector()
         conn = connector.connect(
             "newprojectlfsd:us-central1:lfsd-postgres-prod",
@@ -188,20 +190,37 @@ def create_app() -> FastAPI:
     # Register routers
     # Register routers
     try:
-        from routes import (
-            api_routes_time,
-            api_routes_health,
-            api_routes_finance,
-            api_routes_lifestyle,
-            history_routes,
-            user_routes,
-            calendar_routes,
-            api_routes_onboarding,
-            api_routes_scores,
-            mobility_routes,
-            auth0_routes,
-            test_routes,
-        )
+        print("DEBUG: Importing api_routes_time")
+        from routes import api_routes_time
+        print("DEBUG: Importing api_routes_health")
+        from routes import api_routes_health
+        print("DEBUG: Importing api_routes_finance")
+        from routes import api_routes_finance
+        print("DEBUG: Importing api_routes_lifestyle")
+        from routes import api_routes_lifestyle
+        print("DEBUG: Importing history_routes")
+        from routes import history_routes
+        print("DEBUG: Importing user_routes")
+        from routes import user_routes
+        print("DEBUG: Importing calendar_routes")
+        from routes import calendar_routes
+        print("DEBUG: Importing api_routes_onboarding")
+        from routes import api_routes_onboarding
+        print("DEBUG: Importing api_routes_scores")
+        from routes import api_routes_scores
+        print("DEBUG: Importing mobility_routes")
+        from routes import mobility_routes
+        print("DEBUG: Importing auth0_routes")
+        from routes import auth0_routes
+        print("DEBUG: Importing test_routes")
+        from routes import test_routes
+        print("DEBUG: Importing growth_routes")
+        from routes import growth_routes
+        print("DEBUG: Importing admin_routes")
+        from routes import admin_routes
+        print("DEBUG: Importing api_routes_chat")
+        from routes import api_routes_chat
+        print("DEBUG: Imports DONE")
     except Exception as e:
         import traceback
         print(f"CRITICAL IMPORT ERROR (BLOCK 1): {e}")
@@ -224,6 +243,9 @@ def create_app() -> FastAPI:
     app.include_router(api_routes_scores.router, prefix="/api/scores")
     app.include_router(auth0_routes.router, prefix="/api")  # Auth0 authentication
     app.include_router(test_routes.router, prefix="/api")  # Simple test endpoints
+    app.include_router(growth_routes.router, prefix="/api")
+    app.include_router(admin_routes.router, prefix="/api")
+    app.include_router(api_routes_chat.router, prefix="/api")
     
     try:
         from routes import api_routes_goals

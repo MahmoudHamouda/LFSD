@@ -70,3 +70,27 @@ export const OnboardingRoute: React.FC<{ children: React.ReactNode }> = ({ child
 
     return <>{children}</>;
 };
+
+export const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { status, user } = useAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (status === 'UNAUTHENTICATED') {
+            navigate('/login');
+        } else if (status === 'AUTHENTICATED' && user) {
+            // Check role
+            if (user.identity?.role !== 'admin') {
+                navigate('/'); // Unauthorized, go home
+            }
+        }
+    }, [status, user, navigate]);
+
+    if (status === 'UNKNOWN') return <div style={{ padding: 50, textAlign: 'center' }}>Loading...</div>;
+    // Hide content if not admin (even if not redirected yet)
+    if (status === 'AUTHENTICATED' && user && user.identity?.role !== 'admin') {
+        return null;
+    }
+
+    return <>{children}</>;
+};

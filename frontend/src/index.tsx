@@ -22,6 +22,11 @@ import Login from './pages/login/LoginNative';
 import { CallbackPage } from './pages/CallbackPage';
 import ForgotPassword from './pages/login/ForgotPassword';
 import ResetPassword from './pages/login/ResetPassword';
+import AdminLayout from './pages/admin/AdminLayout';
+import UserManagement from './pages/admin/UserManagement';
+import AuditViewer from './pages/admin/AuditViewer';
+import SubscriptionManagement from './pages/admin/SubscriptionManagement';
+import BillingReconciliation from './pages/admin/BillingReconciliation';
 
 import { AppStateProvider } from './state/AppProvider';
 import './index.css';
@@ -35,7 +40,7 @@ initializeIcons();
 
 // Auth & Guards
 import { AuthProvider } from './context/AuthProvider';
-import { ProtectedRoute, PublicOnlyRoute, OnboardingRoute } from './components/auth/RouteGuards';
+import { ProtectedRoute, PublicOnlyRoute, OnboardingRoute, AdminRoute } from './components/auth/RouteGuards';
 import { Auth0Wrapper } from './components/Auth0Wrapper';
 
 
@@ -72,6 +77,18 @@ export default function App() {
                   <Onboarding />
                 </OnboardingRoute>
               } />
+
+              {/* Admin Routes - Protected by Admin Guard */}
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }>
+                <Route path="users" element={<UserManagement />} />
+                <Route path="audit" element={<AuditViewer />} />
+                <Route path="subscriptions" element={<SubscriptionManagement />} />
+                <Route path="billing" element={<BillingReconciliation />} />
+              </Route>
 
               {/* Main Layout - Protected */}
               <Route path="/" element={

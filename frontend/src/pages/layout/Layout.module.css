@@ -63,33 +63,77 @@
   /* Enable vertical scrolling */
 }
 
-.main.sidebarOpen {
-  margin-left: 320px;
-}
-
-.main.sidebarCollapsed {
-  margin-left: 72px;
+/* Mobile Header */
+.mobileHeader {
+  display: none;
+  align-items: center;
+  padding: 10px 0;
+  margin-bottom: 20px;
 }
 
 .mobileToggle {
   display: none;
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 50;
+  /* Hidden by default on desktop */
   background: none;
   border: none;
   color: var(--text-primary);
   font-size: 24px;
   cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
 }
 
-@media (max-width: 768px) {
-  .main.sidebarOpen {
+.mobileToggle:hover {
+  background-color: var(--bg-surface);
+  /* Use a token if available, or rgba */
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 1024px) {
+  .main {
+    padding: 1rem;
+    /* Reduce padding on mobile */
+  }
+
+  .main.sidebarOpen,
+  .main.sidebarCollapsed {
     margin-left: 0;
+  }
+
+  .mobileHeader {
+    display: flex;
   }
 
   .mobileToggle {
     display: block;
+  }
+}
+
+/* Backdrop for mobile */
+.backdrop {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.backdropVisible {
+  opacity: 1;
+}
+
+@media (max-width: 1024px) {
+  .backdrop {
+    display: block;
+    pointer-events: none;
+  }
+
+  .backdropVisible {
+    pointer-events: auto;
   }
 }
