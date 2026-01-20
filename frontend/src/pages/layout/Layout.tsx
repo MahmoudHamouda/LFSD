@@ -58,7 +58,7 @@ const Layout = () => {
 
         {location.pathname !== '/' && (
           <div className={styles.backNav}>
-            <a href="#" onClick={(e) => { e.preventDefault(); navigate(-1); }} className={styles.backLink}>← Back</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); }} className={styles.backLink}>← Back to Home</a>
           </div>
         )}
 
