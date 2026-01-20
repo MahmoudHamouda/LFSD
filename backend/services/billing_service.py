@@ -2,9 +2,9 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from backend.models.models import User, DBMessage, Recommendation
-from backend.models.growth_models import Subscription
-from backend.models.growth_schemas import PlanId
+from models.models import User, DBMessage, Recommendation
+from models.growth_models import Subscription
+from models.growth_schemas import PlanId
 
 class BillingService:
     # Pricing Constants (Example for Gemini 1.5 Flash)

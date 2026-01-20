@@ -8,20 +8,24 @@ different service areas.
 """
 
 from __future__ import annotations
-
 from time import perf_counter
 from typing import Callable
 import sys
 import os
 
-# Add current directory (backend) to sys.path so that absolute imports (e.g. 'from core') work.
-# sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-import traceback
+import uvicorn
+from contextlib import asynccontextmanager
+from typing import List
 
+# Import Routes and Models
+from core.config import get_settings
+from models.database import init_db, get_db
+from models.models import User
+from sqlalchemy.orm import Session
+from core.authentication import get_current_user
 # Try to use loguru for structured logging; fall back to standard logging if not available.
 try:
     from loguru import logger  # type: ignore
@@ -313,6 +317,137 @@ def create_app() -> FastAPI:
                 return {"status": "success", "message": "Schema patch executed."}
         except Exception as e:
             return {"status": "error", "message": str(e)}
+
+    @app.post("/api/debug/seed_growth")
+    async def seed_growth_data(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+    ):
+        """
+        Seeds TierConfig and ensures the current user has a subscription.
+        """
+        try:
+            print(f"Seeding growth data for user: {current_user.id}")
+            # 1. Seed Tier Configs
+            from models.growth_models import TierConfig, Subscription
+            from models.growth_schemas import PlanId
+            import json
+            
+            # Hardcoded configs (copied from GrowthService fallback)
+            PLAN_CONFIGS = {
+                PlanId.FREE: {
+                    "features": ["basic_charts", "limit_5_goals", "basic_insight"],
+                    "limits": {"goals": 5, "ai_chat_calls": 100, "smart_recos": 10, "executions": -1, "history_months": 3}
+                },
+                PlanId.PLUS: {
+                    "features": ["advanced_charts", "unlimited_goals", "limited_executions"],
+                    "limits": {"goals": -1, "ai_chat_calls": 500, "smart_recos": 100, "executions": 20, "history_months": 12}
+                },
+                PlanId.PRO: {
+                    "features": ["advanced_charts", "unlimited_goals", "deep_insight", "forecasting", "priority_support"],
+                    "limits": {"goals": -1, "ai_chat_calls": 2000, "smart_recos": 500, "executions": 100, "history_months": -1}
+                }
+            }
+            
+            for plan_id, config in PLAN_CONFIGS.items():
+                existing_tier = db.query(TierConfig).filter(TierConfig.plan_id == plan_id).first()
+                if not existing_tier:
+                    print(f"Creating TierConfig for {plan_id}")
+                    new_tier = TierConfig(
+                        plan_id=plan_id,
+                        config_json=config
+                    )
+                    db.add(new_tier)
+                else:
+                    print(f"TierConfig for {plan_id} exists. Updating...")
+                    existing_tier.config_json = config
+            
+            # 2. Ensure User Subscription
+            sub = db.query(Subscription).filter(Subscription.user_id == current_user.id).first()
+            if not sub:
+                print("Creating Default FREE Subscription")
+                new_sub = Subscription(
+                    user_id=current_user.id,
+                    plan_id=PlanId.FREE,
+                    status="active",
+                    current_period_start=datetime.utcnow(),
+                    current_period_end=datetime.utcnow() + timedelta(days=30)
+                )
+                db.add(new_sub)
+            
+            db.commit()
+            return {"status": "success", "message": "Growth data seeded."}
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post("/api/debug/seed_force")
+    async def seed_force(request: Request, db: Session = Depends(get_db)):
+        """
+        Unauthenticated (Secret Protected) endpoint to Initialize DB + Seed Growth.
+        Usage: POST /api/debug/seed_force?secret=lfsd_backup_2024
+        """
+        params = request.query_params
+        secret = params.get("secret")
+        if secret != "lfsd_backup_2024":
+             raise HTTPException(status_code=403, detail="Invalid Secret")
+             
+        try:
+            print("Force Seeding: Initializing DB...")
+            # 1. Init DB (Create Tables)
+            init_db()
+            
+            # 2. Seed Tier Configs
+            print("Force Seeding: Creating Tiers...")
+            from models.growth_models import TierConfig
+            from models.growth_schemas import PlanId
+            
+            # Simple seed logic strictly for tiers
+            PLAN_CONFIGS = {
+                PlanId.FREE: {
+                    "name": "Free",
+                    "config": {
+                        "features": ["basic_charts", "limit_5_goals", "basic_insight"],
+                        "limits": {"goals": 5, "ai_chat_calls": 100, "smart_recos": 10, "executions": -1, "history_months": 3}
+                    }
+                },
+                PlanId.PLUS: {
+                    "name": "Plus",
+                    "config": {
+                        "features": ["advanced_charts", "unlimited_goals", "limited_executions"],
+                        "limits": {"goals": -1, "ai_chat_calls": 500, "smart_recos": 100, "executions": 20, "history_months": 12}
+                    }
+                },
+                PlanId.PRO: {
+                    "name": "Pro",
+                    "config": {
+                        "features": ["advanced_charts", "unlimited_goals", "deep_insight", "forecasting", "priority_support"],
+                        "limits": {"goals": -1, "ai_chat_calls": 2000, "smart_recos": 500, "executions": 100, "history_months": -1}
+                    }
+                }
+            }
+            
+            for plan_id, data in PLAN_CONFIGS.items():
+                existing_tier = db.query(TierConfig).filter(TierConfig.plan_id == plan_id).first()
+                name = data["name"]
+                config = data["config"]
+                
+                if not existing_tier:
+                    new_tier = TierConfig(plan_id=plan_id, name=name, config_json=config)
+                    db.add(new_tier)
+                else:
+                    existing_tier.config_json = config
+                    existing_tier.name = name
+            
+            db.commit()
+            return {"status": "success", "message": "Database Initialized and Tiers Seeded."}
+            
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
 
     # Initialize Scheduler
     from services.scheduler_service import SchedulerService

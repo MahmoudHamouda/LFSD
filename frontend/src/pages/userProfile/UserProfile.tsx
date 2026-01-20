@@ -314,7 +314,7 @@ const UserProfile: React.FC = () => {
                                 <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                     {[
                                         { label: 'AI Chat Calls', key: 'ai_chat_calls' },
-                                        { label: 'Smart Recos', key: 'smart_recos' },
+                                        { label: 'Smart Recommendations', key: 'smart_recos' },
                                         { label: 'Executions', key: 'executions' },
                                         { label: 'Active Goals', key: 'goals' }
                                     ].map(metric => {

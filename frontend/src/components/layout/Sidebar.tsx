@@ -39,8 +39,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onToggle, onTogg
 
     const handleNavigation = (path: string) => {
         navigate(path);
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 1024) {
+            // Mobile/Tablet: Close the sidebar overlay
             onToggle();
+        } else if (!isCollapsed) {
+            // Desktop: Collapse to icons if currently expanded
+            onToggleCollapse();
+        }
+    };
+
+    const handleNewChatClick = () => {
+        onNewChat();
+        if (window.innerWidth <= 1024) {
+            // Mobile/Tablet: Close the sidebar overlay
+            onToggle();
+        } else if (!isCollapsed) {
+            // Desktop: Collapse to icons if currently expanded
+            onToggleCollapse();
         }
     };
 
@@ -71,14 +86,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onToggle, onTogg
             <div className={`${styles.header} ${isCollapsed ? styles.collapsed : ''}`}>
                 {/* Brand Logo - H Mark only */}
                 {/* Brand Logo - H Mark only. Always render, hide via CSS if needed. */}
-                <Link to="/" className={styles.brandLogo} style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}>
+                <Link
+                    to="/"
+                    className={styles.brandLogo}
+                    style={{ display: 'flex', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}
+                    onClick={() => {
+                        if (window.innerWidth <= 1024) {
+                            // Mobile/Tablet: Close the sidebar overlay
+                            onToggle();
+                        } else if (!isCollapsed) {
+                            // Desktop: Collapse to icons if currently expanded
+                            onToggleCollapse();
+                        }
+                    }}
+                >
                     <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--font-heading)' }}>H</h1>
                 </Link>
 
                 <button className={`${styles.toggleButton} ${styles.desktopOnly}`} onClick={onToggleCollapse} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
                     {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                 </button>
-                <button className={styles.newChatButton} onClick={onNewChat} title="New Chat">
+                <button className={styles.newChatButton} onClick={handleNewChatClick} title="New Chat">
                     <span className={styles.icon}><Plus size={18} /></span>
                     <span>New chat</span>
                 </button>

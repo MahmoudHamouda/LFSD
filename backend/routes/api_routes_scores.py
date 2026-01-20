@@ -389,3 +389,47 @@ async def get_financial_score_details(user_id: str, db: Session = Depends(get_db
         "time_window": latest_score.time_window,
         "data_sources": latest_score.data_sources_json
     }
+
+@router.post("/debug/fix_viv_index")
+async def debug_fix_viv_index(email: str, db: Session = Depends(get_db)):
+    """
+    Debug endpoint to backfill missing VivIndex for a user by email.
+    """
+    try:
+        print(f"DEBUG FIX: Attempting to fix VivIndex for {email}")
+        user = db.query(User).filter(User.email == email).first()
+        if not user:
+            raise HTTPException(status_code=404, detail=f"User {email} not found")
+
+        # Check existing
+        viv = db.query(VivIndex).filter(VivIndex.user_id == user.id).order_by(VivIndex.timestamp.desc()).first()
+        if viv:
+            return {"status": "ok", "message": "VivIndex already exists", "score": viv.financial_score}
+
+        # Fetch Component Scores
+        f_score = db.query(FinancialScore).filter(FinancialScore.user_id == user.id).order_by(FinancialScore.timestamp.desc()).first()
+        financial_val = f_score.overall_score if f_score else 0.0
+        
+        print(f"DEBUG FIX: Creating VivIndex with Fin={financial_val}")
+
+        # Create new index
+        new_viv = VivIndex(
+            id=str(uuid.uuid4()),
+            user_id=user.id,
+            financial_score=financial_val,
+            health_score=50.0,
+            time_score=50.0,
+            snapshot_reason="Cloud Fix Backfill",
+            timestamp=datetime.utcnow(),
+            confidence=1.0
+        )
+        
+        db.add(new_viv)
+        db.commit()
+        
+        return {"status": "fixed", "message": "VivIndex created", "financial_score": financial_val}
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))

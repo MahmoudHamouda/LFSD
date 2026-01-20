@@ -21,6 +21,7 @@ apscheduler
 
 # Security & Auth
 pyjwt
+python-jose[cryptography]
 passlib[bcrypt]
 slowapi
 redis

@@ -22,7 +22,8 @@ import {
     SignupStep,
     QuickFinancialStep,
     QuickHealthStep,
-    QuickProductivityStep
+    QuickProductivityStep,
+    PlanSelectionStep
 } from './OnboardingSteps';
 
 export default function Onboarding() {
@@ -38,6 +39,7 @@ export default function Onboarding() {
         name: user?.name || '',
         email: user?.email || '',
         password: '',
+        plan: 'tier_free',
         financial: {
             currency: 'USD',
             onboarding_session_id: '',
@@ -126,7 +128,8 @@ export default function Onboarding() {
                 { id: 'financial-3', component: FinancialStep3 },
                 { id: 'financial-score', component: FinancialScoreStep },
                 { id: 'quick-health', component: QuickHealthStep },
-                { id: 'quick-productivity', component: QuickProductivityStep }
+                { id: 'quick-productivity', component: QuickProductivityStep },
+                { id: 'plan-selection', component: PlanSelectionStep }
             ];
         }
         if (focus === 'health') {
@@ -135,7 +138,8 @@ export default function Onboarding() {
                 { id: 'health-2', component: HealthStep2 },
                 { id: 'health-score', component: HealthScoreStep },
                 { id: 'quick-financial', component: QuickFinancialStep },
-                { id: 'quick-productivity', component: QuickProductivityStep }
+                { id: 'quick-productivity', component: QuickProductivityStep },
+                { id: 'plan-selection', component: PlanSelectionStep }
             ];
         }
         if (focus === 'productivity') {
@@ -145,7 +149,8 @@ export default function Onboarding() {
                 { id: 'calendar', component: CalendarStep },
                 { id: 'time-score', component: TimeScoreStep },
                 { id: 'quick-financial', component: QuickFinancialStep },
-                { id: 'quick-health', component: QuickHealthStep }
+                { id: 'quick-health', component: QuickHealthStep },
+                { id: 'plan-selection', component: PlanSelectionStep }
             ];
         }
         return [];
@@ -227,7 +232,11 @@ export default function Onboarding() {
             // Mark Complete
             await fetch(`/api/users/${user?.id}/onboarding/complete`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ plan_id: formData.plan })
             });
 
             window.location.href = '/';

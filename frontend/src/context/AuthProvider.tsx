@@ -23,6 +23,7 @@ interface AuthContextType {
     login: (token: string, user: User) => void;
     logout: () => void;
     loginWithRedirect: any; // Using any to avoid complex type import for now
+    getAccessToken: () => Promise<string | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -162,8 +163,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const getAccessToken = async (): Promise<string | null> => {
+        // Try Auth0 token first
+        if (isAuthenticated) {
+            try {
+                return await getAccessTokenSilently();
+            } catch (e) {
+                console.error('Failed to get Auth0 token', e);
+            }
+        }
+        // Fallback to localStorage token
+        return localStorage.getItem('token');
+    };
+
     return (
-        <AuthContext.Provider value={{ status, user, checkSession, login, logout, loginWithRedirect }}>
+        <AuthContext.Provider value={{ status, user, checkSession, login, logout, loginWithRedirect, getAccessToken }}>
             {children}
         </AuthContext.Provider>
     );

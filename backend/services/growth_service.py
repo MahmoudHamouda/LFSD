@@ -41,7 +41,7 @@ class GrowthService:
                         "goals": 5,
                         "ai_chat_calls": 100,
                         "smart_recos": 10,
-                        "executions": 0,
+                        "executions": -1,
                         "history_months": 3
                     }
                 },
@@ -95,21 +95,21 @@ class GrowthService:
         ).count()
         print(f"DEBUG: usage goals={usage['goals']}")
         
-        # AI Chat: Messages sent by user this month (Using ChatHistory)
+        # AI Chat: Messages sent by user this month (Using DBMessage/messages table)
         first_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        usage["ai_chat_calls"] = db.query(ChatHistory).filter(
-            ChatHistory.user_id == user_id,
-            ChatHistory.message_type == "user",
-            ChatHistory.timestamp >= first_of_month
+        usage["ai_chat_calls"] = db.query(DBMessage).filter(
+            DBMessage.user_id == user_id,
+            DBMessage.role == "user",
+            DBMessage.date >= first_of_month
         ).count()
         
         # Token usage (Growth Agent)
         token_stats = db.query(
-            func.sum(ChatHistory.input_tokens).label("input"),
-            func.sum(ChatHistory.output_tokens).label("output")
+            func.sum(DBMessage.input_tokens).label("input"),
+            func.sum(DBMessage.output_tokens).label("output")
         ).filter(
-            ChatHistory.user_id == user_id,
-            ChatHistory.timestamp >= first_of_month
+            DBMessage.user_id == user_id,
+            DBMessage.date >= first_of_month
         ).first()
         
         input_tokens = getattr(token_stats, "input", 0) or 0

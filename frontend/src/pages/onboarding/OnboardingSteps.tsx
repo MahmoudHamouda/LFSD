@@ -2310,6 +2310,114 @@ export const QuickHealthStep: React.FC<StepProps> = ({ onNext, data, updateData 
     );
 };
 
+export const PlanSelectionStep: React.FC<StepProps> = ({ onNext, onBack, data, updateData }) => {
+    const selectedPlan = data.plan || 'tier_free';
+
+    const handleSelect = (plan: string) => {
+        updateData('plan', plan);
+    };
+
+    return (
+        <div className={styles.stepContainer}>
+             <div className={styles.header}>
+                <h1 className={styles.title}>Choose your plan</h1>
+                <p className={styles.subtitle}>Unlock more power or start with the essentials.</p>
+            </div>
+            
+            <div style={{display:'flex', gap:'1rem', flexDirection:'column'}}>
+                 {/* Free */}
+                 <div 
+                    onClick={() => handleSelect('tier_free')}
+                    style={{
+                        padding:'1.5rem',
+                        border: selectedPlan === 'tier_free' ? '2px solid var(--color-accent-blue)' : '1px solid var(--border-light)',
+                        borderRadius:'12px',
+                        cursor:'pointer',
+                        background: selectedPlan === 'tier_free' ? 'rgba(59, 130, 246, 0.05)' : 'var(--bg-card)',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                    }}
+                 >
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                        <div style={{fontWeight:'bold', fontSize:'1.1rem'}}>Free</div>
+                        <div style={{fontSize:'1.2rem', fontWeight:'bold'}}>$0 <span style={{fontSize:'0.8rem', color:'var(--text-secondary)', fontWeight:'normal'}}>/mo</span></div>
+                    </div>
+                    <ul style={{paddingLeft:'1.2rem', color:'var(--text-secondary)', fontSize:'0.9rem', margin:0}}>
+                        <li>Essential budgeting & tracking</li>
+                        <li>Basic health integration</li>
+                        <li>5 active goals</li>
+                    </ul>
+                 </div>
+
+                 {/* Plus */}
+                 <div 
+                    onClick={() => handleSelect('tier_plus')}
+                    style={{
+                        padding:'1.5rem',
+                        border: selectedPlan === 'tier_plus' ? '2px solid var(--color-accent-blue)' : '1px solid var(--border-light)',
+                        borderRadius:'12px',
+                        cursor:'pointer',
+                        background: selectedPlan === 'tier_plus' ? 'rgba(59, 130, 246, 0.05)' : 'var(--bg-card)',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                    }}
+                 >
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                        <div style={{fontWeight:'bold', fontSize:'1.1rem', color:'var(--color-accent-blue)'}}>Plus</div>
+                        <div style={{fontSize:'1.2rem', fontWeight:'bold'}}>$15 <span style={{fontSize:'0.8rem', color:'var(--text-secondary)', fontWeight:'normal'}}>/mo</span></div>
+                    </div>
+                    <ul style={{paddingLeft:'1.2rem', color:'var(--text-secondary)', fontSize:'0.9rem', margin:0}}>
+                        <li>Advanced AI Insights</li>
+                        <li>Unlimited goals</li>
+                        <li>Priority Chat Support</li>
+                    </ul>
+                 </div>
+
+                 {/* Pro */}
+                 <div 
+                    onClick={() => handleSelect('tier_pro')}
+                    style={{
+                        padding:'1.5rem',
+                        border: selectedPlan === 'tier_pro' ? '2px solid var(--color-accent-blue)' : '1px solid var(--border-light)',
+                        borderRadius:'12px',
+                        cursor:'pointer',
+                        background: selectedPlan === 'tier_pro' ? 'rgba(59, 130, 246, 0.05)' : 'var(--bg-card)',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.5rem'
+                    }}
+                 >
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                        <div style={{fontWeight:'bold', fontSize:'1.1rem', background: 'linear-gradient(to right, #a855f7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>Pro</div>
+                        <div style={{fontSize:'1.2rem', fontWeight:'bold'}}>$30 <span style={{fontSize:'0.8rem', color:'var(--text-secondary)', fontWeight:'normal'}}>/mo</span></div>
+                    </div>
+                    <ul style={{paddingLeft:'1.2rem', color:'var(--text-secondary)', fontSize:'0.9rem', margin:0}}>
+                        <li>AI Financial Concierge</li>
+                        <li>Full Automation & Forecasting</li>
+                        <li>White-glove 24/7 support</li>
+                    </ul>
+                 </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                {onBack && (
+                    <button className={styles.buttonSecondary} onClick={onBack} style={{ flex: 1 }}>
+                        ← Back
+                    </button>
+                )}
+                <button className={styles.button} onClick={onNext} style={{ flex: 1, marginTop: 0 }}>
+                    {selectedPlan === 'tier_free' ? 'Complete Setup' : 'Upgrade & Complete'} →
+                </button>
+            </div>
+        </div>
+    );
+};
+
 export const QuickProductivityStep: React.FC<StepProps> = ({ onNext, data, updateData }) => {
     return (
         <div className={styles.stepContainer}>

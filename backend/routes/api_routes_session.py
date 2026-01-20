@@ -120,6 +120,15 @@ async def logout(response: Response):
 
 user_router = APIRouter(prefix="/users", tags=["Onboarding"])
 
+from fastapi import Body
+from models.growth_models import Subscription
+from models.growth_schemas import PlanId
+
+class OnboardingCompleteRequest(BaseModel):
+    plan_id: Optional[str] = None
+
+# ... existing code ...
+
 @user_router.post("/{user_id}/onboarding/progress")
 async def update_onboarding_progress(
     user_id: str,
@@ -140,6 +149,7 @@ async def update_onboarding_progress(
 @user_router.post("/{user_id}/onboarding/complete")
 async def complete_onboarding(
     user_id: str,
+    payload: OnboardingCompleteRequest = Body(default=None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -147,11 +157,29 @@ async def complete_onboarding(
     user_to_update = db.query(User).filter(User.id == current_user.id).first()
     print(f"DEBUG: /complete called for user {current_user.id}. Current status: {user_to_update.onboarding_status if user_to_update else 'NOT FOUND'}")
     
-    
     if user_to_update:
         user_to_update.onboarding_status = "COMPLETE"
         user_to_update.onboarding_step = None
         user_to_update.updated_at = datetime.utcnow() # Force update with correct type
+        
+        # Handle Plan Selection
+        if payload and payload.plan_id:
+             print(f"Processing plan selection: {payload.plan_id}")
+             # Validate plan_id (simple check)
+             if payload.plan_id in [PlanId.FREE, PlanId.PLUS, PlanId.PRO]:
+                 # Find existing sub
+                 sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+                 if sub:
+                     if sub.plan_id != payload.plan_id:
+                         print(f"Upgrading user {user_id} from {sub.plan_id} to {payload.plan_id}")
+                         sub.plan_id = payload.plan_id
+                         sub.updated_at = datetime.utcnow()
+                 else:
+                     # Create if missing (failsafe)
+                     print(f"Creating new subscription for {user_id}: {payload.plan_id}")
+                     new_sub = Subscription(user_id=user_id, plan_id=payload.plan_id, status="active")
+                     db.add(new_sub)
+        
         db.commit()
         db.refresh(user_to_update)
         print(f"DEBUG: /complete committed. New status: {user_to_update.onboarding_status}")

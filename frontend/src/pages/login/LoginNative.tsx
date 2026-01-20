@@ -144,7 +144,57 @@ const LoginNative: React.FC = () => {
                 throw new Error("Failed to load user profile: " + meText);
 
             } else {
-                // Registration successful
+                // Registration successful - Auto Login
+                console.log('LOGIN NATIVE: Signup Success, Attempting Auto-Login');
+
+                try {
+                    const loginRes = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+
+                    if (loginRes.ok) {
+                        const loginData = await loginRes.json();
+                        const token = loginData.access_token;
+
+                        // Minimal JWT decode to get ID
+                        let auth0_id = '';
+                        try {
+                            const base64Url = token.split('.')[1];
+                            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                            const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function (c) {
+                                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                            }).join(''));
+
+                            const decoded = JSON.parse(jsonPayload);
+                            auth0_id = decoded.sub;
+                        } catch (e) {
+                            console.error('LOGIN NATIVE: Auto-Login JWT Decode Error', e);
+                            throw new Error("Account created, but auto-login failed. Please log in.");
+                        }
+
+                        // Fetch full profile
+                        const meRes = await fetch(`/api/auth/me?auth0_id=${encodeURIComponent(auth0_id)}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (meRes.ok) {
+                            const meText = await meRes.text();
+                            const meData = JSON.parse(meText);
+                            if (meData.user) {
+                                console.log('LOGIN NATIVE: Auto-Login SUCCESS');
+                                login(token, meData.user);
+                                navigate('/');
+                                return;
+                            }
+                        }
+                    }
+                } catch (autoLoginErr) {
+                    console.error('LOGIN NATIVE: Auto-Login Failed', autoLoginErr);
+                    // Fallback to manual login
+                }
+
                 setIsLogin(true);
                 setError("Account created! Please log in.");
                 setPassword('');

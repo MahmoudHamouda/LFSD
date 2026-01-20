@@ -31,6 +31,7 @@ google-generativeai
 google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
+googlemaps
 
 # File Processing
 pymupdf

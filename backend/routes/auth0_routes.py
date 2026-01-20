@@ -7,6 +7,8 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from models.database import get_db
 from models import User
+from models.growth_models import Subscription
+from models.growth_schemas import PlanId
 from core.auth0_utils import verify_auth0_token
 from core.auth0_config import get_auth0_settings
 import uuid
@@ -120,6 +122,17 @@ async def auth0_callback(
                     updated_at=datetime.utcnow()
                 )
                 db.add(user)
+                
+                # AUTOMATICALLY CREATE FREE SUBSCRIPTION
+                print(f"Creating FREE subscription for new user {email}")
+                new_sub = Subscription(
+                    user_id=user.id,
+                    plan_id=PlanId.FREE,
+                    status="active",
+                    created_at=datetime.utcnow(),
+                    updated_at=datetime.utcnow()
+                )
+                db.add(new_sub)
         
         db.commit()
         db.refresh(user)

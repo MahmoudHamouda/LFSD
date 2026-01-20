@@ -14,17 +14,34 @@ settings = get_settings()
 # --- CLOUD SQL CONFIGURATION ---
 from google.cloud.sql.connector import Connector
 import pg8000
+import os
 
 def getconn():
-    connector = Connector()
-    conn = connector.connect(
-        "newprojectlfsd:us-central1:lfsd-postgres-prod",
-        "pg8000",
-        user="postgres",
-        password="LfsdSecure2024!",
-        db="lfsd",
-        ip_type="public"
-    )
+    instance_connection_name = "newprojectlfsd:us-central1:lfsd-postgres-prod"
+    db_user = "lfsd_app"
+    db_pass = "SecurePass123"
+    db_name = "lfsd"
+    
+    # Check for Cloud Run Unix Socket
+    unix_socket_path = f"/cloudsql/{instance_connection_name}"
+    if os.path.exists(unix_socket_path):
+        conn = pg8000.connect(
+            user=db_user,
+            password=db_pass,
+            database=db_name,
+            unix_sock=f"{unix_socket_path}/.s.PGSQL.5432"
+        )
+    else:
+        # Fallback to Public IP Connector
+        connector = Connector()
+        conn = connector.connect(
+            instance_connection_name,
+            "pg8000",
+            user=db_user,
+            password=db_pass,
+            db=db_name,
+            ip_type="public"
+        )
     return conn
 
 if settings.ENV == "prod":
