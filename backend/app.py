@@ -443,63 +443,37 @@ def create_app() -> FastAPI:
                     
             db.commit()
 
-            # 3. Seed Users (Inline - no import dependencies)
-            print("Force Seeding: Seeding users inline...")
+            # 3. Seed Users with FULL Persona Data (Finance, Health, Time data + Goals)
+            print("Force Seeding: Seeding users with comprehensive persona data...")
             user_seed_status = "NOT_ATTEMPTED"
             user_seed_error = None
             
             try:
-                users_to_create = [
-                    {"id": "user-finance", "email": "finance@helm.com", "password": "P@ssword123", "name": "Finance User"},
-                    {"id": "user-empty", "email": "empty@helm.com", "password": "P@ssword123", "name": "Empty User"},
-                    {"id": "user-health", "email": "health@helm.com", "password": "P@ssword123", "name": "Health User"},
-                    {"id": "user-time", "email": "time@helm.com", "password": "P@ssword123", "name": "Time User"},
-                    {"id": "user-super", "email": "super@helm.com", "password": "P@ssword123", "name": "Super User"},
-                    {"id": "user-david", "email": "david@example.com", "password": "password", "name": "David"},
-                    {"id": "user-sara", "email": "sara@example.com", "password": "password", "name": "Sara"},
-                    {"id": "user-alex", "email": "alex@example.com", "password": "password", "name": "Alex"},
-                ]
+                # Import the comprehensive seeding function
+                import sys
+                import os
+                # Ensure seed_users module is importable
+                backend_path = os.path.dirname(os.path.abspath(__file__))
+                if backend_path not in sys.path:
+                    sys.path.insert(0, backend_path)
                 
-                from models.models import User, VivIndex
-                from core.authentication import get_password_hash
-                import uuid
+                from seed_users import safe_seed_users
                 
-                for user_data in users_to_create:
-                    existing = db.query(User).filter(User.email == user_data["email"]).first()
-                    if not existing:
-                        print(f"Creating user: {user_data['email']}")
-                        user = User(
-                            id=user_data["id"],
-                            email=user_data["email"],
-                            hashed_password=get_password_hash(user_data["password"]),
-                            profile_json={"name": user_data["name"]},
-                            onboarding_status="COMPLETE"
-                        )
-                        db.add(user)
-                        db.flush()
-                        
-                        # Add VivIndex
-                        viv = VivIndex(
-                            id=str(uuid.uuid4()),
-                            user_id=user.id,
-                            financial_score=50.0,
-                            health_score=50.0,
-                            time_score=50.0,
-                            snapshot_reason="Initial",
-                            timestamp=datetime.utcnow()
-                        )
-                        db.add(viv)
-                    else:
-                        print(f"User exists: {user_data['email']}")
+                print("Calling safe_seed_users() - This will create users WITH data:")
+                print("  - Financial accounts & transactions (30 day history)")
+                print("  - Health metrics & sleep data (7 day history)")  
+                print("  - Calendar events")
+                print("  - Life goals")
+                print("  - VivIndex scores")
                 
-                db.commit()
+                safe_seed_users()
                 user_seed_status = "SUCCESS"
-                print("Inline user seeding completed!")
+                print("✅ Comprehensive user seeding completed!")
                 
             except Exception as e:
                 import traceback
                 user_seed_error = str(e)
-                print(f"ERROR seeding users inline: {e}")
+                print(f"❌ ERROR seeding users: {e}")
                 print(traceback.format_exc())
                 user_seed_status = "FAILED"
             
