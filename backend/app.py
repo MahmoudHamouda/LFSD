@@ -444,11 +444,28 @@ def create_app() -> FastAPI:
             db.commit()
 
             # 3. Seed Users (Safe Mode)
-            print("Force Seeding: Seeding Users (Safe)...")
-            from seed_users import safe_seed_users
-            safe_seed_users()
+            print("Force Seeding: Attempting to import seed_users module...")
+            user_seed_status = "NOT_ATTEMPTED"
+            user_seed_error = None
             
-            return {"status": "success", "message": "Database Initialized, Tiers & Users Seeded safely."}
+            try:
+                from seed_users import safe_seed_users
+                print("Force Seeding: Module imported successfully. Calling safe_seed_users()...")
+                safe_seed_users()
+                print("Force Seeding: safe_seed_users() completed successfully!")
+                user_seed_status = "SUCCESS"
+            except Exception as e:
+                import traceback
+                user_seed_error = str(e)
+                print(f"ERROR seeding users: {e}")
+                print(traceback.format_exc())
+                user_seed_status = "FAILED"
+            
+            message = f"Database Initialized, Tiers Seeded. User Seeding: {user_seed_status}"
+            if user_seed_error:
+                message += f" (Error: {user_seed_error[:100]})"
+            
+            return {"status": "success" if user_seed_status != "FAILED" else "partial", "message": message, "user_seed_status": user_seed_status}
             
         except Exception as e:
             import traceback
