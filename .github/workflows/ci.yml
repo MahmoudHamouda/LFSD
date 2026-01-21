@@ -113,12 +113,6 @@ jobs:
           service: lfsd-backend
           image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:${{ steps.slug.outputs.sha8 }}
           region: us-central1
-          env_vars: |
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            DB_HOST=${{ secrets.DB_HOST }}
-            GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}
 
       # Optional: Notify Success
       - name: Notify Success
