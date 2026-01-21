@@ -443,21 +443,63 @@ def create_app() -> FastAPI:
                     
             db.commit()
 
-            # 3. Seed Users (Safe Mode)
-            print("Force Seeding: Attempting to import seed_users module...")
+            # 3. Seed Users (Inline - no import dependencies)
+            print("Force Seeding: Seeding users inline...")
             user_seed_status = "NOT_ATTEMPTED"
             user_seed_error = None
             
             try:
-                from seed_users import safe_seed_users
-                print("Force Seeding: Module imported successfully. Calling safe_seed_users()...")
-                safe_seed_users()
-                print("Force Seeding: safe_seed_users() completed successfully!")
+                users_to_create = [
+                    {"id": "user-finance", "email": "finance@helm.com", "password": "P@ssword123", "name": "Finance User"},
+                    {"id": "user-empty", "email": "empty@helm.com", "password": "P@ssword123", "name": "Empty User"},
+                    {"id": "user-health", "email": "health@helm.com", "password": "P@ssword123", "name": "Health User"},
+                    {"id": "user-time", "email": "time@helm.com", "password": "P@ssword123", "name": "Time User"},
+                    {"id": "user-super", "email": "super@helm.com", "password": "P@ssword123", "name": "Super User"},
+                    {"id": "user-david", "email": "david@example.com", "password": "password", "name": "David"},
+                    {"id": "user-sara", "email": "sara@example.com", "password": "password", "name": "Sara"},
+                    {"id": "user-alex", "email": "alex@example.com", "password": "password", "name": "Alex"},
+                ]
+                
+                from models.models import User, VivIndex
+                from core.authentication import get_password_hash
+                import uuid
+                
+                for user_data in users_to_create:
+                    existing = db.query(User).filter(User.email == user_data["email"]).first()
+                    if not existing:
+                        print(f"Creating user: {user_data['email']}")
+                        user = User(
+                            id=user_data["id"],
+                            email=user_data["email"],
+                            hashed_password=get_password_hash(user_data["password"]),
+                            profile_json={"name": user_data["name"]},
+                            onboarding_status="COMPLETE"
+                        )
+                        db.add(user)
+                        db.flush()
+                        
+                        # Add VivIndex
+                        viv = VivIndex(
+                            id=str(uuid.uuid4()),
+                            user_id=user.id,
+                            financial_score=50.0,
+                            health_score=50.0,
+                            time_score=50.0,
+                            snapshot_reason="Initial",
+                            timestamp=datetime.utcnow()
+                        )
+                        db.add(viv)
+                    else:
+                        print(f"User exists: {user_data['email']}")
+                
+                db.commit()
                 user_seed_status = "SUCCESS"
+                print("Inline user seeding completed!")
+                
             except Exception as e:
                 import traceback
                 user_seed_error = str(e)
-                print(f"ERROR seeding users: {e}")
+                print(f"ERROR seeding users inline: {e}")
                 print(traceback.format_exc())
                 user_seed_status = "FAILED"
             
