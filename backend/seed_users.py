@@ -13,16 +13,10 @@ from models.models import (
 from core.authentication import get_password_hash
 import uuid
 
-def seed_all_users():
-    """Seed all test users with complete data."""
+def safe_seed_users():
+    """Seed users without dropping tables (Safe for production)."""
     db = SessionLocal()
     try:
-        # Create all tables
-        # Force strict schema reset to prevent mismatches
-        print("Resetting database schema...")
-        Base.metadata.drop_all(bind=engine)
-        Base.metadata.create_all(bind=engine)
-        
         users_to_create = [
             {
                 "id": "user-finance",
@@ -58,17 +52,40 @@ def seed_all_users():
                 "password": "P@ssword123",
                 "name": "Super User",
                 "profile": "super"
+            },
+            # Standard Personas (Mapped to profiles for data generation)
+            {
+                "id": "user-david",
+                "email": "david@example.com",
+                "password": "password",
+                "name": "David",
+                "profile": "finance"
+            },
+            {
+                "id": "user-sara",
+                "email": "sara@example.com",
+                "password": "password",
+                "name": "Sara",
+                "profile": "health"
+            },
+            {
+                "id": "user-alex",
+                "email": "alex@example.com",
+                "password": "password",
+                "name": "Alex",
+                "profile": "time"
             }
         ]
         
         for user_data in users_to_create:
+            # Check existing first
             existing = db.query(User).filter(User.email == user_data["email"]).first()
-            
             if existing:
-                print(f"User {user_data['email']} exists. Updating onboarding status...")
+                print(f"User {user_data['email']} exists. Updating onboarding status and password...")
                 existing.onboarding_status = "COMPLETE"
                 existing.hashed_password = get_password_hash(user_data["password"])
                 db.commit()
+                # Ensure we have the user object
                 user = existing
             else:
                 print(f"Creating user {user_data['email']}...")
@@ -77,7 +94,7 @@ def seed_all_users():
                     email=user_data["email"],
                     hashed_password=get_password_hash(user_data["password"]),
                     profile_json={"name": user_data["name"]},
-                    onboarding_status="COMPLETE"  # All users should skip onboarding
+                    onboarding_status="COMPLETE"
                 )
                 db.add(user)
                 db.commit()
@@ -88,25 +105,20 @@ def seed_all_users():
             profile = user_data["profile"]
             
             if profile in ["finance", "super"]:
-                # Add financial data
                 _add_financial_data(db, user.id)
             
             if profile in ["health", "super"]:
-                # Add health data
                 _add_health_data(db, user.id)
             
             if profile in ["time", "super"]:
-                # Add calendar/time data
                 _add_time_data(db, user.id)
             
             if profile == "super":
-                # Add goals
                 _add_life_goals(db, user.id)
             
-            # Always add VivIndex for all users
             _add_viv_index(db, user.id, profile)
         
-        print("All users seeded successfully!")
+        print("Safe seeding completed successfully!")
         
     except Exception as e:
         print(f"Error seeding users: {e}")
@@ -115,6 +127,13 @@ def seed_all_users():
         db.rollback()
     finally:
         db.close()
+
+def seed_all_users():
+    """Seed all test users with strict schema reset (Use with caution)."""
+    print("Resetting database schema...")
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    safe_seed_users()
 
 
 def _add_financial_data(db, user_id):

@@ -399,7 +399,7 @@ def create_app() -> FastAPI:
             # 1. Init DB (Create Tables)
             init_db()
             
-            # 2. Seed Tier Configs
+            # 2. Seed Tier Configs (Existing logic preserved)
             print("Force Seeding: Creating Tiers...")
             from models.growth_models import TierConfig
             from models.growth_schemas import PlanId
@@ -440,9 +440,15 @@ def create_app() -> FastAPI:
                 else:
                     existing_tier.config_json = config
                     existing_tier.name = name
-            
+                    
             db.commit()
-            return {"status": "success", "message": "Database Initialized and Tiers Seeded."}
+
+            # 3. Seed Users (Safe Mode)
+            print("Force Seeding: Seeding Users (Safe)...")
+            from seed_users import safe_seed_users
+            safe_seed_users()
+            
+            return {"status": "success", "message": "Database Initialized, Tiers & Users Seeded safely."}
             
         except Exception as e:
             import traceback
@@ -491,7 +497,7 @@ if __name__ == "__main__":
         "app:create_app",
         factory=True,
         host="0.0.0.0",
-        port=8003,
+        port=int(os.environ.get("PORT", 8003)),
         reload=True,
     )
 # Force Reload Triggered by Agent
