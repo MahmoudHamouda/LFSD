@@ -1,19 +1,19 @@
 from flask import Flask
-from api_gateway.routes.user_routes import user_blueprint
-from api_gateway.routes.financial_routes import financial_blueprint
-from api_gateway.routes.notification_routes import notification_blueprint
-from api_gateway.routes.partner_routes import partner_blueprint
-from api_gateway.routes.recommendation_routes import recommendation_blueprint
-from api_gateway.routes.activity_feed_routes import activity_feed_blueprint
-from api_gateway.routes.audit_routes import audit_blueprint
-from api_gateway.routes.chat_routes import chat_blueprint
-from shared.logging import setup_logging
+from routes.user_routes import user_blueprint
+from routes.financial_routes import financial_blueprint
+from routes.notification_routes import notification_blueprint
+from routes.partner_routes import partner_blueprint
+from routes.recommendation_routes import recommendation_blueprint
+from routes.activity_feed_routes import activity_feed_blueprint
+from routes.audit_routes import audit_blueprint
+from routes.chat_routes import chat_blueprint
+# from shared.logging import setup_logging  # Comment out if shared module not available
 
 
 def create_app():
     app = Flask(__name__)
     # Setup logging
-    setup_logging(app, service_name="api_gateway")
+    # setup_logging(app, service_name="api_gateway")  # Commented out - not available in container
     # Register Blueprints
     app.register_blueprint(user_blueprint, url_prefix="/users")
     app.register_blueprint(financial_blueprint, url_prefix="/financial")
