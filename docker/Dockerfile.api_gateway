@@ -16,5 +16,5 @@ COPY backend/api_gateway/ .
 # Expose the application port
 EXPOSE 5000
 
-# Run the application
-CMD ["python", "app.py"]
+# Run the application (using minimal version for testing)
+CMD ["python", "app_minimal.py"]
