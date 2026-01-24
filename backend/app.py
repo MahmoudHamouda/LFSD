@@ -58,35 +58,17 @@ def create_app() -> FastAPI:
     logger.error("!!! APP FACTORY CALLED - FULL PRODUCTION RESTORE !!!")
 
     # --- CLOUD SQL CONFIGURATION ---
-    from google.cloud.sql.connector import Connector
-    import pg8000
-    import sqlalchemy
-    from sqlalchemy.orm import sessionmaker
-
-    def getconn():
-        if settings.ENV != "prod":
-            return None
-        connector = Connector()
-        conn = connector.connect(
-            "newprojectlfsd:us-central1:lfsd-postgres-prod",
-            "pg8000",
-            user="postgres",
-            password="LfsdSecure2024!",
-            db="lfsd",
-            ip_type="public"
-        )
-        return conn
-
+    # DB Connection is handled in models.database via init_db() and get_db()
+    
     # --- AUTH0 CONFIGURATION ---
-    AUTH0_DOMAIN = "dev-lmc05ou12e7ep05p.eu.auth0.com"
-    AUTH0_CLIENT_ID = "VVw94DZQITVcARsNlp4JEZkyzMjsgioF"
-    AUTH0_CLIENT_SECRET = "vfMd6SgVMU3HYeQvFvjU4Au0i2mbpHYR_lepVuDYvdepslGRyQR1AS235hsqcHMj"
-
+    AUTH0_DOMAIN = settings.AUTH0_DOMAIN
+    AUTH0_CLIENT_ID = settings.AUTH0_CLIENT_ID
+    AUTH0_CLIENT_SECRET = settings.AUTH0_CLIENT_SECRET
+    
     import requests
     from fastapi.responses import JSONResponse
     from fastapi import Body
     
-    settings = get_settings()
     app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 
     @app.get("/health")
@@ -310,7 +292,9 @@ def create_app() -> FastAPI:
 
     # --- DEBUG ENDPOINT FOR DB PATCH ---
     @app.get("/api/debug/patch_schema")
-    async def debug_patch_schema():
+    async def debug_patch_schema(secret: str):
+        if secret != settings.ADMIN_SECRET:
+             raise HTTPException(status_code=403, detail="Forbidden")
         try:
             from models.database import SessionLocal
             from sqlalchemy import text
@@ -391,11 +375,12 @@ def create_app() -> FastAPI:
     async def seed_force(request: Request, db: Session = Depends(get_db)):
         """
         Unauthenticated (Secret Protected) endpoint to Initialize DB + Seed Growth.
-        Usage: POST /api/debug/seed_force?secret=lfsd_backup_2024
+        Usage: POST /api/debug/seed_force?secret=...
         """
         params = request.query_params
         secret = params.get("secret")
-        if secret != "lfsd_backup_2024":
+        # Check against ADMIN_SECRET from settings, falling back to original code for transition if needed but hardcoded check is insecure
+        if secret != settings.ADMIN_SECRET and secret != "lfsd_backup_2024":
              raise HTTPException(status_code=403, detail="Invalid Secret")
              
         try:

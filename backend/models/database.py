@@ -17,10 +17,17 @@ import pg8000
 import os
 
 def getconn():
-    instance_connection_name = "newprojectlfsd:us-central1:lfsd-postgres-prod"
-    db_user = "lfsd_app"
-    db_pass = "SecurePass123"
-    db_name = "lfsd"
+    if not settings.INSTANCE_CONNECTION_NAME:
+        # If no instance connection name, unlikely to work for Cloud SQL, 
+        # but maybe we are in a mode where we don't need it?
+        # Check env var as fallback
+        if not os.environ.get("INSTANCE_CONNECTION_NAME"):
+            return None
+
+    instance_connection_name = settings.INSTANCE_CONNECTION_NAME
+    db_user = settings.DB_USER
+    db_pass = settings.DB_PASS
+    db_name = settings.DB_NAME
     
     # Check for Cloud Run Unix Socket
     unix_socket_path = f"/cloudsql/{instance_connection_name}"

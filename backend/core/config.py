@@ -85,6 +85,22 @@ class Settings(BaseSettings):
     EMAILS_FROM_EMAIL: str = Field("", description="Email address to send from")
     EMAILS_FROM_NAME: str = Field("Viv App", description="Name to display as sender")
 
+    # Cloud SQL & Database Credentials (PROD)
+    DB_USER: str = Field("lfsd_app", description="Database User")
+    DB_PASS: str = Field("", description="Database Password")
+    DB_NAME: str = Field("lfsd", description="Database Name")
+    INSTANCE_CONNECTION_NAME: str = Field("", description="GCP Instance Connection Name")
+
+    # Auth0 Configuration
+    AUTH0_DOMAIN: str = Field("dev-lmc05ou12e7ep05p.eu.auth0.com", description="Auth0 Domain")
+    AUTH0_CLIENT_ID: str = Field("", description="Auth0 Client ID")
+    AUTH0_CLIENT_SECRET: str = Field("", description="Auth0 Client Secret")
+    AUTH0_AUDIENCE: str = Field("", description="Auth0 API Audience")
+    AUTH0_ALGORITHMS: str = Field("RS256", description="Auth0 Algorithms (comma separated)")
+
+    # Admin / Debug Security
+    ADMIN_SECRET: str = Field("temporary_admin_secret", description="Secret for debug endpoints")
+
     # Pydantic v2 uses `model_config` for settings.
     model_config = {
         "env_file": str(Path(__file__).resolve().parent.parent.parent / ".env"),
