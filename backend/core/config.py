@@ -100,6 +100,7 @@ class Settings(BaseSettings):
 
     # Admin / Debug Security
     ADMIN_SECRET: str = Field("temporary_admin_secret", description="Secret for debug endpoints")
+    CREDENTIALS_ENCRYPTION_KEY: str = Field("9lYiaBSEzM2Ss_jV0TlBYzu6zbHRRCXU2yjSg5ZdOthA=", description="Fernet key for encrypting provider credentials")
 
     # Pydantic v2 uses `model_config` for settings.
     model_config = {

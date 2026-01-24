@@ -2,7 +2,7 @@
 Enterprise-Grade Database Models for Viv Logic Engine.
 """
 
-from sqlalchemy import Column, String, Float, DateTime, ForeignKey, Integer, Text, Boolean, Date, JSON, Index
+from sqlalchemy import Column, String, Float, DateTime, ForeignKey, Integer, Text, Boolean, Date, JSON, Index, UniqueConstraint
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
@@ -77,7 +77,10 @@ class User(Base):
 class Connection(Base):
     """Stores OAuth credentials and status for external providers."""
     __tablename__ = "connections"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = (
+        UniqueConstraint('user_id', 'provider', name='ux_user_provider'),
+        {'extend_existing': True}
+    )
 
     id = Column(String, primary_key=True, default=generate_uuid)
     user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
