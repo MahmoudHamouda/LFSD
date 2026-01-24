@@ -126,6 +126,8 @@ def safe_seed_users():
         import traceback
         traceback.print_exc()
         db.rollback()
+        # Raise it so we see the full stack in terminal
+        raise e
     finally:
         db.close()
 
