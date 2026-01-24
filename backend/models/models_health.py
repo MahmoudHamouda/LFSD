@@ -1,104 +1,237 @@
 """
-Enhanced database models for health integrations and user indexes.
+Health Models - Health integrations, metrics, insights, and user health indexes.
 
-This module extends the existing models.py with new tables for:
-- Health connections (WHOOP, Apple Health, Android Health)
-- Health metrics (sleep, recovery, activity, HRV, steps)
-- User indexes (financial wellbeing, time saved, balance)
+Provides data models for health provider connections (Apple Health, Whoop, etc.),
+health metrics storage, computed insights, and user health settings.
 """
 
-from sqlalchemy import Column, String, Text, DateTime, ForeignKey, Integer, Float, Boolean
+import enum
+import uuid
+from datetime import datetime, timezone
+
+from sqlalchemy import (
+    Column, String, Float, DateTime, ForeignKey, JSON, Boolean,
+    Enum, UniqueConstraint, Index
+)
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from sqlalchemy.sql import func
 from .database import Base
 
+
+def generate_uuid() -> str:
+    """Generate UUID string for primary keys."""
+    return str(uuid.uuid4())
+
+
 # ============================================================================
-# Health Connection Model
+# ENUMS
+# ============================================================================
+
+class HealthProvider(str, enum.Enum):
+    """Supported health data providers."""
+    APPLE_HEALTH = "apple_health"
+    WHOOP = "whoop"
+    FITBIT = "fitbit"
+    GARMIN = "garmin"
+    OURA = "oura"
+    GOOGLE_FIT = "google_fit"
+
+
+class ConnectionStatus(str, enum.Enum):
+    """Health connection lifecycle states."""
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    REVOKED = "revoked"
+    ERROR = "error"
+
+
+class MetricType(str, enum.Enum):
+    """Health metric types."""
+    HEART_RATE = "heart_rate"
+    HRV = "hrv"
+    STEPS = "steps"
+    SLEEP_DURATION = "sleep_duration"
+    SLEEP_QUALITY = "sleep_quality"
+    CALORIES = "calories"
+    WORKOUT = "workout"
+    WEIGHT = "weight"
+    BLOOD_PRESSURE = "blood_pressure"
+    OXYGEN_SATURATION = "oxygen_saturation"
+
+
+class SyncFrequency(str, enum.Enum):
+    """Data sync frequency options."""
+    REALTIME = "realtime"
+    HOURLY = "hourly"
+    DAILY = "daily"
+    WEEKLY = "weekly"
+
+
+# ============================================================================
+# MODELS
 # ============================================================================
 
 class DBHealthConnection(Base):
-    """Health connection model for storing user links to health providers."""
-    __tablename__ = "health_connections"
+    """
+    Health provider OAuth connections.
     
-    id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    provider = Column(String, nullable=False)  # "whoop", "apple_health", "android_health"
-    status = Column(String, default="not_connected")  # "not_connected", "connecting", "connected", "error", "reconnect"
-    credentials = Column(Text)  # Encrypted JSON string with OAuth tokens
-    permissions = Column(Text)  # JSON array of granted permissions
-    error_message = Column(String, nullable=True)
-    connected_at = Column(DateTime, nullable=True)
-    last_synced_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Stores encrypted credentials and permissions for third-party health data access.
+    One connection per (user, provider).
+    """
+    __tablename__ = "health_connections"
 
-# ============================================================================
-# Health Metric Model
-# ============================================================================
+    __table_args__ = (
+        UniqueConstraint("user_id", "provider", name="uq_health_conn_user_provider"),
+        Index("ix_health_conn_user_status", "user_id", "status"),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
+    provider = Column(Enum(HealthProvider), nullable=False, index=True)
+    
+    # OAuth/API credentials (encrypted at rest)
+    # WARNING: Encrypt before storing, decrypt on read
+    credentials = Column(String, nullable=False)  # Encrypted JSON blob
+    
+    # Permissions granted by user (store as JSON for queryability)
+    permissions = Column(JSON, nullable=False, default=dict)
+    
+    status = Column(Enum(ConnectionStatus), default=ConnectionStatus.ACTIVE, nullable=False)
+    
+    connected_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_synced_at = Column(DateTime(timezone=True), nullable=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    
+    metadata_json = Column(JSON, nullable=False, default=dict)
+
+    user = relationship("User", back_populates="health_connections")
+
 
 class DBHealthMetric(Base):
-    """Health metric model for storing health data from various providers."""
-    __tablename__ = "health_metrics"
+    """
+    Raw health metrics from providers.
     
-    id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    provider = Column(String, nullable=False)  # "whoop", "apple_health", "android_health"
-    metric_type = Column(String, nullable=False)  # "sleep", "recovery", "activity", "hrv", "steps", "heart_rate"
-    value = Column(Float, nullable=False)
-    timestamp = Column(DateTime, nullable=False)
-    raw_data = Column(Text, nullable=True)  # JSON string with full provider data
-    created_at = Column(DateTime, default=datetime.utcnow)
+    Stores time-series health data with optional deduplication by timestamp.
+    """
+    __tablename__ = "health_metrics"
 
-# ============================================================================
-# User Index Model
-# ============================================================================
+    __table_args__ = (
+        # Optional: Prevent duplicate datapoints from same provider
+        # UniqueConstraint("user_id", "provider", "metric_type", "timestamp", 
+        #                 name="uq_health_metric_dedupe"),
+        Index("ix_health_metrics_user_time", "user_id", "timestamp"),
+        Index("ix_health_metrics_user_type_time", "user_id", "metric_type", "timestamp"),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
+    provider = Column(Enum(HealthProvider), nullable=False)
+    
+    metric_type = Column(Enum(MetricType), nullable=False, index=True)
+    value = Column(Float, nullable=False)
+    unit = Column(String(20), nullable=True)
+    
+    timestamp = Column(DateTime(timezone=True), nullable=False, index=True)
+    
+    # Store raw provider data as JSON (not encrypted, for debugging)
+    raw_data = Column(JSON, nullable=False, default=dict)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="health_metrics")
+
 
 class DBUserIndex(Base):
-    """User index model for storing calculated wellbeing indexes."""
-    __tablename__ = "user_indexes"
+    """
+    Computed health index scores per user.
     
-    id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    financial_wellbeing = Column(Float, nullable=False)  # 0-100
-    time_saved = Column(Float, nullable=False)  # 0-100
-    balance_index = Column(Float, nullable=True)  # 0-100 (only if health connected)
-    trend_financial = Column(Float, default=0.0)  # +/- percentage
-    trend_time_saved = Column(Float, default=0.0)  # +/- percentage
-    trend_balance = Column(Float, nullable=True)  # +/- percentage
-    calculated_at = Column(DateTime, default=datetime.utcnow)
+    NOTE: This may duplicate VivIndex/HealthScore tables elsewhere.
+    Consider consolidating to a single canonical index table.
+    """
+    __tablename__ = "user_health_indexes"
 
-# ============================================================================
-# Health Insight Model
-# ============================================================================
+    __table_args__ = (
+        # One index per user per time window
+        UniqueConstraint("user_id", "time_window", name="uq_user_index_window"),
+        Index("ix_user_index_calculated", "user_id", "calculated_at"),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
+    
+    # Pillar scores
+    financial_index = Column(Float, default=0.0, nullable=False)
+    time_index = Column(Float, default=0.0, nullable=False)
+    balance_index = Column(Float, default=0.0, nullable=False)
+    
+    # Metadata
+    time_window = Column(String(20), default="last_30_days", nullable=False)  # TODO: Enum
+    confidence = Column(Float, default=0.0, nullable=False)
+    
+    calculated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    data_sources = Column(JSON, nullable=False, default=dict)
+
+    user = relationship("User", back_populates="health_indexes")
+
 
 class DBHealthInsight(Base):
-    """Health insight model for storing AI-generated health-to-finance insights."""
-    __tablename__ = "health_insights"
+    """
+    AI-generated health insights and recommendations.
     
-    id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    insight_type = Column(String, nullable=False)  # "recovery_low", "sleep_good", "activity_high", "general"
-    title = Column(String, nullable=False)
-    description = Column(Text, nullable=False)
-    recommendation = Column(Text, nullable=True)
-    financial_impact = Column(Text, nullable=True)  # JSON: {category, suggestion}
-    related_metrics = Column(Text, nullable=True)  # JSON array of {metricType, value}
-    created_at = Column(DateTime, default=datetime.utcnow)
-    dismissed_at = Column(DateTime, nullable=True)
+    Personalized insights based on health data patterns.
+    """
+    __tablename__ = "health_insights"
 
-# ============================================================================
-# Health Integration Settings Model
-# ============================================================================
+    __table_args__ = (
+        Index("ix_health_insights_user_created", "user_id", "created_at"),
+        Index("ix_health_insights_user_dismissed", "user_id", "dismissed_at"),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
+    
+    title = Column(String(255), nullable=False)
+    description = Column(String, nullable=True)
+    insight_type = Column(String(50), nullable=True, index=True)
+    
+    # Financial/time impact (store as JSON for structured data)
+    financial_impact = Column(JSON, nullable=False, default=dict)
+    related_metrics = Column(JSON, nullable=False, default=list)
+    
+    priority = Column(String(20), default="normal", nullable=False)
+    
+    is_dismissed = Column(Boolean, default=False, nullable=False)
+    dismissed_at = Column(DateTime(timezone=True), nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+
+    user = relationship("User", back_populates="health_insights")
+
 
 class DBHealthSettings(Base):
-    """Health integration settings model for user preferences."""
-    __tablename__ = "health_settings"
+    """
+    User health data sync settings per provider.
     
-    id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
-    provider = Column(String, nullable=False)  # "whoop", "apple_health", "android_health"
-    enabled = Column(Boolean, default=True)
-    data_categories = Column(Text)  # JSON: {sleep, activity, hrv, steps, heartRate}
-    sync_frequency = Column(String, default="hourly")  # "realtime", "hourly", "daily"
-    notifications_enabled = Column(Boolean, default=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    Controls what data is synced and how frequently.
+    """
+    __tablename__ = "health_settings"
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "provider", name="uq_health_settings_user_provider"),
+    )
+
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
+    provider = Column(Enum(HealthProvider), nullable=False)
+    
+    sync_enabled = Column(Boolean, default=True, nullable=False)
+    sync_frequency = Column(Enum(SyncFrequency), default=SyncFrequency.DAILY, nullable=False)
+    
+    # Categories of data to sync (store as JSON array)
+    data_categories = Column(JSON, nullable=False, default=list)
+    
+    last_modified_at = Column(DateTime(timezone=True), server_default=func.now(), 
+                             onupdate=func.now(), nullable=False)
+
+    user = relationship("User", back_populates="health_settings")

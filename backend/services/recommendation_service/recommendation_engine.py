@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
@@ -49,28 +49,16 @@ def compute_recommendations(user_id: str, db: Session) -> List[Dict[str, Any]]:
 
 def _generate_financial_recommendations(user_id: str, db: Session) -> Optional[Dict[str, Any]]:
     """
-    Generator: Optimize monthly subscriptions
-    Rule: If count of "unused" subscriptions >= 2, suggest check.
-    Logic: 
-      - Fetch all active recurring bills.
-      - "Unused" = mock logic for now: if we have more than 2 recurring bills total, 
-        we assume some are unused for the sake of the feature demonstration 
-        (since we lack a robust 'last_used_at' signal on the bill itself).
-      - In a real world, we would join with Transactions to find last payment date vs usage.
+    Generator: Optimize monthly subscriptions.
+    Suggests review if there are multiple active bills.
     """
-    # Get all verified recurring bills
     bills = db.query(RecurringBill).filter(
-        RecurringBill.user_id == user_id
+        RecurringBill.user_id == user_id,
+        RecurringBill.status == "active"
     ).all()
     
-    # Filter for 'unused' (Simulation: if we have > 2 bills, we flag the excess/cheaper ones)
-    # Real logic: check if no 'usage' signal. 
-    # For MVP: If user has >= 3 bills, we flag 2 of them as potential candidates.
-    
     if len(bills) >= 3:
-        # Calculate potential savings (sum of 2 cheapest bills)
         sorted_bills = sorted(bills, key=lambda b: b.amount)
-        # Take the bottom 2 items (cheapest) as candidates for "unused"
         candidates = sorted_bills[:2] 
         count = len(candidates)
         savings = sum(b.amount for b in candidates)
@@ -79,8 +67,8 @@ def _generate_financial_recommendations(user_id: str, db: Session) -> Optional[D
             "id": "rec_fin_subscriptions",
             "category": "FINANCIAL",
             "title": "Optimize your monthly subscriptions",
-            "body": f"We found {count} subscriptions you rarely use. Cancel them to save ${int(savings)}/month.",
-            "createdAt": datetime.utcnow().isoformat(),
+            "body": f"We found {count} active subscriptions. Reviewing your least-used services could save you up to ${int(savings)}/month.",
+            "createdAt": datetime.now(timezone.utc).isoformat(),
             "cta": { "label": "Review Now", "href": "/subscriptions/review" },
             "priority": PRIORITY_FINANCIAL,
             "meta": { "unusedCount": count, "savingsMonthly": savings }
@@ -90,14 +78,11 @@ def _generate_financial_recommendations(user_id: str, db: Session) -> Optional[D
 
 def _generate_time_recommendations(user_id: str, db: Session) -> Optional[Dict[str, Any]]:
     """
-    Generator: Automate morning commute
-    Rule: If user has recurring morning commute pattern (8 AM weekday).
-    Logic: Look for mobility trips between 7AM-9AM on weekdays in last 30 days.
+    Generator: Automate morning commute.
+    Looks for frequent weekday morning trips in the last 30 days.
     """
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
     
-    # Count trips between 7-9 AM
-    # SQLite/Postgres extracts are different, so we fetch recent trips and filter in python for MVP safety
     recent_trips = db.query(MobilityTrip).filter(
         MobilityTrip.user_id == user_id,
         MobilityTrip.pickup_time >= thirty_days_ago
@@ -110,15 +95,14 @@ def _generate_time_recommendations(user_id: str, db: Session) -> Optional[Dict[s
             if trip.pickup_time.weekday() < 5 and 7 <= trip.pickup_time.hour <= 9:
                 morning_commute_count += 1
                 
-    # If we see a pattern (e.g. at least 3 morning trips)
-    if morning_commute_count >= 3:
+    if morning_commute_count >= 5: # Increased threshold for higher confidence
         return {
             "id": "rec_time_commute",
             "category": "TIME",
             "title": "Automate your morning commute",
-            "body": "Set up automatic ride booking for your 8 AM commute every weekday.",
-            "createdAt": datetime.utcnow().isoformat(),
-            "cta": { "label": "Set Up", "href": "/commute/automation" },
+            "body": "Your pattern suggests a consistent morning commute. Automating bookings could save you 15 minutes of frustration daily.",
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "cta": { "label": "Set Up Automation", "href": "/commute/automation" },
             "priority": PRIORITY_TIME,
             "meta": { "commuteCount": morning_commute_count }
         }
@@ -127,24 +111,18 @@ def _generate_time_recommendations(user_id: str, db: Session) -> Optional[Dict[s
 
 def _generate_health_recommendations(user_id: str, db: Session) -> Optional[Dict[str, Any]]:
     """
-    Generator: Schedule recovery time
-    Rule: If activity load is high (e.g. recent workout high exertion or low sleep).
+    Generator: Schedule recovery time.
+    Uses the most recent health data instead of strictly "yesterday".
     """
-    # Check yesterday's sleep or today's workout
-    today = datetime.utcnow().date()
-    yesterday = today - timedelta(days=1)
+    # 1. Check Sleep Quality
+    latest_health = db.query(HealthDailySummary).filter(
+        HealthDailySummary.user_id == user_id
+    ).order_by(HealthDailySummary.date.desc()).first()
     
-    # 1. Low Sleep?
-    sleep = db.query(HealthDailySummary).filter(
-        HealthDailySummary.user_id == user_id,
-        HealthDailySummary.date == yesterday
-    ).first()
-    
-    low_sleep = sleep and sleep.sleep_duration_minutes and sleep.sleep_duration_minutes < 360 # 6 hours
+    low_sleep = latest_health and latest_health.sleep_duration_minutes and latest_health.sleep_duration_minutes < 390 # 6.5 hours
     
     # 2. High Workout Load?
-    # Get workouts in last 24h
-    last_24h = datetime.utcnow() - timedelta(hours=24)
+    last_24h = datetime.now(timezone.utc) - timedelta(hours=24)
     workouts = db.query(Workout).filter(
         Workout.user_id == user_id,
         Workout.start_time >= last_24h
@@ -153,14 +131,14 @@ def _generate_health_recommendations(user_id: str, db: Session) -> Optional[Dict
     high_load = any(w.perceived_exertion and w.perceived_exertion >= 8 for w in workouts)
     
     if low_sleep or high_load:
-        reason = "activity load is high" if high_load else "sleep was low"
+        reason = "high physical load" if high_load else "low sleep efficiency"
         return {
             "id": "rec_health_recovery",
             "category": "HEALTH",
             "title": "Schedule recovery time",
-            "body": f"Your {reason}. Consider lighter tasks tomorrow afternoon.",
-            "createdAt": datetime.utcnow().isoformat(),
-            "cta": { "label": "View Schedule", "href": "/schedule" },
+            "body": f"Based on your recent {reason}, prioritize 20 minutes of mindfulness or a cool-down session today.",
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+            "cta": { "label": "View Recovery Plan", "href": "/schedule" },
             "priority": PRIORITY_HEALTH,
             "meta": { "reason": reason }
         }

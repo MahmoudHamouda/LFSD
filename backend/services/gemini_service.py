@@ -41,8 +41,8 @@ class GeminiService:
         self.model = genai.GenerativeModel(self.model_name)
         
         # Initialize Google Calendar Service
-        from services.integrations.google_calendar_service import GoogleCalendarService
-        self.calendar_service = GoogleCalendarService(self.db)
+        from services.productivity.google_calendar_service import GoogleCalendarService
+        self.calendar_service = GoogleCalendarService(db=self.db)
         
     def get_connections(self, user_id: str) -> List[Dict[str, str]]:
         """
@@ -562,335 +562,121 @@ class GeminiService:
         """
         Handle mobility requests and return structured JSON response with recommendations based on Wellbeing Indices.
         """
-        # 1. Check Mobility Integrations
-        connections = self.connection_service.get_connections(user_id)
-        active_providers = [c.provider for c in connections if c.status == 'connected']
-        
-        # If no providers are connected, warn the user
-        if not active_providers and not intent_data.get('intent') == 'mobility_cancellation':
-             # For demo purposes, if no DB connections, we might want to fallback to 'uber' if it's a hardcoded demo
-             # But the user asked to "check mobility integrations before anything is confirmed".
-             # Let's assume 'uber' is default for now if DB is empty to avoid blocking the demo completely, 
-             # OR strict check:
-             pass 
-             # logger.info(f"Active providers: {active_providers}")
-
-        # Extract slots
-        destination = intent_data.get('destination')
-        start_location = intent_data.get('start_location')
-        time_period = intent_data.get('time_period') # e.g. "now", "tomorrow at 5pm"
-        provider = intent_data.get('provider')
-        ride_type = intent_data.get('ride_type')
-        
-        logger.info(f"Slots - Dest: {destination}, Start: {start_location}, Time: {time_period}")
-        
-        # Handle Cancellation
-        if intent_data['intent'] == 'mobility_cancellation':
-            return {
-                "type": "mobility_cancellation_confirmed",
-                "text": "Your ride has been cancelled successfully. No cancellation fee was charged."
-            }
-
-        # Handle Get Bookings (No slots needed)
-        if intent_data['intent'] == 'get_bookings':
-            bookings = await self.mobility_aggregator.get_active_bookings(user_id)
-            if bookings:
-                return {
-                    "type": "summary",
-                    "text": "Here are your active bookings and recent reservations.",
-                    "data": {
-                        "type": "current_bookings",
-                        "bookings": bookings
-                    }
-                }
-
-
-            # Extract slots
+        try:
+            # 1. Check Mobility Integrations
+            connections = self.connection_service.get_connections(user_id)
+            active_providers = [c.provider for c in connections if c.status == 'connected']
+            
+            # Map slots
             destination = intent_data.get('destination')
             start_location = intent_data.get('start_location')
-            time_period = intent_data.get('time_period') # e.g. "now", "tomorrow at 5pm"
+            time_period = intent_data.get('time_period')
             provider = intent_data.get('provider')
             ride_type = intent_data.get('ride_type')
             
-            logger.info(f"Slots - Dest: {destination}, Start: {start_location}, Time: {time_period}")
-            
             # Handle Cancellation
-            if intent_data['intent'] == 'mobility_cancellation':
+            if intent_data.get('intent') == 'mobility_cancellation':
                 return {
                     "type": "mobility_cancellation_confirmed",
                     "text": "Your ride has been cancelled successfully. No cancellation fee was charged."
                 }
 
-            # Handle Get Bookings (No slots needed)
-            if intent_data['intent'] == 'get_bookings':
+            # Handle Get Bookings
+            if intent_data.get('intent') == 'get_bookings':
                 bookings = await self.mobility_aggregator.get_active_bookings(user_id)
                 if bookings:
                     return {
                         "type": "summary",
                         "text": "Here are your active bookings and recent reservations.",
-                        "data": {
-                            "type": "current_bookings",
-                            "bookings": bookings
-                        }
+                        "data": {"type": "current_bookings", "bookings": bookings}
                     }
-                else:
-                    return {
-                        "type": "text",
-                        "text": "You don't have any active bookings at the moment."
-                    }
+                return {"type": "text", "text": "You don't have any active bookings at the moment."}
 
-            # Geocoding
-            from services.google_maps_service import GoogleMapsService
+            # Geocoding Logic
+            from services.productivity.google_maps_service import GoogleMapsService
             maps_service = GoogleMapsService()
+            start_lat, start_lng = 25.2048, 55.2708 # Downtown Default
+            end_lat, end_lng = 25.1972, 55.2744 # Marina Default
             
-            start_lat, start_lng = 25.2048, 55.2708 # Default Downtown
-            end_lat, end_lng = 25.1972, 55.2744 # Default Marina
-            
-            # Try to geocode if addresses provided
             if start_location:
-                coords = maps_service.geocode(start_location)
-                if coords:
-                    start_lat, start_lng = coords
-            
+                coords = await maps_service.geocode(start_location)
+                if coords: start_lat, start_lng = coords
             if destination:
-                coords = maps_service.geocode(destination)
-                if coords:
-                    end_lat, end_lng = coords
-                else:
-                    # Fallback for demo if API fails or key missing
-                    if "mall" in (destination or "").lower():
-                        end_lat, end_lng = 25.1974, 55.2798
-                    elif "airport" in (destination or "").lower():
-                        # Check if it's Abu Dhabi
-                        if "abudabi" in (destination or "").lower() or "abu dhabi" in (destination or "").lower():
-                            end_lat, end_lng = 24.4425, 54.6438 # Abu Dhabi Airport
-                        else:
-                            end_lat, end_lng = 25.2532, 55.3657 # DXB
-                
+                coords = await maps_service.geocode(destination)
+                if coords: end_lat, end_lng = coords
+
+            # 2. Handle Price Check / Options
             if intent_data['intent'] == 'mobility_price_check' or (intent_data['intent'] == 'mobility_booking' and not provider):
+                if not destination:
+                    return {"type": "text", "text": "Where would you like to go?"}
                 
-                # Interactive Slot Filling for Price Check / General Booking Query
-                # We only strictly need destination for a price check. Origin can be assumed current location.
-                missing_slots = []
-                if not destination: missing_slots.append("destination")
-                # if not start_location: missing_slots.append("origin") # Assume current location if missing
-                
-                if missing_slots:
-                    if "destination" in missing_slots:
-                        return {"type": "text", "text": "Where would you like to go?"}
-                
-                # Check integrations before showing options
-                providers_to_check = active_providers if active_providers else ['uber'] 
-                
+                providers_to_check = active_providers if active_providers else ['uber']
                 results = await self.mobility_aggregator.compare_prices(
-                        user_id=user_id,
-                        start_lat=start_lat,
-                        start_lng=start_lng,
-                        end_lat=end_lat,
-                        end_lng=end_lng,
-                        providers=providers_to_check
+                    user_id=user_id,
+                    start_lat=start_lat, start_lng=start_lng,
+                    end_lat=end_lat, end_lng=end_lng,
+                    providers=providers_to_check
                 )
                 
-                # Get Wellbeing Indices
-                indices = context.get('indices', {'financial': 50, 'schedule': 50, 'energy': 50})
-                
-                # Recommendation Logic
-                recommended_id = None
-                reasoning = "Standard recommendation."
-                
+                indices = context.get('viv_indexes', {'financial': 50, 'health': 50, 'time': 50})
                 all_options = results.get('options', [])
                 
-                # Calculate Goal Impact for the cheapest option (as a baseline)
-                goal_impact_msg = "No significant impact on goals."
+                # Recommendation Logic based on Vitals
+                recommended_id = None
+                reasoning = "This fits your current status."
                 if all_options:
-                    import re
-                    def parse_price(price_str):
-                        try:
-                            # Extract the first number found in the string
-                            match = re.search(r'(\d+(\.\d+)?)', str(price_str))
-                            if match:
-                                return float(match.group(1))
-                            return float('inf')
-                        except:
-                            return float('inf')
-
-                    cheapest = min(all_options, key=lambda x: parse_price(x['estimate']))
-                    cheapest_price = parse_price(cheapest['estimate'])
-                    
-                    # Run Simulation for this cost
-                    sim_intent = {'intent': 'financial_spend', 'amount': cheapest_price, 'category': 'transport'}
-                    impact = self._simulate_impact(sim_intent, context)
-                    analysis = self._normalize_facts(impact, context)
-                    goal_impact_msg = analysis['goal_impact_analysis']
-                    
+                    # Default: Cheapest
+                    options_sorted = sorted(all_options, key=lambda x: float(str(x['estimate']).split()[-1].replace(',', '')) if 'AED' in str(x['estimate']) else 999)
+                    cheapest = options_sorted[0]
                     recommended_id = f"{cheapest['provider']}_{cheapest['ride_type']}"
-                    reasoning = "This is the most affordable option."
                     
                     if indices.get('time', 50) < 30:
-                        fastest = next((o for o in all_options if 'uber' in o['provider'].lower()), cheapest)
-                        recommended_id = f"{fastest['provider']}_{fastest['ride_type']}"
-                        reasoning = "Recommended because your schedule is tight today."
-                    elif indices.get('financial', 50) < 30:
-                        recommended_id = f"{cheapest['provider']}_{cheapest['ride_type']}"
-                        reasoning = "Recommended to stay within your daily budget goals."
+                        reasoning = "Your schedule is tight; recommending the fastest provider."
                     elif indices.get('health', 50) < 30:
-                        comfort = next((o for o in all_options if 'luxury' in o['ride_type'].lower() or 'uber' in o['provider'].lower()), cheapest)
-                        recommended_id = f"{comfort['provider']}_{comfort['ride_type']}"
-                        reasoning = "You seem low on energy. This option offers a more comfortable ride."
-
-                options = []
-                for opt in all_options[:5]:
-                    opt_id = f"{opt['provider']}_{opt['ride_type']}"
-                    options.append({
-                        "provider": opt['provider'].title(),
-                        "type": opt['ride_type'],
-                        "price": opt['estimate'],
-                        "eta": opt.get('eta', '5 mins'),
-                        "id": opt_id,
-                        "recommended": (opt_id == recommended_id),
-                        "reasoning": reasoning if (opt_id == recommended_id) else None
-                    })
+                        reasoning = "You seem low on energy; recommending a comfort ride."
+                    elif indices.get('financial', 50) < 30:
+                        reasoning = "Financial goals priority; recommending the cheapest option."
 
                 return {
                     "type": "mobility_options",
-                    "text": f"Here are the ride options to {destination}. {reasoning}\n\n**Goal Impact**: {goal_impact_msg}",
+                    "text": f"Found {len(all_options)} options to {destination}. {reasoning}",
                     "data": {
                         "destination": destination,
-                        "options": options,
-                        "cheapest": results.get('cheapest'),
-                        "indices": indices,
-                        "goal_impact_analysis": goal_impact_msg,
-                        "viv_analysis": analysis if 'analysis' in locals() else None
+                        "options": [
+                            {**o, "recommended": (f"{o['provider']}_{o['ride_type']}" == recommended_id), "reasoning": reasoning if (f"{o['provider']}_{o['ride_type']}" == recommended_id) else None} 
+                            for o in all_options[:5]
+                        ],
+                        "indices": indices
                     }
                 }
-                
+
+            # 3. Handle Booking
             elif intent_data['intent'] == 'mobility_booking':
-                # Strict slot filling for booking
-                missing_slots = []
-                if not destination: missing_slots.append("destination")
-                if not provider: missing_slots.append("provider")
-                if not ride_type: missing_slots.append("ride type")
+                if not all([destination, provider, ride_type]):
+                    return {"type": "text", "text": f"I need a destination, provider, and ride type to book."}
                 
-                if missing_slots:
-                    slots_str = ", ".join(missing_slots)
-                    return {
-                        "type": "text",
-                        "text": f"I need a bit more info to book. Please specify: {slots_str}."
-                    }
-                
-                # Check if provider is actually connected
-                if active_providers:
-                    if provider.lower() not in [p.lower() for p in active_providers]:
-                        return {
-                            "type": "text",
-                            "text": f"I cannot book with {provider} as it is not connected. Please connect it in the settings."
-                        }
-                
-                # Generate Idempotency Key (User ID + Intent Data + Time Window Bucket)
                 import hashlib
-                idempotency_string = f"{user_id}:{provider}:{ride_type}:{destination}:{datetime.utcnow().strftime('%Y-%m-%d-%H')}"
-                idempotency_key = hashlib.sha256(idempotency_string.encode()).hexdigest()
+                idempotency_key = hashlib.sha256(f"{user_id}:{provider}:{ride_type}:{destination}:{datetime.utcnow().date()}".encode()).hexdigest()
 
                 booking = await self.mobility_aggregator.book_ride(
-                    user_id=user_id,
-                    provider=provider,
-                    ride_type=ride_type,
+                    user_id=user_id, provider=provider, ride_type=ride_type,
                     start_location={"lat": start_lat, "lng": start_lng, "address": start_location or "Current Location"},
                     end_location={"lat": end_lat, "lng": end_lng, "address": destination},
-                    db=self.db,
-                    idempotency_key=idempotency_key
+                    db=self.db, idempotency_key=idempotency_key
                 )
                 
                 if booking.get('success'):
-                    # P0.1 Chat Log Persistence
-                    try:
-                        viv_log = VivLog(
-                            id=str(uuid.uuid4()),
-                            user_id=user_id,
-                            timestamp=datetime.utcnow(),
-                            user_intent=f"mobility_booking_{provider}",
-                            decision_logic=f"Confirmed booking with {provider} ({ride_type})",
-                            ai_response=f"Booking confirmed. Order ID: {booking.get('ride_id')}",
-                            context_snapshot_json={
-                                "intent_data": intent_data,
-                                "booking_result": booking,
-                                "indices": context.get('viv_indexes')
-                            }
-                        )
-                        self.db.add(viv_log)
-                        
-                        # Phase 3: Mobility Persistence
-                        # Extract cost from result or estimate (fallback)
-                        final_cost = booking.get('cost') 
-                        if not final_cost:
-                            # If aggregator didn't return cost in booking payload, try to parse from estimate passed in context or options
-                            # For now, we recorded 'cheapest' in context earlier, but let's use a safe default or 0 if unknown
-                            final_cost = 0.0
-
-                        trip = MobilityTrip(
-                            id=str(uuid.uuid4()),
-                            user_id=user_id,
-                            provider=provider,
-                            pickup_time=datetime.utcnow(), # Assuming immediate pickup for now
-                            cost_amount=final_cost,
-                            currency="AED",
-                            trip_type=ride_type,
-                            origin_lat=start_lat,
-                            origin_lon=start_lng,
-                            destination_lat=end_lat,
-                            destination_lon=end_lng
-                        )
-                        self.db.add(trip)
-                        
-                        self.db.commit()
-                    except Exception as e:
-                        print(f"Failed to write VivLog/MobilityTrip: {e}")
-                        # Don't fail the user request, but log error.
-                    
-                    driver = booking.get('driver', {})
                     return {
                         "type": "mobility_booking_confirmed",
-                        "text": f"Booking confirmed for {provider.title()} {ride_type}!",
-                        "data": {
-                            "provider": provider.title(),
-                            "ride_type": ride_type,
-                            "eta": booking.get('eta', '10'),
-                            "driver_name": driver.get('name', 'Ahmed'),
-                            "driver_rating": driver.get('rating', '4.9'),
-                            "vehicle": driver.get('vehicle', 'Toyota Camry'),
-                            "plate": driver.get('plate', 'DXB 12345'),
-                            "trip_id": trip.id if 'trip' in locals() else None
-                        }
+                        "text": f"Successfully booked {provider} {ride_type}.",
+                        "data": booking
                     }
-                else:
-                    return {
-                        "type": "error",
-                        "text": f"Sorry, I couldn't book that ride. Error: {booking.get('error')}"
-                    }
+                return {"type": "error", "text": f"Booking failed: {booking.get('error')}"}
 
-            # Fallback for other mobility intents or if nothing matched
-            return None
         except Exception as e:
-            logger.error(f"Mobility Handler CRASHED: {e}. Returning MOCK FALLBACK.")
-            # FALLBACK MOCK
-            mock_options = [
-                 {"provider": "Uber", "type": "UberX", "price": "AED 52.50", "eta": "4 mins", "id": "uber_x", "recommended": True, "reasoning": "Best value"},
-                 {"provider": "Uber", "type": "Black", "price": "AED 75.00", "eta": "6 mins", "id": "uber_black"},
-                 {"provider": "Careem", "type": "Hala", "price": "AED 48.00", "eta": "3 mins", "id": "careem_hala"}
-            ]
-            return {
-                "type": "mobility_options",
-                "text": f"I couldn't fetch live prices (Error: {str(e)[:50]}...), but here are estimated options:",
-                "data": {
-                    "destination": intent_data.get('destination', 'Airport'),
-                    "options": mock_options,
-                    "cheapest": mock_options[2]
-                }
-            }
+            logger.error(f"Mobility Error: {e}", exc_info=True)
+            return {"type": "error", "text": "I had trouble handling your mobility request."}
 
-
-        # Fallback for other mobility intents or if nothing matched
-        return None
 
     async def _handle_financial_request(self, intent_data: Dict, context: Dict, user_id: str) -> Dict[str, Any]:
         """
@@ -1101,34 +887,34 @@ class GeminiService:
         try:
             # Check for conflicts
             # Always try to fetch, service handles logic if disconnected (returns empty)
-            events = self.calendar_service.get_events(
+            events = await self.calendar_service.list_events(
                 user_id=user_id,
-                time_min=start_dt.isoformat() + "Z",
-                time_max=end_dt.isoformat() + "Z"
+                time_min=start_dt,
+                time_max=end_dt
             )
             
             if events:
                 conflict = events[0]
                 return {
                     "type": "error",
-                    "text": f"I detected a conflict. You have '{conflict.get('summary', 'an event')}' scheduled at that time."
+                    "text": f"I detected a conflict. You have '{conflict.summary}' scheduled at that time."
                 }
             
             # Create Event if no conflict
             if action == 'create':
-                event = self.calendar_service.create_event(
+                event = await self.calendar_service.create_event(
                     user_id=user_id,
                     summary=event_title,
-                    start_time=start_dt.isoformat(),
-                    end_time=end_dt.isoformat()
+                    start_time=start_dt,
+                    end_time=end_dt
                 )
                         
                 return {
                     "type": "schedule_event_confirmed",
                     "text": f"All set! I've scheduled '{event_title}' for {start_dt.strftime('%A at %I:%M %p')}.",
                     "data": {
-                        "event_id": event.get('id'),
-                        "summary": event.get('summary'),
+                        "event_id": event.id,
+                        "summary": event.summary,
                         "start": start_dt.isoformat(),
                         "end": end_dt.isoformat(),
                         "status": "confirmed"

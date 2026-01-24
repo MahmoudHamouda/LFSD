@@ -102,26 +102,6 @@ class UberService(BaseMobilityService):
                     data = response.json()
                     prices = data.get("prices", [])
                     
-                    # Log interaction if user_id provided
-                    if user_id and prices:
-                        self.log_interaction(
-                            user_id,
-                            "price_check",
-                            {
-                                "start": {"lat": start_lat, "lng": start_lng},
-                                "end": {"lat": end_lat, "lng": end_lng} if end_lat else None,
-                                "num_options": len(prices),
-                                "sandbox": self.settings.ENV == "dev"
-                            }
-                        )
-                        
-                        self.log_price_history(
-                            user_id,
-                            prices,
-                            {"lat": start_lat, "lng": start_lng},
-                            {"lat": end_lat, "lng": end_lng} if end_lat else None
-                        )
-                    
                     return {
                         "success": True,
                         "prices": prices,
@@ -129,16 +109,18 @@ class UberService(BaseMobilityService):
                         "sandbox": self.settings.ENV == "dev"
                     }
                 else:
-                    print(f"Uber API error: {response.status_code} - {response.text}")
+                    logger.error(f"Uber API error: {response.status_code} - {response.text}")
                     return {
+                        "success": False,
                         "error": f"API returned {response.status_code}",
                         "mock": True,
                         "prices": self._get_mock_prices(distance_km)
                     }
                     
         except Exception as e:
-            print(f"Uber API exception: {e}")
+            logger.error(f"Uber API exception: {e}")
             return {
+                "success": False,
                 "error": str(e),
                 "mock": True,
                 "prices": self._get_mock_prices(distance_km)
@@ -152,83 +134,34 @@ class UberService(BaseMobilityService):
         end_location: Dict[str, Any],
         **kwargs
     ) -> Dict[str, Any]:
-        """
-        Book a ride with Uber.
+        """Book a ride (Mock/Sandbox)."""
+        ride_id = f"uber_{uuid.uuid4().hex[:12]}"
         
-        Note: This requires OAuth authentication which is not implemented yet.
-        Returns mock response for now.
-        
-        Args:
-            user_id: User ID
-            ride_type: Type of ride (e.g., "UberX")
-            start_location: Dict with lat, lng, address
-            end_location: Dict with lat, lng, address
-            **kwargs: Additional options
-            
-        Returns:
-            Dictionary with booking details
-        """
-        # TODO: Implement actual Uber booking with OAuth
-        # For now, return mock response
-        
-        ride_id = f"uber_{user_id}_{int(datetime.now().timestamp())}"
-        
-        booking_data = {
-            "booking_type": "mobility",
-            "provider": "Uber",
-            "ride_type": ride_type,
-            "status": "Confirmed",
+        return {
+            "success": True,
             "ride_id": ride_id,
-            "origin": start_location.get("address", "Unknown"),
-            "destination": end_location.get("address", "Unknown"),
-            "eta": "5 mins (Driver arrival)",
+            "status": "pending",
+            "provider": self.provider_name,
+            "mock": True,
+            "message": "Uber booking initiated in sandbox mode.",
             "driver_info": {
                 "name": "Ahmed",
                 "rating": 4.9,
                 "vehicle": "Toyota Camry",
                 "plate": "Dubai 12345"
             },
-            "timestamp": datetime.now().isoformat()
+            "eta": 5
         }
-        
-        # Store in memory (for demo purposes)
-        if not hasattr(self, 'active_bookings'):
-            self.active_bookings = []
-        self.active_bookings.append(booking_data)
-        
-        # Log the booking attempt
-        self.log_booking(
-            user_id,
-            ride_id,
-            ride_type,
-            {
-                "start": start_location,
-                "end": end_location,
-                "mock": True
-            },
-            status="pending"
-        )
-        
-        self.log_interaction(
-            user_id,
-            "booking",
-            {
-                "ride_id": ride_id,
-                "ride_type": ride_type,
-                "start": start_location,
-                "end": end_location,
-                "mock": True
-            }
-        )
-        
+
+    async def get_ride_status(self, user_id: str, ride_id: str) -> Dict[str, Any]:
+        """Fetch tracking status for an active Uber ride."""
         return {
             "success": True,
+            "status": "in_progress",
             "ride_id": ride_id,
-            "status": "pending",
-            "mock": True,
-            "message": "Uber booking requires OAuth authentication. This is a mock response.",
-            "driver": booking_data["driver_info"],
-            "eta": 5
+            "provider": self.provider_name,
+            "eta": 12,
+            "mock": True
         }
 
     async def get_active_bookings(self, user_id: str) -> List[Dict[str, Any]]:

@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     """Configuration for the LFSD application."""
 
     APP_NAME: str = Field("lfsd", description="Human readable name of the application")
+    APP_BASE_URL: str = Field("http://localhost:3000", description="Base URL of the frontend application")
     ENV: str = Field(os.environ.get("ENV", "dev"), description="Environment name, e.g. dev/staging/prod")
     DEBUG: bool = Field(str(os.environ.get("DEBUG", "false")).lower() == "true", description="Enable debug mode")
     SECRET_KEY: str = Field(os.environ.get("SECRET_KEY", "fallback-dev-secret-key"), description="Secret key for JWT signing")
@@ -44,7 +45,7 @@ class Settings(BaseSettings):
     REDIS_URL: str = Field("redis://redis:6379/0", description="Redis connection URL for rate limiting and caching")
     DATABASE_URL: str = Field("sqlite:///./lfsd_v2.db", description="Database connection URL (SQLite for dev, PostgreSQL for prod)")
     UBER_SERVER_TOKEN: str = Field("", description="Uber API Server Token for price estimates and ride requests")
-    GEMINI_API_KEY: str = Field("AIzaSyDwhejk-FKUDtA47i5qH4HHGFJEDaX2KBw", env="GEMINI_API_KEY", description="Google Gemini API Key for chat generation")
+    GEMINI_API_KEY: str = Field(..., env="GEMINI_API_KEY", description="Google Gemini API Key for chat generation (REQUIRED - set via environment variable)")
     GEMINI_MODEL: str = Field("gemini-2.0-flash-exp", description="Optional explicit Gemini model name (overrides auto‑detect)")
     
     # Careem Integration
@@ -101,6 +102,18 @@ class Settings(BaseSettings):
     # Admin / Debug Security
     ADMIN_SECRET: str = Field("temporary_admin_secret", description="Secret for debug endpoints")
     CREDENTIALS_ENCRYPTION_KEY: str = Field("9lYiaBSEzM2Ss_jV0TlBYzu6zbHRRCXU2yjSg5ZdOthA=", description="Fernet key for encrypting provider credentials")
+
+    # WhatsApp Cloud API Integration
+    WHATSAPP_ACCESS_TOKEN: str = Field("", description="WhatsApp Cloud API User Access Token")
+    WHATSAPP_PHONE_NUMBER_ID: str = Field("", description="WhatsApp Phone Number ID")
+    WHATSAPP_VERIFY_TOKEN: str = Field("lfsd_webhook_verify_token", description="WhatsApp Webhook Verification Token")
+    WHATSAPP_API_VERSION: str = Field("v22.0", description="WhatsApp Graph API Version")
+
+    # Apple Integration
+    APPLE_CLIENT_ID: str = Field("", description="Apple Services ID / Client ID")
+    APPLE_TEAM_ID: str = Field("", description="Apple Developer Team ID")
+    APPLE_KEY_ID: str = Field("", description="Apple Private Key ID (kid)")
+    APPLE_PRIVATE_KEY: str = Field("", description="Apple Private Key (PKCS#8 format)")
 
     # Pydantic v2 uses `model_config` for settings.
     model_config = {

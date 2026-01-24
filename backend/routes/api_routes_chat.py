@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Body, Path
 from sqlalchemy.orm import Session
 from models.database import get_db
-from services.chat_service.models import ChatSession, ChatHistory
+from models.chat_models import ChatSession, ChatHistory
 from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional, List
