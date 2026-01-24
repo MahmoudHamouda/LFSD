@@ -29,61 +29,21 @@ logger = logging.getLogger("gemini_service")
 
 class GeminiService:
     def __init__(self, db: Session):
-        with open("debug_log.txt", "a") as f: f.write("DEBUG: GeminiService.__init__ start\n")
-        print("DEBUG: Initializing GeminiService...")
-        
-        # Force mock mode if key is missing/empty (Overriding Env Var if it's empty string)
-        if not settings.GEMINI_API_KEY:
-             print("DEBUG: GEMINI_API_KEY is empty. Using Hardcoded Real Key.")
-             # Fallback to key provided by user: AIzaSyDwhejk-FKUDtA47i5qH4HHGFJEDaX2KBw
-             real_key = "AIzaSyDwhejk-FKUDtA47i5qH4HHGFJEDaX2KBw"
-             object.__setattr__(settings, 'GEMINI_API_KEY', real_key)
-
         self.db = db
         self.connection_service = ConnectionService(db)
         self.finance_service = FinanceService(db)
         self.uber_service = UberService()
         self.mobility_aggregator = MobilityAggregator()
         
-        # Initialize model - use exact model name from settings
-        self.model_name = settings.GEMINI_MODEL or "gemini-1.5-flash"
-        print(f"DEBUG: Using Gemini Model: {self.model_name}")
-        with open("debug_log.txt", "a") as f: f.write(f"DEBUG: Using Gemini Model: {self.model_name}\n")
+        # Initialize model - use exact model name from settings; DO NOT configure or fallback here.
+        # genai should be configured at app startup or safely wrapped.
+        self.model_name = settings.GEMINI_MODEL or "gemini-1.5-pro"
         self.model = genai.GenerativeModel(self.model_name)
         
         # Initialize Google Calendar Service
-        from services.google_calendar_service import GoogleCalendarService
+        from services.integrations.google_calendar_service import GoogleCalendarService
         self.calendar_service = GoogleCalendarService(self.db)
-        print("DEBUG: GeminiService Initialized Successfully")
-        with open("debug_log.txt", "a") as f: f.write("DEBUG: GeminiService.__init__ end\n")
-
-    def get_connections(self) -> List[Dict[str, str]]:
-        return self.connection_service.get_connections()
-
-    async def _generate_content_safe(self, prompt, **kwargs):
-        if settings.GEMINI_API_KEY == "mock":
-            class MockResponse:
-                text = "This is a simulated AI response (Mock Mode). I can help you analyze finances, health, and schedule events!"
-            return MockResponse()
         
-        import asyncio
-        return await asyncio.to_thread(self.model.generate_content, prompt, **kwargs)
-        """
-        Get a list of connected services for the current user.
-        
-        Returns:
-            List of dictionaries containing provider names and status.
-        """
-        if not self.db: # Safety check
-            return []
-            
-        # user_id should be passed in or context-aware but self.connection_service needs it.
-        # This method signature lacks user_id. Updating signature is best.
-        # But looking at usage, let's see. 
-        # Actually this method is just a helper. Let's fix line 53 usage.
-        # Assuming we can't change signature safely without extensive refactor, 
-        # check caller. But wait, get_connections usually takes user_id. 
-        # Fix: Accept user_id in get_connections(self, user_id).
     def get_connections(self, user_id: str) -> List[Dict[str, str]]:
         """
         Get a list of connected services for the current user.
@@ -93,6 +53,17 @@ class GeminiService:
         """
         connections = self.connection_service.get_connections(user_id)
         return [{"provider": c.provider, "status": c.status} for c in connections]
+
+    async def _generate_content_safe(self, prompt, **kwargs):
+        if settings.GEMINI_API_KEY == "mock":
+             # We assume caller handles the mock object structure or we return a simple object
+            class MockResponse:
+                text = "This is a simulated AI response (Mock Mode). I can help you analyze finances, health, and schedule events!"
+            return MockResponse()
+        
+        # Ensure we don't block event loop
+        import asyncio
+        return await asyncio.to_thread(self.model.generate_content, prompt, **kwargs)
 
     async def get_ride_estimates(self, start_address: str, end_address: str) -> Dict[str, Any]:
         """
@@ -632,20 +603,7 @@ class GeminiService:
                         "bookings": bookings
                     }
                 }
-    async def _handle_mobility_request(self, intent_data: Dict, context: Dict, user_id: str) -> Dict[str, Any]:
-        try:
-            # 1. Check Mobility Integrations
-            connections = self.connection_service.get_connections(user_id)
-            active_providers = [c.provider for c in connections if c.status == 'connected']
-            
-            # If no providers are connected, warn the user
-            if not active_providers and not intent_data.get('intent') == 'mobility_cancellation':
-                # For demo purposes, if no DB connections, we might want to fallback to 'uber' if it's a hardcoded demo
-                # But the user asked to "check mobility integrations before anything is confirmed".
-                # Let's assume 'uber' is default for now if DB is empty to avoid blocking the demo completely, 
-                # OR strict check:
-                pass 
-                # logger.info(f"Active providers: {active_providers}")
+
 
             # Extract slots
             destination = intent_data.get('destination')
