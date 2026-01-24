@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from typing import List, Dict, Any
 from services.connection_service import ConnectionService
 from services.finance_service import FinanceService
-from services.uber_service import UberService
+from services.integrations.uber_service import UberService
 from models.models import FinancialTransaction, FinancialAccount, LifeGoal, VivLog, MobilityTrip, Recommendation, ActivityFeed, User, Connection
 from models.logging_models import AuditLog
 import uuid

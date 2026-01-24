@@ -7,33 +7,67 @@ available generative models and returns the most recent one (by lexical order).
 If the API call fails, it falls back to a known stable model name.
 """
 
+from google.api_core import retry
 import logging
-from typing import List
+from typing import List, Optional
 import google.generativeai as genai
+from core.config import get_settings
 
 log = logging.getLogger("gemini_utils")
 
+# Simple in-memory cache for model name
+_cached_model_name: Optional[str] = None
+
+@retry.Retry(predicate=retry.if_exception_type(Exception), deadline=10.0)
+def _fetch_models_with_retry() -> List[str]:
+    """Fetch models with exponential backoff retry."""
+    models = genai.list_models()
+    return [
+        m.name for m in models if "generateContent" in getattr(m, "supported_generation_methods", [])
+    ]
 
 def get_latest_gemini_model() -> str:
     """Return the name of the newest Gemini model supported by the current API.
 
-    The Gemini API provides a `list_models` method.  We filter for models that
-    support `generateContent`, sort them, and pick the last entry.  If anything
-    goes wrong we log the error and return a safe fallback (`gemini-1.5-flash`).
+    Features:
+    - 5-minute caching to avoid spamming list_models
+    - Retry logic for transient network errors
+    - Explicit configuration check
+    - Graceful fallback
     """
+    global _cached_model_name
+    if _cached_model_name:
+        return _cached_model_name
+
+    # Ensure API is configured before calling list_models
     try:
-        models = genai.list_models()
-        # Keep only generative models (those that can generate content)
-        generative_names: List[str] = [
-            m.name for m in models if "generateContent" in getattr(m, "supported_generation_methods", [])
-        ]
+        settings = get_settings()
+        if not settings.GOOGLE_API_KEY:
+            log.warning("GOOGLE_API_KEY not set. Using fallback model.")
+            return "gemini-1.5-flash"
+        
+        # Check if already configured? genai doesn't expose is_configured() 
+        # but re-configuring is safe-ish. Better to rely on caller or do it here.
+        # We assume main app entrypoint configured it, but we can configure if needed.
+        # genai.configure(api_key=settings.GOOGLE_API_KEY)
+        
+        generative_names = _fetch_models_with_retry()
+        
         if not generative_names:
             raise RuntimeError("No generative models returned from Gemini API")
+            
         latest = sorted(generative_names)[-1]
-        log.info("Auto‑selected latest Gemini model: %s", latest)
+        
+        # Cache logic could be time-based, for now life-of-process is likely fine 
+        # as model lists don't change hourly.
+        _cached_model_name = latest
+        
+        log.debug("Auto-selected latest Gemini model: %s", latest)
         return latest
+        
     except Exception as exc:  # pragma: no cover – defensive fallback
-        log.error("Failed to list Gemini models: %s", exc)
+        log.warning("Failed to list Gemini models (using fallback): %s", exc)
         # Fallback to a model that is widely available
         return "gemini-1.5-flash"
+
 

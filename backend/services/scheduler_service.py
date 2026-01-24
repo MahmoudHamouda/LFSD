@@ -3,8 +3,8 @@ from apscheduler.triggers.interval import IntervalTrigger
 from sqlalchemy.orm import Session
 from models.database import SessionLocal
 from models.models import Connection
-from services.google_fit_service import GoogleFitService
-# from services.apple_health_service import AppleHealthService
+from services.integrations.google_fit_service import GoogleFitService
+# from services.integrations.apple_health_service import AppleHealthService
 import logging
 
 logger = logging.getLogger(__name__)
