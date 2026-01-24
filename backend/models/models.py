@@ -16,7 +16,7 @@ def generate_uuid():
 # ============================================================================
 
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "users_v2"
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
@@ -70,7 +70,7 @@ class Connection(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     provider = Column(String, nullable=False) # uber, whoop, google, etc.
     status = Column(String, default="disconnected")
@@ -95,7 +95,7 @@ class HealthDataSample(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     source = Column(String, nullable=False) # "google_fit" | "apple_health"
     date = Column(DateTime, nullable=False, index=True)
@@ -123,7 +123,7 @@ class VivIndex(Base):
     )
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     
     financial_score = Column(Float, default=50.0) # 0-100
@@ -138,11 +138,11 @@ class VivIndex(Base):
 
 class LifeGoal(Base):
     """Crucial for decision making."""
-    __tablename__ = "life_goals"
+    __tablename__ = "life_goals_v2"
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     title = Column(String, nullable=False)
     target_amount = Column(Float, nullable=False)
@@ -164,11 +164,11 @@ class LifeGoal(Base):
 # ============================================================================
 
 class FinancialAccount(Base):
-    __tablename__ = "financial_accounts"
+    __tablename__ = "financial_accounts_v2"
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     institution_name = Column(String, nullable=False)
     account_type = Column(String, nullable=False) # checking, savings, credit
@@ -196,7 +196,7 @@ class Statement(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=True, index=True)
     
     bank_name = Column(String, nullable=True)
     period_start = Column(Date, nullable=True)
@@ -212,16 +212,16 @@ class Statement(Base):
 
 class FinancialTransaction(Base):
     """The Deep Dive into spending."""
-    __tablename__ = "transactions"
+    __tablename__ = "transactions_v2"
     __table_args__ = (
         Index('idx_transactions_user_date', 'user_id', 'transaction_date'),
         {'extend_existing': True}
     )
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    account_id = Column(String, ForeignKey("financial_accounts.id"), nullable=True, index=True) # Made nullable to allow statement-only transactions initially
+    account_id = Column(String, ForeignKey("financial_accounts_v2.id"), nullable=True, index=True) # Made nullable to allow statement-only transactions initially
     statement_id = Column(String, ForeignKey("statements.id"), nullable=True, index=True) # Link to source statement
-    user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=True, index=True)
     
     amount = Column(Float, nullable=False)
     currency_code = Column(String, default="USD")
@@ -252,7 +252,7 @@ class RecurringBill(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     name = Column(String, nullable=False)
     amount = Column(Float, nullable=False)
@@ -277,7 +277,7 @@ class HealthDailySummary(Base):
     )
 
     id = Column(String, primary_key=True, default=generate_uuid) # Added ID for consistency
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     date = Column(Date, nullable=False, index=True)
     
     sleep_duration_minutes = Column(Integer, nullable=True)
@@ -294,7 +294,7 @@ class SleepSession(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
@@ -311,7 +311,7 @@ class Workout(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     start_time = Column(DateTime, nullable=False)
     end_time = Column(DateTime, nullable=False)
@@ -336,7 +336,7 @@ class CalendarEvent(Base):
     )
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     start_time = Column(DateTime, nullable=False, index=True)
     end_time = Column(DateTime, nullable=False)
@@ -354,7 +354,7 @@ class MobilityTrip(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     provider = Column(String, nullable=False) # Uber/Lyft
     pickup_time = Column(DateTime, nullable=True)
@@ -382,7 +382,7 @@ class VivLog(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     
     user_intent = Column(String, nullable=True) # e.g., "order_sushi"
@@ -398,7 +398,7 @@ class Recommendation(Base):
     __table_args__ = {'extend_existing': True}
     
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
     
     type = Column(String, nullable=False) # "mobility.car_purchase"
@@ -421,7 +421,7 @@ class DBConversation(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True) # Optional for now, but suggested for usage tracking
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=True, index=True) # Optional for now, but suggested for usage tracking
     title = Column(String, nullable=True)
     date = Column(DateTime, default=datetime.utcnow)
     
@@ -434,7 +434,7 @@ class DBMessage(Base):
 
     id = Column(String, primary_key=True, default=generate_uuid)
     conversation_id = Column(String, ForeignKey("conversations.id"), nullable=False, index=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=True, index=True) # Tracking which user sent it (or system)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=True, index=True) # Tracking which user sent it (or system)
     role = Column(String, nullable=False) # "user", "assistant", "system"
     content = Column(Text, nullable=False)
     date = Column(DateTime, default=datetime.utcnow)
@@ -462,8 +462,8 @@ class Order(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
-    transaction_id = Column(String, ForeignKey("transactions.id"), nullable=True) # Linked financial record
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
+    transaction_id = Column(String, ForeignKey("transactions_v2.id"), nullable=True) # Linked financial record
     
     # Core Data
     provider = Column(String, nullable=False) # uber, careem, etc.
@@ -517,7 +517,7 @@ class FinancialScore(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
 
     overall_score = Column(Float, default=0.0)
@@ -550,11 +550,11 @@ class TimeScore(Base):
     """
     Detailed breakdown of the Time Management Score (7 Pillars).
     """
-    __tablename__ = "time_scores"
+    __tablename__ = "time_scores_v2"
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
 
     overall_score = Column(Float, default=0.0)
@@ -587,7 +587,7 @@ class FeatureInterest(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     feature_name = Column(String, nullable=False) # e.g., "whoop_integration", "apple_health"
     timestamp = Column(DateTime, default=datetime.utcnow)
@@ -603,7 +603,7 @@ class HealthProfile(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     diet_style = Column(String, nullable=True) # e.g., "Mediterranean", "Balanced"
     water_intake_range = Column(String, nullable=True) # "1-2L"
@@ -627,7 +627,7 @@ class TimeProfile(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
 
     # A) Work & Structure
     work_status = Column(String, nullable=True) # Full-time, Part-time, etc.
@@ -659,7 +659,7 @@ class TimeEvent(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     source = Column(String, nullable=False) # google_calendar, screenshot, manual
     start_time = Column(DateTime, nullable=False, index=True)

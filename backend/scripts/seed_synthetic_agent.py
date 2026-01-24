@@ -145,7 +145,7 @@ class DataSeedingAgent:
         try:
             # Check if we are in a safe environment? Assuming yes for this script.
             # Use TRUNCATE CASCADE to wipe users and all dependent tables
-            self.db.execute(text("TRUNCATE TABLE users CASCADE"))
+            self.db.execute(text("TRUNCATE TABLE users_v2 CASCADE"))
             self.db.commit()
             print("Database wiped successfully.")
         except Exception as e:
@@ -154,7 +154,7 @@ class DataSeedingAgent:
 
     def seed_users(self):
         print("--- STEP 3: UPSERTING USERS ---")
-        if not self.schema.has_table('users'):
+        if not self.schema.has_table('users_v2'):
              return
 
         for key, persona in PERSONAS.items():
@@ -162,7 +162,7 @@ class DataSeedingAgent:
             
             # Check if exists
             try:
-                row = self.db.execute(text("SELECT id FROM users WHERE email = :email"), {"email": email}).fetchone()
+                row = self.db.execute(text("SELECT id FROM users_v2 WHERE email = :email"), {"email": email}).fetchone()
                 if row:
                     user_id = str(row[0])
                     print(f"User {email} exists ({user_id}).")
@@ -189,15 +189,15 @@ class DataSeedingAgent:
             valid_cols = []
             valid_vals = {}
             for c in cols:
-                if self.schema.has_column('users', c):
+                if self.schema.has_column('users_v2', c):
                     valid_cols.append(c)
                     valid_vals[c] = vals[c]
             
-            if self.schema.has_column('users', 'onboarding_status'):
+            if self.schema.has_column('users_v2', 'onboarding_status'):
                 valid_cols.append('onboarding_status')
                 valid_vals['onboarding_status'] = 'PENDING' if key == 'empty' else 'COMPLETE'
 
-            sql = f"INSERT INTO users ({','.join(valid_cols)}) VALUES ({','.join([':'+c for c in valid_cols])})"
+            sql = f"INSERT INTO users_v2 ({','.join(valid_cols)}) VALUES ({','.join([':'+c for c in valid_cols])})"
             try:
                 self.db.execute(text(sql), valid_vals)
                 self.db.commit()
@@ -473,7 +473,7 @@ class DataSeedingAgent:
         print("--- STEP 7: VALIDATION QUERIES ---")
         
         # Count rows per user tables
-        tables_to_check = ['users', 'life_goals', 'financial_accounts', 'transactions', 'health_daily_summaries', 'time_profiles']
+        tables_to_check = ['users_v2', 'life_goals', 'financial_accounts', 'transactions', 'health_daily_summaries', 'time_profiles']
         
         print(f"{'Table':<25} | {'Count':<10}")
         print("-" * 40)
@@ -481,11 +481,11 @@ class DataSeedingAgent:
         for t in tables_to_check:
             if not self.schema.has_table(t): continue
             try:
-                if t == 'users':
+                if t == 'users_v2':
                     count = self.db.execute(text(f"SELECT count(*) FROM {t}")).scalar()
                     print(f"{t:<25} | {count:<10}")
                 elif self.schema.has_column(t, 'user_id'):
-                    res = self.db.execute(text(f"SELECT u.email, count(*) FROM {t} x JOIN users u ON x.user_id = u.id WHERE u.email like '%@helm.com' GROUP BY u.email")).fetchall()
+                    res = self.db.execute(text(f"SELECT u.email, count(*) FROM {t} x JOIN users_v2 u ON x.user_id = u.id WHERE u.email like '%@helm.com' GROUP BY u.email")).fetchall()
                     for r in res:
                         print(f"{t} ({r[0]})".ljust(25) + f" | {r[1]:<10}")
                 else:

@@ -28,7 +28,7 @@ def seed_finance_30_days():
         
         # 1. Create a financial account if it doesn't exist
         existing_account = conn.execute(text("""
-            SELECT id FROM financial_accounts WHERE user_id = :uid LIMIT 1
+            SELECT id FROM financial_accounts_v2 WHERE user_id = :uid LIMIT 1
         """), {"uid": fid}).scalar()
         
         if existing_account:
@@ -38,7 +38,7 @@ def seed_finance_30_days():
             acct_id = str(uuid.uuid4())
             print(f"Creating new account: {acct_id}")
             conn.execute(text("""
-                INSERT INTO financial_accounts (id, user_id, name, type, balance, currency, institution_name, created_at)
+                INSERT INTO financial_accounts_v2 (id, user_id, name, type, balance, currency, institution_name, created_at)
                 VALUES (:id, :uid, 'Primary Checking', 'depository', 5000.00, 'USD', 'Chase Bank', :now)
             """), {
                 "id": acct_id, 
@@ -48,7 +48,7 @@ def seed_finance_30_days():
             print("Account created successfully")
         
         # 2. Clear existing transactions for this user to avoid duplicates
-        deleted = conn.execute(text("DELETE FROM transactions WHERE user_id = :uid"), {"uid": fid})
+        deleted = conn.execute(text("DELETE FROM transactions_v2 WHERE user_id = :uid"), {"uid": fid})
         print(f"Cleared {deleted.rowcount} existing transactions")
         
         # 3. Create 30 days of transaction history
@@ -70,7 +70,7 @@ def seed_finance_30_days():
             # Weekly salary (every 7 days)
             if day_offset % 7 == 0:
                 conn.execute(text("""
-                    INSERT INTO transactions (
+                    INSERT INTO transactions_v2 (
                         id, account_id, user_id, amount, currency_code, transaction_date,
                         description, merchant_name, category_primary, is_recurring, created_at
                     ) VALUES (
@@ -97,7 +97,7 @@ def seed_finance_30_days():
                 amount = -random.uniform(10.0, 150.0)  # Negative for expenses
                 
                 conn.execute(text("""
-                    INSERT INTO transactions (
+                    INSERT INTO transactions_v2 (
                         id, account_id, user_id, amount, currency_code, transaction_date,
                         description, merchant_name, category_primary, is_recurring, created_at
                     ) VALUES (
@@ -122,10 +122,10 @@ def seed_finance_30_days():
         
         # 4. Verify the data
         print("\n=== VERIFICATION ===")
-        total_tx = conn.execute(text("SELECT COUNT(*) FROM transactions WHERE user_id = :uid"), {"uid": fid}).scalar()
+        total_tx = conn.execute(text("SELECT COUNT(*) FROM transactions_v2 WHERE user_id = :uid"), {"uid": fid}).scalar()
         distinct_dates = conn.execute(text("""
             SELECT COUNT(DISTINCT DATE(transaction_date)) 
-            FROM transactions 
+            FROM transactions_v2 
             WHERE user_id = :uid
         """), {"uid": fid}).scalar()
         
@@ -136,7 +136,7 @@ def seed_finance_30_days():
         print("\nRecent transactions:")
         rows = conn.execute(text("""
             SELECT merchant_name, amount, transaction_date 
-            FROM transactions 
+            FROM transactions_v2 
             WHERE user_id = :uid 
             ORDER BY transaction_date DESC 
             LIMIT 5

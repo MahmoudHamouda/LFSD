@@ -21,7 +21,7 @@ with engine.connect() as conn:
     
     # Users (Core)
     conn.execute(text("""
-    CREATE TABLE IF NOT EXISTS users (
+    CREATE TABLE IF NOT EXISTS users_v2 (
         id VARCHAR(50) PRIMARY KEY,
         email VARCHAR(100) UNIQUE NOT NULL,
         auth0_id VARCHAR(100) UNIQUE,
@@ -106,7 +106,7 @@ with engine.connect() as conn:
         provider_customer_id VARCHAR(100),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users (id)
+        FOREIGN KEY (user_id) REFERENCES users_v2 (id)
     )
     """))
     
@@ -130,7 +130,7 @@ with engine.connect() as conn:
         reason VARCHAR(255),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users (id)
+        FOREIGN KEY (user_id) REFERENCES users_v2 (id)
     )
     """))
     
@@ -182,22 +182,22 @@ with engine.connect() as conn:
                 conn.execute(text("ALTER TABLE messages ADD COLUMN model_used VARCHAR(100)"))
 
         # Users table migrations
-        print("Checking users table columns...")
-        u_cols = conn.execute(text("PRAGMA table_info(users)")).fetchall()
+        print("Checking users_v2 table columns...")
+        u_cols = conn.execute(text("PRAGMA table_info(users_v2)")).fetchall()
         if u_cols:
             u_names = [c[1] for c in u_cols]
             # Add account_status if missing
             if 'account_status' not in u_names:
-                print("Altering users to add account_status...")
-                conn.execute(text("ALTER TABLE users ADD COLUMN account_status VARCHAR(50) DEFAULT 'ACTIVE'"))
+                print("Altering users_v2 to add account_status...")
+                conn.execute(text("ALTER TABLE users_v2 ADD COLUMN account_status VARCHAR(50) DEFAULT 'ACTIVE'"))
             # Add role if missing
             if 'role' not in u_names:
-                print("Altering users to add role...")
-                conn.execute(text("ALTER TABLE users ADD COLUMN role VARCHAR(50) DEFAULT 'user'"))
+                print("Altering users_v2 to add role...")
+                conn.execute(text("ALTER TABLE users_v2 ADD COLUMN role VARCHAR(50) DEFAULT 'user'"))
             # Add onboarding_status if missing (just in case)
             if 'onboarding_status' not in u_names:
-                print("Altering users to add onboarding_status...")
-                conn.execute(text("ALTER TABLE users ADD COLUMN onboarding_status VARCHAR(50) DEFAULT 'NOT_STARTED'"))
+                print("Altering users_v2 to add onboarding_status...")
+                conn.execute(text("ALTER TABLE users_v2 ADD COLUMN onboarding_status VARCHAR(50) DEFAULT 'NOT_STARTED'"))
     except Exception as e:
         print(f"Schema check error: {e}")
 
