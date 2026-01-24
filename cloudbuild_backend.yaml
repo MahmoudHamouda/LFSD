@@ -1,0 +1,29 @@
+steps:
+  # Build the container image
+  - name: "gcr.io/cloud-builders/docker"
+    dir: "backend"
+    args: ["build", "-t", "gcr.io/newprojectlfsd/backend:latest", "."]
+
+  # Push the container image
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/newprojectlfsd/backend:latest"]
+
+  # Deploy container image to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - "run"
+      - "deploy"
+      - "lfsd-backend"
+      - "--image"
+      - "gcr.io/newprojectlfsd/backend:latest"
+      - "--region"
+      - "us-central1"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+      - "--port"
+      - "8080"
+
+images:
+  - "gcr.io/newprojectlfsd/backend:latest"
