@@ -37,6 +37,7 @@ class Token(BaseModel):
 
 
 class UserSchema(BaseModel):
+    """Pydantic model for User data."""
     id: str
     username: str
     disabled: Optional[bool] = None
@@ -97,6 +98,13 @@ def authenticate_user(db: Session, username: str, password: str) -> Optional[DBU
 def create_access_token(data: Dict[str, Any], expires_minutes: Optional[int] = None) -> str:
     """
     Create a signed JWT token with an optional expiry.
+    
+    Args:
+        data: The payload to encode (e.g., {"sub": "user@example.com"}).
+        expires_minutes: Optional override for token lifespan.
+        
+    Returns:
+        Encoded JWT string.
     """
     settings = get_settings()
     to_encode = data.copy()
@@ -115,6 +123,17 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
     """
     Decode a JWT and return the corresponding user from the DB.
     Supports both Authorization header (Bearer token) and HttpOnly cookie (access_token).
+    
+    Args:
+        request: FastAPI Request object.
+        token: Bearer token from Authorization header.
+        db: Database session.
+        
+    Returns:
+        DBUser: The authenticated user instance.
+        
+    Raises:
+        HTTPException(401): If token is missing, invalid, or user not found.
     """
     settings = get_settings()
     

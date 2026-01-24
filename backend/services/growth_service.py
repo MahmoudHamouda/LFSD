@@ -10,11 +10,12 @@ from sqlalchemy import func
 import uuid
 
 from services.chat_service.models import ChatHistory
+from loguru import logger
 
 class GrowthService:
     @staticmethod
     def get_entitlements(user_id: str, db: Session) -> EntitlementResponse:
-        print(f"DEBUG: get_entitlements for {user_id}")
+        logger.debug(f"Growth: Fetching entitlements for {user_id}")
         # 1. Fetch Subscription
         subscription = db.query(Subscription).filter(Subscription.user_id == user_id, Subscription.status == "active").first()
         
@@ -23,11 +24,11 @@ class GrowthService:
         if subscription:
             plan_id = subscription.plan_id
             status = subscription.status
-        print(f"DEBUG: plan_id={plan_id}, status={status}")
+        logger.debug(f"Growth: Plan={plan_id}, Status={status}")
 
         # 2. Fetch Global Tier Config
         tier = db.query(TierConfig).filter(TierConfig.plan_id == plan_id).first()
-        print(f"DEBUG: tier={tier}")
+        # logger.debug(f"Growth: Tier Config Found={bool(tier)}")
         
         # Fallback to defaults if DB config not seeded yet
         if tier:
@@ -93,7 +94,6 @@ class GrowthService:
         usage["goals"] = db.query(LifeGoal).filter(
             LifeGoal.user_id == user_id
         ).count()
-        print(f"DEBUG: usage goals={usage['goals']}")
         
         # AI Chat: Messages sent by user this month (Using DBMessage/messages table)
         first_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -137,7 +137,6 @@ class GrowthService:
             limits=base_config.get("limits", {}),
             usage=usage
         )
-        print(f"DEBUG: Returning entitlements: {res}")
         return res
 
     @staticmethod
