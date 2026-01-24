@@ -60,6 +60,7 @@ class User(Base):
     financial_scores = relationship("FinancialScore", back_populates="user", cascade="all, delete-orphan")
     time_scores = relationship("TimeScore", back_populates="user", cascade="all, delete-orphan")
     health_data_samples = relationship("HealthDataSample", back_populates="user", cascade="all, delete-orphan")
+    health_scores = relationship("HealthScore", back_populates="user", cascade="all, delete-orphan")
     subscription = relationship("Subscription", uselist=False, back_populates="user", cascade="all, delete-orphan")
     conversations = relationship("DBConversation", back_populates="user", cascade="all, delete-orphan")
     
@@ -683,6 +684,33 @@ class TimeEvent(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="time_events")
+
+class HealthScore(Base):
+    """
+    Detailed breakdown of the Health Score (5 Pillars).
+    """
+    __tablename__ = "health_scores"
+    __table_args__ = {'extend_existing': True}
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
+
+    overall_score = Column(Float, default=0.0)
+    confidence = Column(Float, default=0.0)
+    
+    # The 5 Pillars
+    sleep_score = Column(Float, default=0.0)
+    movement_score = Column(Float, default=0.0)
+    recovery_score = Column(Float, default=0.0)
+    nutrition_score = Column(Float, default=0.0)
+    lifestyle_score = Column(Float, default=0.0)
+
+    # Metadata
+    time_window = Column(String, default="last_30_days")
+    data_sources_json = Column(JSON, nullable=True) # {"whoop": true, "apple": false}
+
+    user = relationship("User", back_populates="health_scores")
 
 
 
