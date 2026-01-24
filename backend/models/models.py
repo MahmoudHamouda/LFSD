@@ -56,7 +56,7 @@ class User(Base):
     connections = relationship("Connection", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     limit_overrides = relationship("UserLimitOverride", back_populates="user", cascade="all, delete-orphan")
-    statements = relationship("Statement", back_populates="user", cascade="all, delete-orphan")
+    statements = relationship("Statement", back_populates="user", cascade="all, delete-orphan", foreign_keys="[Statement.user_id]")
     financial_scores = relationship("FinancialScore", back_populates="user", cascade="all, delete-orphan")
     time_scores = relationship("TimeScore", back_populates="user", cascade="all, delete-orphan")
     health_data_samples = relationship("HealthDataSample", back_populates="user", cascade="all, delete-orphan")
@@ -195,7 +195,7 @@ __all__ = [
     "FinancialTransaction", "HealthDailySummary", "SleepSession", "Workout", 
     "CalendarEvent", "MobilityTrip", "VivLog", "DBConversation", "DBMessage",
     "SystemLog", "BugReport", "Recommendation", "ActivityFeed", "OnboardingSession",
-    "Order"
+    "Order", "Statement"
 ]
 
 
