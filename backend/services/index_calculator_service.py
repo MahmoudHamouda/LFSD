@@ -6,8 +6,11 @@ health, and behavioral data.
 """
 
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from datetime import datetime, timedelta
 import uuid
+from loguru import logger
+from typing import Dict, Any, Optional
 
 from models.models import User, VivIndex, FinancialAccount, FinancialTransaction, HealthDailySummary, VivLog
 
@@ -15,145 +18,161 @@ from models.models import User, VivIndex, FinancialAccount, FinancialTransaction
 # Index Calculation Functions
 # ============================================================================
 
-def calculate_financial_wellbeing_index(user_id: str, db: Session) -> float:
+def calculate_financial_wellbeing_index(user_id: str, db: Session) -> Dict[str, Any]:
     """
     Calculate financial wellbeing index (0-100).
+    Returns dict with value and confidence.
     
     Formula:
-    - Savings rate: 30%
-    - Discretionary income: 40%
-    - Debt ratio: 30%
+    - Savings Rate (Savings Balance / Monthly Income): 40%
+    - Discretionary Ratio (Incoming - Commitments): 40%
+    - Debt Ratio (Outstanding / Income): 20%
     """
-    # Get accounts
-    accounts = db.query(FinancialAccount).filter(FinancialAccount.user_id == user_id).all()
-    
-    savings = sum(acc.current_balance for acc in accounts if acc.account_type.lower() == 'savings')
-    debts = sum(acc.current_balance for acc in accounts if acc.account_type.lower() == 'credit')
-    
-    # Get transactions for income/expenses (last 30 days)
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    transactions = db.query(FinancialTransaction).filter(
-        FinancialTransaction.user_id == user_id,
-        FinancialTransaction.transaction_date >= thirty_days_ago
-    ).all()
-    
-    income = sum(t.amount for t in transactions if t.amount > 0)
-    expenses = sum(abs(t.amount) for t in transactions if t.amount < 0)
-    
-    if income <= 0:
-        return 50.0
-    
-    # Calculate components
-    savings_rate = (savings / income) * 100 if income > 0 else 0
-    discretionary_ratio = ((income - expenses) / income) * 100 if income > 0 else 0
-    debt_ratio = (debts / income) * 100 if income > 0 else 0
-    
-    # Normalize to 0-100 scale
-    savings_score = min(savings_rate / 50 * 100, 100) * 0.3  # Target 50% savings rate
-    discretionary_score = min(discretionary_ratio / 40 * 100, 100) * 0.4  # Target 40% discretionary
-    debt_score = max(0, (1 - debt_ratio / 100) * 100) * 0.3  # Lower debt is better
-    
-    total = savings_score + discretionary_score + debt_score
-    return round(min(max(total, 0), 100), 2)
+    try:
+        # Get accounts
+        accounts = db.query(FinancialAccount).filter(FinancialAccount.user_id == user_id).all()
+        
+        # Savings is STOCK (Accumulated capacity), Income is FLOW.
+        savings_balance = sum(acc.current_balance for acc in accounts if str(acc.account_type).lower() == 'savings')
+        debt_balance = sum(acc.current_balance for acc in accounts if str(acc.account_type).lower() == 'credit')
+        
+        # Get transactions for income/expenses (last 30 days)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        transactions = db.query(FinancialTransaction).filter(
+            FinancialTransaction.user_id == user_id,
+            FinancialTransaction.transaction_date >= thirty_days_ago
+        ).all()
+        
+        income = sum(t.amount for t in transactions if t.amount > 0)
+        expenses = sum(abs(t.amount) for t in transactions if t.amount < 0)
+        
+        if income <= 0:
+            return {"value": 50.0, "confidence": 0.2} # Low confidence fallback
+        
+        # 1. Savings Buffer Ratio (Months of income saved)
+        # Target: 3 months saved = 100 score. 0 saved = 0 score.
+        months_saved = savings_balance / income
+        savings_score = min(months_saved / 3.0, 1.0) * 100
+        
+        # 2. Free Cashflow Ratio
+        free_cashflow = (income - expenses) / income
+        # Target: 0.2 (20% savings rate) = 100 score. 0 = 50 score. < 0 = 0 score
+        if free_cashflow < 0:
+            cashflow_score = 0
+        else:
+            cashflow_score = 50 + min(free_cashflow / 0.2, 1.0) * 50
+        
+        # 3. Debt-to-Income (Monthly capacity)
+        # Using simplified total debt balance vs monthly income
+        dti = debt_balance / income
+        # Target: 0 debt = 100. > 10x income = 0.
+        debt_score = max(0, (1 - (dti / 10.0)) * 100)
+        
+        total = (savings_score * 0.4) + (cashflow_score * 0.4) + (debt_score * 0.2)
+        return {"value": round(total, 2), "confidence": 0.8}
+        
+    except Exception as e:
+        logger.error(f"Financial index error: {e}")
+        return {"value": 50.0, "confidence": 0.0}
 
-def calculate_time_saved_index(user_id: str, db: Session) -> float:
+def calculate_time_saved_index(user_id: str, db: Session) -> Dict[str, Any]:
     """
     Calculate time saved index (0-100).
-    
-    Based on chat logs (automation, recommendations).
+    Based on automation/action logs.
     """
-    # Get logs from last 30 days
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    logs = db.query(VivLog).filter(
-        VivLog.user_id == user_id,
-        VivLog.timestamp >= thirty_days_ago
-    ).all()
-    
-    # Count different activity types based on intent/logic
-    automated_tasks = len([l for l in logs if "automated" in (l.decision_logic or "").lower()])
-    recommendations_used = len([l for l in logs if "recommendation" in (l.decision_logic or "").lower()])
-    quick_actions = len([l for l in logs if "quick_action" in (l.user_intent or "").lower()])
-    
-    # Calculate score
-    score = (automated_tasks * 10) + (recommendations_used * 5) + (quick_actions * 2)
-    
-    # Normalize to 0-100
-    normalized = min(score, 100)
-    return round(normalized, 2)
+    try:
+        # Get logs from last 30 days
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+        logs = db.query(VivLog).filter(
+            VivLog.user_id == user_id,
+            VivLog.timestamp >= thirty_days_ago
+        ).all()
+        
+        if not logs:
+             return {"value": 0.0, "confidence": 0.5}
 
-def calculate_balance_index(user_id: str, financial_index: float, db: Session) -> float:
+        # Weighted Activity
+        automated_tasks = len([l for l in logs if "automated" in (str(l.decision_logic) or "").lower()])
+        recommendations = len([l for l in logs if "recommendation" in (str(l.decision_logic) or "").lower()])
+        actions = len([l for l in logs if "quick_action" in (str(l.user_intent) or "").lower()])
+        
+        # Score Logic: 10 actions/month = 100? No, let's scale.
+        # Target: 20 meaningful interactions = 100 score.
+        score_raw = (automated_tasks * 2) + (recommendations * 1.5) + (actions * 1)
+        
+        final_score = min((score_raw / 20.0) * 100, 100)
+        return {"value": round(final_score, 2), "confidence": 0.8}
+    except Exception as e:
+        logger.error(f"Time index error: {e}")
+        return {"value": 0.0, "confidence": 0.0}
+
+def calculate_balance_index(user_id: str, financial_index: float, db: Session) -> Dict[str, Any]:
     """
     Calculate balance index (0-100) - health-enhanced.
-    
-    Formula:
-    - Sleep score: 30%
-    - Recovery: 30% (derived from HRV/Sleep)
-    - Activity load: 20%
-    - Financial wellbeing: 20%
     """
-    # Get latest health summary
-    latest_health = db.query(HealthDailySummary).filter(
-        HealthDailySummary.user_id == user_id
-    ).order_by(HealthDailySummary.date.desc()).first()
-    
-    if not latest_health:
-        return None
-    
-    # Calculate components
-    sleep_score = (latest_health.sleep_quality_score or 50) * 0.3
-    
-    # Derive recovery from HRV (simple normalization)
-    hrv = latest_health.hrv_average or 50
-    recovery_score = min(hrv / 100 * 100, 100) * 0.3
-    
-    # Derive activity from steps
-    steps = latest_health.steps_count or 0
-    activity_score = min(steps / 10000 * 100, 100) * 0.2
-    
-    financial_score_component = financial_index * 0.2
-    
-    total = sleep_score + recovery_score + activity_score + financial_score_component
-    return round(min(max(total, 0), 100), 2)
+    try:
+        # Get latest health summary
+        latest_health = db.query(HealthDailySummary).filter(
+            HealthDailySummary.user_id == user_id
+        ).order_by(HealthDailySummary.date.desc()).first()
+        
+        if not latest_health:
+            return {"value": 50.0, "confidence": 0.1}
+        
+        # Sleep (Target 7-9h)
+        sleep_mins = latest_health.sleep_minutes or 360
+        if 420 <= sleep_mins <= 540:
+            sleep_score = 100
+        else:
+            diff = min(abs(sleep_mins - 420), abs(540 - sleep_mins))
+            sleep_score = max(0, 100 - (diff / 2.0)) # Drop 1 pt per 2 mins off target
+        
+        # Active Mins (Target 30)
+        active = latest_health.active_minutes or 0
+        active_score = min(active / 30.0, 1.0) * 100
+        
+        # Financial Component (20% weight)
+        
+        total = (sleep_score * 0.4) + (active_score * 0.4) + (financial_index * 0.2)
+        return {"value": round(total, 2), "confidence": 0.8}
+        
+    except Exception as e:
+        logger.error(f"Balance index error: {e}")
+        return {"value": 50.0, "confidence": 0.0}
 
-def calculate_index_trend(user_id: str, current_index: float, index_type: str, db: Session) -> float:
+def calculate_index_trend(user_id: str, current_val: float, index_type: str, db: Session) -> float:
     """
-    Calculate trend for an index by comparing to previous period.
-    
-    Returns percentage change.
+    Calculate trend vs previous snapshot (approx 7 days ago).
     """
-    # Get index from 7 days ago
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
-    previous = db.query(VivIndex).filter(
-        VivIndex.user_id == user_id,
-        VivIndex.timestamp <= seven_days_ago
-    ).order_by(VivIndex.timestamp.desc()).first()
-    
-    if not previous:
+    try:
+        # Find closest snapshot to 7 days ago
+        target_date = datetime.utcnow() - timedelta(days=7)
+        # Look for range [8 days ago, 6 days ago] to find best match
+        start_win = target_date - timedelta(days=1)
+        end_win = target_date + timedelta(days=1)
+        
+        previous = db.query(VivIndex).filter(
+            VivIndex.user_id == user_id,
+            VivIndex.timestamp >= start_win,
+            VivIndex.timestamp <= end_win
+        ).order_by(VivIndex.timestamp.desc()).first()
+        
+        if not previous or not current_val:
+            return 0.0
+        
+        prev_val = 0.0
+        if index_type == "financial": prev_val = previous.financial_score
+        elif index_type == "time_saved": prev_val = previous.time_score
+        elif index_type == "balance": prev_val = previous.health_score 
+        
+        if prev_val == 0: return 0.0
+        
+        change = ((current_val - prev_val) / prev_val) * 100
+        return round(change, 1)
+        
+    except Exception as e:
+        logger.error(f"Trend calc error: {e}")
         return 0.0
-    
-    # Get previous value based on index type
-    previous_value = 0
-    if index_type == "financial":
-        previous_value = previous.financial_score
-    elif index_type == "time_saved":
-        previous_value = previous.time_score
-    elif index_type == "balance":
-        # Balance score wasn't explicitly stored in VivIndex in the new schema, 
-        # but let's assume it's roughly the average or we can add it.
-        # Wait, VivIndex has financial, health, time. 
-        # 'Balance' seems to be a composite or synonymous with Health in some contexts, 
-        # but here it's calculated separately.
-        # Let's map 'balance' to 'health_score' for trend tracking if it fits, 
-        # or just return 0 if not tracked.
-        # Actually, let's use health_score as the proxy for balance/wellbeing.
-        previous_value = previous.health_score
-    
-    if previous_value == 0:
-        return 0.0
-    
-    # Calculate percentage change
-    change = ((current_index - previous_value) / previous_value) * 100
-    return round(change, 2)
 
 # ============================================================================
 # Main Calculator Function
@@ -161,43 +180,59 @@ def calculate_index_trend(user_id: str, current_index: float, index_type: str, d
 
 def calculate_user_indexes(user_id: str, db: Session) -> dict:
     """
-    Calculate all user indexes and store in database.
-    
-    Returns calculated indexes with trends.
+    Calculate all user indexes, persist snapshot (idempotent-ish), return results.
     """
+    # 1. Check for existing snapshot today to avoid spam
+    today = datetime.utcnow().date()
+    existing = db.query(VivIndex).filter(
+        VivIndex.user_id == user_id,
+        func.date(VivIndex.timestamp) == today
+    ).first()
     
-    # Calculate indexes
-    financial_index = calculate_financial_wellbeing_index(user_id, db)
-    time_saved_index = calculate_time_saved_index(user_id, db)
-    balance_index = calculate_balance_index(user_id, financial_index, db) or 50.0
+    # Calculate
+    fin_res = calculate_financial_wellbeing_index(user_id, db)
+    time_res = calculate_time_saved_index(user_id, db)
+    bal_res = calculate_balance_index(user_id, fin_res["value"], db)
     
-    # Calculate trends
-    financial_trend = calculate_index_trend(user_id, financial_index, "financial", db)
-    time_saved_trend = calculate_index_trend(user_id, time_saved_index, "time_saved", db)
-    balance_trend = calculate_index_trend(user_id, balance_index, "balance", db)
+    # Trends
+    trends = {
+        "financial": calculate_index_trend(user_id, fin_res["value"], "financial", db),
+        "time_saved": calculate_index_trend(user_id, time_res["value"], "time_saved", db),
+        "balance": calculate_index_trend(user_id, bal_res["value"], "balance", db)
+    }
     
-    # Store in database
-    viv_index = VivIndex(
-        id=str(uuid.uuid4()),
-        user_id=user_id,
-        financial_score=financial_index,
-        time_score=time_saved_index,
-        health_score=balance_index, # Mapping balance to health_score for storage
-        timestamp=datetime.utcnow(),
-        snapshot_reason="Daily Calculation"
-    )
+    # Weighted confidence
+    avg_conf = (fin_res["confidence"] + time_res["confidence"] + bal_res["confidence"]) / 3.0
     
-    db.add(viv_index)
+    if existing:
+        # Update existing
+        existing.financial_score = fin_res["value"]
+        existing.time_score = time_res["value"]
+        existing.health_score = bal_res["value"]
+        existing.confidence = avg_conf
+        existing.timestamp = datetime.utcnow() 
+    else:
+        # Create new
+        viv_index = VivIndex(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            financial_score=fin_res["value"],
+            time_score=time_res["value"],
+            health_score=bal_res["value"],
+            confidence=avg_conf,
+            timestamp=datetime.utcnow(),
+            snapshot_reason="Daily Calculation"
+        )
+        db.add(viv_index)
+    
     db.commit()
     
     return {
-        "financialWellbeingIndex": financial_index,
-        "timeSavedIndex": time_saved_index,
-        "balanceIndex": balance_index,
-        "trend": {
-            "financialWellbeing": financial_trend,
-            "timeSaved": time_saved_trend,
-            "balance": balance_trend
-        },
-        "lastCalculatedAt": viv_index.timestamp.isoformat()
+        "financial_index": fin_res["value"],
+        "time_saved_index": time_res["value"],
+        "balance_index": bal_res["value"],
+        "trends": trends,
+        "confidence": avg_conf,
+        "last_calculated": datetime.utcnow().isoformat()
     }
+
