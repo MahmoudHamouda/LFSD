@@ -568,15 +568,15 @@ class TimeScore(Base):
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
 
     overall_score = Column(Float, default=0.0)
+    confidence = Column(Float, default=0.0)
     
     # The 7 Time Pillars
-    schedule_coverage_score = Column(Float, default=0.0)  # % of day with scheduled events
-    planning_habit_score = Column(Float, default=0.0)     # consistency of planning ahead
-    focus_blocks_score = Column(Float, default=0.0)       # presence of uninterrupted work time
-    meeting_load_score = Column(Float, default=0.0)       # % of time in meetings (inverse)
-    context_switching_score = Column(Float, default=0.0)  # frequency of task changes (inverse)
-    weekly_rhythm_score = Column(Float, default=0.0)      # consistency week-to-week
-    time_alignment_score = Column(Float, default=0.0)     # events aligned with priorities
+    # The 5 Time Pillars
+    structure_score = Column(Float, default=0.0)
+    load_score = Column(Float, default=0.0)
+    focus_score = Column(Float, default=0.0) 
+    friction_score = Column(Float, default=0.0)
+    stress_score = Column(Float, default=0.0)
 
     # Metadata
     time_window = Column(String, default="last_30_days")

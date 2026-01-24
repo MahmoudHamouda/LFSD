@@ -145,6 +145,31 @@ def compute_time_score(user_id: str, db: Session, override_input: Optional[Dict[
                 "focus": {"score": round(focus_score, 1), "max": 20},
                 "friction": {"score": round(friction_score, 1), "max": 15},
                 "stress": {"score": round(stress_score, 1), "max": 15}
+        }
+        
+        # 3. Persist
+        _persist_score(user_id, {
+            "productivity_score": overall_score,
+            "confidence": overall_conf,
+            "dimensions": {
+                 "structure": {"score": structure_score},
+                 "load": {"score": load_score},
+                 "focus": {"score": focus_score},
+                 "friction": {"score": friction_score},
+                 "stress": {"score": stress_score}
+            }
+        }, db)
+
+        return {
+            "productivity_score": round(overall_score, 1),
+            "confidence": round(overall_conf, 2),
+            "band": band,
+            "dimensions": {
+                "structure": {"score": round(structure_score, 1), "max": 25},
+                "load": {"score": round(load_score, 1), "max": 25},
+                "focus": {"score": round(focus_score, 1), "max": 20},
+                "friction": {"score": round(friction_score, 1), "max": 15},
+                "stress": {"score": round(stress_score, 1), "max": 15}
             }
         }
     except Exception as e:
@@ -162,6 +187,30 @@ def compute_time_score(user_id: str, db: Session, override_input: Optional[Dict[
                 "stress": {"score": 7.5, "max": 15}
             }
         }
+
+def _persist_score(user_id: str, result: Dict[str, Any], db: Session):
+    try:
+        from models.models import TimeScore
+        import uuid
+        
+        score = TimeScore(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            overall_score=result["productivity_score"],
+            confidence=result["confidence"],
+            
+            structure_score=result["dimensions"]["structure"]["score"],
+            load_score=result["dimensions"]["load"]["score"],
+            focus_score=result["dimensions"]["focus"]["score"],
+            friction_score=result["dimensions"]["friction"]["score"],
+            stress_score=result["dimensions"]["stress"]["score"],
+            
+            time_window="last_30_days"
+        )
+        db.add(score)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Failed to persist Time Score: {e}")
 
 def calculate_productivity_score(user_id: str, onboarding_data: Dict[str, Any], db: Session) -> Dict[str, Any]:
     """Wrapper for API compatibility."""
