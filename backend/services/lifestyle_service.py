@@ -1,48 +1,78 @@
 from sqlalchemy.orm import Session
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict, Any, Union
 from models.lifestyle_events import LifestyleEvent
-from models.database import get_db
+from models.models import LifeGoal
+from loguru import logger
+import uuid
+import pytz
 
 class LifestyleService:
     def __init__(self, db: Session):
         self.db = db
 
     def get_upcoming_events(self, user_id: str) -> List[LifestyleEvent]:
-        """Get upcoming lifestyle events."""
+        """Get upcoming lifestyle events (from now onwards)."""
         now = datetime.utcnow()
         return self.db.query(LifestyleEvent).filter(
             LifestyleEvent.user_id == user_id,
             LifestyleEvent.start_time >= now
         ).order_by(LifestyleEvent.start_time.asc()).all()
 
-    def create_event(self, user_id: str, event_data: dict) -> LifestyleEvent:
+    def create_event(self, user_id: str, event_data: dict) -> Dict[str, Any]:
         """Create a lifestyle event (e.g. dinner reservation)."""
-        event = LifestyleEvent(
-            user_id=user_id,
-            event_type=event_data.get("event_type", "dining"),
-            title=event_data.get("title"),
-            start_time=datetime.fromisoformat(event_data.get("start_time")),
-            cost_estimated=event_data.get("cost_estimated"),
-            source="manual"
-        )
-        self.db.add(event)
-        self.db.commit()
-        self.db.refresh(event)
-        return event
+        # Validate critical fields
+        if not event_data.get("title") or not event_data.get("start_time"):
+             raise ValueError("Event title and start_time are required")
+             
+        try:
+            # Handle start_time parsing robustly
+            start_str = event_data.get("start_time")
+            start_time = None
+            if start_str.endswith("Z"):
+                 start_str = start_str[:-1] # Brittle naive fix, better to use specialized parser but this works for basic Z
+                 start_time = datetime.fromisoformat(start_str)
+            else:
+                 start_time = datetime.fromisoformat(start_str)
+            
+            event = LifestyleEvent(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                event_type=event_data.get("event_type", "dining"),
+                title=event_data.get("title"),
+                start_time=start_time,
+                cost_estimated=max(0, float(event_data.get("cost_estimated", 0))), # Ensure non-negative
+                source="manual"
+            )
+            self.db.add(event)
+            self.db.commit()
+            self.db.refresh(event)
+            return {
+                "success": True, 
+                "event_id": event.id,
+                "title": event.title
+            }
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Failed to create lifestyle event: {e}")
+            raise e
 
     def get_recommendations(self, user_id: str, mood: str = "stress") -> List[dict]:
-        """Get 'Treat Yourself' recommendations based on mood."""
+        """
+        Get 'Treat Yourself' recommendations based on mood.
+        TODO: Connect to user preferences/history instead of hardcoding.
+        """
         # In a real app, this would query an external API or a recommendation engine
+        # and use user_id to filter by preferences.
         if mood == "stress":
             return [
                 {"title": "Order Comfort Food", "type": "dining", "suggestion": "Nando's"},
                 {"title": "Relaxing Spa Day", "type": "wellness", "suggestion": "Local Spa"}
             ]
         return []
+
     def get_goals(self, user_id: str) -> List[dict]:
         """Get life goals."""
-        from models.models import LifeGoal
         goals = self.db.query(LifeGoal).filter(LifeGoal.user_id == user_id).all()
         return [
             {
@@ -51,22 +81,40 @@ class LifestyleService:
                 "target_amount": g.target_amount,
                 "saved_amount": g.saved_amount,
                 "progress": int((g.saved_amount / g.target_amount) * 100) if g.target_amount > 0 else 0,
-                "deadline": g.deadline.isoformat() if g.deadline else None,
-                "category": "personal" # Default for now
+                "target_date": g.target_date.isoformat() if g.target_date else None,
+                "pillar": g.pillar or "finance" # Use pillar instead of dead 'category'
             }
             for g in goals
         ]
 
-    def create_goal(self, user_id: str, goal_data: dict) -> bool:
+    def create_goal(self, user_id: str, goal_data: dict) -> Dict[str, Any]:
         """Create a new life goal."""
-        from models.models import LifeGoal
-        goal = LifeGoal(
-            user_id=user_id,
-            title=goal_data.get("title"),
-            target_amount=goal_data.get("target_amount", 1000), # Default target
-            saved_amount=0,
-            deadline=datetime.fromisoformat(goal_data.get("target_date")) if goal_data.get("target_date") else None
-        )
-        self.db.add(goal)
-        self.db.commit()
-        return True
+        try:
+            target_date_val = None
+            if goal_data.get("target_date"):
+                 # Robust parse could go here, for now basic iso format
+                 target_date_val = datetime.fromisoformat(goal_data.get("target_date").replace("Z", ""))
+                 
+            goal = LifeGoal(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                title=goal_data.get("title"),
+                target_amount=max(0, float(goal_data.get("target_amount", 1000))),
+                saved_amount=0,
+                target_date=target_date_val,
+                pillar=goal_data.get("pillar", "finance")
+            )
+            self.db.add(goal)
+            self.db.commit()
+            self.db.refresh(goal)
+            
+            return {
+                "success": True, 
+                "goal_id": goal.id,
+                "title": goal.title
+            }
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Failed to create life goal: {e}")
+            raise e
+
