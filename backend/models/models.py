@@ -62,6 +62,15 @@ class User(Base):
     health_data_samples = relationship("HealthDataSample", back_populates="user", cascade="all, delete-orphan")
     subscription = relationship("Subscription", uselist=False, back_populates="user", cascade="all, delete-orphan")
     conversations = relationship("DBConversation", back_populates="user", cascade="all, delete-orphan")
+    
+    # Extended Relationships
+    feature_interests = relationship("FeatureInterest", back_populates="user", cascade="all, delete-orphan")
+    health_profile = relationship("HealthProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
+    time_profile = relationship("TimeProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
+    time_events = relationship("TimeEvent", back_populates="user", cascade="all, delete-orphan")
+    recurring_bills = relationship("RecurringBill", back_populates="user", cascade="all, delete-orphan")
+    recommendations = relationship("Recommendation", back_populates="user", cascade="all, delete-orphan")
+    activity_feed = relationship("ActivityFeed", back_populates="user", cascade="all, delete-orphan")
 
 
 class Connection(Base):
@@ -594,7 +603,7 @@ class FeatureInterest(Base):
 
     user = relationship("User", back_populates="feature_interests")
 
-User.feature_interests = relationship("FeatureInterest", back_populates="user", cascade="all, delete-orphan")
+
 
 
 class HealthProfile(Base):
@@ -618,7 +627,7 @@ class HealthProfile(Base):
 
     user = relationship("User", back_populates="health_profile")
 
-User.health_profile = relationship("HealthProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
+
 
 
 class TimeProfile(Base):
@@ -676,12 +685,4 @@ class TimeEvent(Base):
     user = relationship("User", back_populates="time_events")
 
 
-# Add relationships to User
-User.feature_interests = relationship("FeatureInterest", back_populates="user", cascade="all, delete-orphan")
-User.health_profile = relationship("HealthProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
-User.time_profile = relationship("TimeProfile", uselist=False, back_populates="user", cascade="all, delete-orphan")
-User.time_events = relationship("TimeEvent", back_populates="user", cascade="all, delete-orphan")
-User.time_scores = relationship("TimeScore", back_populates="user", cascade="all, delete-orphan")
-User.recurring_bills = relationship("RecurringBill", back_populates="user", cascade="all, delete-orphan")
-User.recommendations = relationship("Recommendation", back_populates="user", cascade="all, delete-orphan")
-User.activity_feed = relationship("ActivityFeed", back_populates="user", cascade="all, delete-orphan")
+

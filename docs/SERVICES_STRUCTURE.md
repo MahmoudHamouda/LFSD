@@ -43,10 +43,12 @@ services/
 **Purpose**: Ride-hailing and public transit integration.
 
 **Providers**:
-- Uber (Sandbox API)
-- Careem (Mock)
-- Bolt (Mock)
-- RTA Dubai (Mock)
+- Uber (Sandbox API) - Real Uber Sandbox for development
+- Careem (Mock) - Returns simulated responses without API calls
+- Bolt (Mock) - Returns simulated responses without API calls
+- RTA Dubai (Mock) - Returns simulated transit data without API calls
+
+> **Mock vs Sandbox**: Mock implementations generate responses locally without external API calls. Sandbox APIs (like Uber's) make real API calls to a test environment. Both are suitable for development, but sandbox provides more realistic behavior.
 
 **Key Features**:
 - Price comparison across providers

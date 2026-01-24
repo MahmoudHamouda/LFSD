@@ -8,7 +8,8 @@ from models.database import engine, SessionLocal, Base
 from models.models import (
     User, LifeGoal, FinancialAccount, FinancialTransaction,
     HealthDailySummary, SleepSession, Workout, VivIndex,
-    CalendarEvent, MobilityTrip, VivLog, Order
+    CalendarEvent, MobilityTrip, VivLog, Order,
+    FinancialScore, TimeScore
 )
 from core.authentication import get_password_hash
 import uuid
@@ -110,7 +111,7 @@ def safe_seed_users():
             if profile in ["health", "super"]:
                 _add_health_data(db, user.id)
             
-            if profile in ["time", "super"]:
+            if profile in ["time", "super", "finance"]:
                 _add_time_data(db, user.id)
             
             if profile == "super":

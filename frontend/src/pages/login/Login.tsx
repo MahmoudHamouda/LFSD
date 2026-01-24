@@ -70,8 +70,8 @@ const Login: React.FC = () => {
                     throw new Error("Password must be at least 6 characters");
                 }
 
-                // 1. Sign Up
-                const signupRes = await fetch('/api/auth/signup', {
+                // 1. Sign Up (Auth0)
+                const signupRes = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password, name })
@@ -84,23 +84,15 @@ const Login: React.FC = () => {
                         const err = JSON.parse(rawText);
                         errMessage = err.detail || errMessage;
                     } catch (e) {
-                        // If raw text is reasonable length, log it to console for debug
-                        if (rawText && rawText.length < 3000) {
-                            console.error("Signup Server Catch:", rawText);
-                        } else {
-                            console.error("Signup Server Catch: Response too large to log");
-                        }
-                        // User-friendly message as requested
-                        errMessage = "We couldn't create your account. Please try again or contact support if the issue persists.";
+                        console.error("Signup Server Catch:", rawText);
                     }
                     throw new Error(errMessage);
                 }
 
-                // 2. Auto Login after signup
-                // Proceed to login block
+                // 2. Auto Login after signup -> Proceed to login block
             }
 
-            // 3. Log In (Common for both flows)
+            // 3. Log In (Auth0 - /api/auth/login)
             const loginRes = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -109,14 +101,24 @@ const Login: React.FC = () => {
 
             if (!loginRes.ok) throw new Error('Invalid credentials');
 
-            const data = await loginRes.json();
+            const loginData = await loginRes.json();
+            const token = loginData.access_token;
 
-            // 4. Update Context
-            login(data.access_token, data.user);
+            // 4. Fetch User Profile (Backend resolves Auth0 token to DB user)
+            const meRes = await fetch('/api/user/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-            // 5. Navigation handled by PublicOnlyRoute or simple redirect
-            // But we can nudge it here if needed
-            // navigate('/') -> RouteGuard will pick up user.onboarding_status and redirect accordingly.
+            if (!meRes.ok) throw new Error('Failed to fetch user profile');
+
+            const meData = await meRes.json();
+            // meData structure from backend: { "user": { ... } }
+
+            // 5. Update Context
+            login(token, meData.user);
+
+            // 6. Navigation
+            // navigate('/') -> RouteGuard will pick up user.
 
         } catch (err: any) {
             console.error(err);

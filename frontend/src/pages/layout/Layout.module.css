@@ -63,6 +63,15 @@
   /* Enable vertical scrolling */
 }
 
+/* Desktop Sidebar Offset */
+.sidebarOpen {
+  margin-left: 320px;
+}
+
+.sidebarCollapsed {
+  margin-left: 72px;
+}
+
 /* Mobile Header */
 .mobileHeader {
   display: none;

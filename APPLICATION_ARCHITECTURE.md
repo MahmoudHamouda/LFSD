@@ -23,7 +23,11 @@ Handles HTTP requests, validates input, and delegates to services.
 
 ### 2. Service Layer (`services/`)
 Contains business logic and external integrations.
-- **Mobility**: `MobilityAggregator` unifies Uber, Careem, Bolt, RTA.
+- **Mobility**: `MobilityAggregator` unifies multiple providers:
+  - Uber (✅ Sandbox API)
+  - Careem (🔄 Mock implementation)
+  - Bolt (🔄 Mock implementation)
+  - RTA (🔄 Mock implementation)
 - **AI**: `GeminiService` handles chat and intent recognition.
 - **Health**: Integrates with health providers.
 - **Financial**: Analyzes spending and affordability.
@@ -44,7 +48,15 @@ Defines database schema and handles DB interactions via SQLAlchemy.
 5. **Response**: Service returns data, Route formats JSON response.
 
 ## External Integrations
-- **Uber/Careem/Bolt**: Mobility APIs.
-- **Google Gemini**: AI Model.
+### Production/Sandbox APIs
+- **Uber**: Sandbox API for ride estimates and booking.
+- **Google Gemini**: Production AI Model for chat.
 - **Google Maps**: Geocoding & Routing.
 - **Whoop/Apple Health**: Health Data.
+
+### Mock Implementations (Development)
+- **Careem**: Mock service returning simulated ride data.
+- **Bolt**: Mock service returning simulated ride data.
+- **RTA**: Mock service returning simulated transit data.
+
+> **Note**: Mock services provide realistic responses for development/testing without requiring production API credentials. They use the same interface as real integrations for seamless switching.
