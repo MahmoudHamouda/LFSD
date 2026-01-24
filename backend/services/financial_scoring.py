@@ -6,6 +6,8 @@ import math
 import statistics
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
+from services.finance_service.utils import get_monthly_summary
+from loguru import logger
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -317,7 +319,7 @@ def _persist_score(user_id: str, result: Dict[str, Any], db: Session):
         db.add(score_entry)
         db.commit()
     except Exception as e:
-        print(f"Error persisting score: {e}")
+        logger.error(f"Error persisting score: {e}")
 
 
 # End of valid implementation

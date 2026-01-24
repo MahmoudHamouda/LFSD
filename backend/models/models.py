@@ -56,7 +56,7 @@ class User(Base):
     connections = relationship("Connection", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     limit_overrides = relationship("UserLimitOverride", back_populates="user", cascade="all, delete-orphan")
-    statements = relationship("Statement", back_populates="user", cascade="all, delete-orphan", primaryjoin="User.id==Statement.user_id")
+    statements = relationship("Statement", back_populates="user", cascade="all, delete-orphan")
     financial_scores = relationship("FinancialScore", back_populates="user", cascade="all, delete-orphan")
     time_scores = relationship("TimeScore", back_populates="user", cascade="all, delete-orphan")
     health_data_samples = relationship("HealthDataSample", back_populates="user", cascade="all, delete-orphan")
@@ -215,7 +215,7 @@ class Statement(Base):
     
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
-    user = relationship("User", back_populates="statements")
+    user = relationship("User", back_populates="statements", foreign_keys=[user_id])
     transactions = relationship("FinancialTransaction", back_populates="statement", cascade="all, delete-orphan")
 
 

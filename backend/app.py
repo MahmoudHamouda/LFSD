@@ -89,6 +89,10 @@ def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 
+    @app.get("/health")
+    async def health_check():
+        return {"status": "ok", "version": "1.0.0"}
+
     # --- NATIVE AUTH ENDPOINTS ---
     @app.post("/api/auth/login")
     async def login(data: LoginRequest = Body(...)):

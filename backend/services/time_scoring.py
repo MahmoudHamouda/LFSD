@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional
 from services.time_data_fusion import get_time_metrics
 from models.models import User
+from loguru import logger
 
 def compute_time_score(user_id: str, db: Session, override_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
@@ -151,7 +152,7 @@ def compute_time_score(user_id: str, db: Session, override_input: Optional[Dict[
         }
     except Exception as e:
         import traceback
-        print(f"Time Scoring Error: {e}")
+        logger.error(f"Time Scoring Error: {e}")
         return {
             "productivity_score": 50.0,
             "confidence": 0.0,

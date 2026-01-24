@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 from models.models import User
 from services.health_data_fusion import get_health_metrics
+from loguru import logger
 
 # ============================================================================
 # Helpers
@@ -259,7 +260,7 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
         }
     except Exception as e:
         import traceback
-        print(f"Health Scoring Error: {e}")
+        logger.error(f"Health Scoring Error: {e}")
         # Return fallback
         return {
             "health_score": 50.0,
