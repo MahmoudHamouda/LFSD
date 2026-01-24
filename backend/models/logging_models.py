@@ -106,7 +106,7 @@ class ActivityFeed(Base):
     __tablename__ = "activity_feed"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True) # Linked to User
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True) # Linked to User
     
     event_type = Column(String, index=True, nullable=True) # e.g. "goal_achieved", "bill_paid"
     action_type = Column(String, nullable=True) # "ACCOUNT_UNLOCKED", etc. (Legacy/Alias)
@@ -131,7 +131,7 @@ class Notification(Base):
     __tablename__ = "notifications"
     
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    user_id = Column(String, ForeignKey("users.id"), index=True, nullable=False)
+    user_id = Column(String, ForeignKey("users_v2.id"), index=True, nullable=False)
     
     channel = Column(String, default="in_app") # in_app, email, push
     status = Column(String, default="pending") # pending, sent, failed

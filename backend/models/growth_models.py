@@ -13,7 +13,7 @@ class Subscription(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     plan_id = Column(String, nullable=False, default="tier_free") # tier_free, tier_pro
     status = Column(String, nullable=False, default="active") # active, canceled, past_due, trialing
@@ -62,7 +62,7 @@ class UserLimitOverride(Base):
     __table_args__ = {'extend_existing': True}
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
     
     # Example: {"ai_queries_per_day": 50} - overrides the tier limit
     overrides_json = Column(JSON, nullable=False, default=dict)
