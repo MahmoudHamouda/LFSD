@@ -2,39 +2,51 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 from models.growth_models import Subscription, TierConfig, UserLimitOverride
 from models.growth_schemas import PlanId, EntitlementResponse
-from models.database import SessionLocal 
 from models.models import User, LifeGoal, DBMessage, Recommendation
 from models.logging_models import AuditLog
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, and_
 import uuid
-
-from services.chat_service.models import ChatHistory
+import copy
 from loguru import logger
 
 class GrowthService:
     @staticmethod
     def get_entitlements(user_id: str, db: Session) -> EntitlementResponse:
         logger.debug(f"Growth: Fetching entitlements for {user_id}")
-        # 1. Fetch Subscription
-        subscription = db.query(Subscription).filter(Subscription.user_id == user_id, Subscription.status == "active").first()
+        
+        # 1. Fetch Subscription (Prioritize Active)
+        # Using filter over 'active' ensures we don't fall back to an expired PRO plan when it should be FREE
+        subscription = db.query(Subscription).filter(
+            Subscription.user_id == user_id, 
+            Subscription.status == "active",
+            Subscription.current_period_end >= datetime.utcnow() # Ensure valid period
+        ).first()
         
         plan_id = PlanId.FREE
-        status = "active"
+        status = "active" # Free is always active
+        
         if subscription:
-            plan_id = subscription.plan_id
+            # Type safety for PlanId
+            try:
+                plan_id = PlanId(subscription.plan_id)
+            except ValueError:
+                logger.warning(f"Invalid plan_id {subscription.plan_id} for user {user_id}, falling back to FREE")
+                plan_id = PlanId.FREE
+                
             status = subscription.status
+            
         logger.debug(f"Growth: Plan={plan_id}, Status={status}")
 
-        # 2. Fetch Global Tier Config
+        # 2. Fetch Global Tier Config (or fallback)
         tier = db.query(TierConfig).filter(TierConfig.plan_id == plan_id).first()
-        # logger.debug(f"Growth: Tier Config Found={bool(tier)}")
         
-        # Fallback to defaults if DB config not seeded yet
+        base_config = {}
         if tier:
-            base_config = tier.config_json
+            # Must DEEP COPY to prevent mutation of cached/DB objects in memory
+            base_config = copy.deepcopy(tier.config_json)
         else:
-            # Plan Config Table
+             # Plan Config Table
             PLAN_CONFIGS = {
                 PlanId.FREE: {
                     "features": ["basic_charts", "limit_5_goals", "basic_insight"],
@@ -77,33 +89,43 @@ class GrowthService:
                     }
                 }
             }
-            base_config = PLAN_CONFIGS.get(plan_id, PLAN_CONFIGS[PlanId.FREE])
+            # Deep copy here too
+            base_config = copy.deepcopy(PLAN_CONFIGS.get(plan_id, PLAN_CONFIGS[PlanId.FREE]))
 
-        # 3. Apply User-Specific Overrides
-        override = db.query(UserLimitOverride).filter(UserLimitOverride.user_id == user_id).first()
+        # 3. Apply User-Specific Overrides (Validated)
+        override = db.query(UserLimitOverride).filter(
+            UserLimitOverride.user_id == user_id,
+            UserLimitOverride.expiration_date >= datetime.utcnow() # Check expiry
+        ).first()
+        
         if override and "limits" in base_config:
-            # Overwrite specific keys in limits
             for key, val in override.overrides_json.items():
                 if key in base_config["limits"]:
-                    base_config["limits"][key] = val
+                    # Ensure positive integers only for limits (or -1)
+                    if isinstance(val, int) and (val >= -1):
+                        base_config["limits"][key] = val
+                    else:
+                        logger.warning(f"Invalid override value {val} for key {key} user {user_id}")
 
-        # 4. Calculate Actual Usage
+        # 4. Calculate Actual Usage (Optimized with Indices)
         usage = {}
+        first_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         
         # Goals: Total goals
         usage["goals"] = db.query(LifeGoal).filter(
             LifeGoal.user_id == user_id
         ).count()
         
-        # AI Chat: Messages sent by user this month (Using DBMessage/messages table)
-        first_of_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        # AI Chat: Messages sent by user this month 
+        # Note: Counting messages != 'calls' in all models, but it's our chosen proxy for now.
+        # Ensure index exists on (user_id, date) or (user_id, role, date) for performance
         usage["ai_chat_calls"] = db.query(DBMessage).filter(
             DBMessage.user_id == user_id,
             DBMessage.role == "user",
             DBMessage.date >= first_of_month
         ).count()
         
-        # Token usage (Growth Agent)
+        # Token usage 
         token_stats = db.query(
             func.sum(DBMessage.input_tokens).label("input"),
             func.sum(DBMessage.output_tokens).label("output")
@@ -123,12 +145,15 @@ class GrowthService:
         ).count()
         
         # Executions: creation of specific entities or audit logs
-        # For now, count AuditLog "EXECUTE" actions this month
-        usage["executions"] = db.query(AuditLog).filter(
-            AuditLog.actor_id == user_id,
-            AuditLog.action == "EXECUTE",
-            AuditLog.timestamp >= first_of_month
-        ).count()
+        # Count only if configured, otherwise skip distinct count for performance
+        if base_config["limits"].get("executions", 0) != 0:
+            usage["executions"] = db.query(AuditLog).filter(
+                AuditLog.actor_id == user_id,
+                AuditLog.action == "EXECUTE",
+                AuditLog.timestamp >= first_of_month
+            ).count()
+        else:
+             usage["executions"] = 0
 
         res = EntitlementResponse(
             plan=plan_id,
@@ -141,24 +166,36 @@ class GrowthService:
 
     @staticmethod
     def create_or_upgrade_subscription(user_id: str, plan_id: str, db: Session) -> Subscription:
-        # Check existing
+        # Validate Plan ID
+        try:
+             validated_plan = PlanId(plan_id)
+        except ValueError:
+             raise ValueError(f"Invalid Plan ID: {plan_id}")
+
+        # Check existing (potentially including expired/cancelled to reactivate)
         existing_sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
         
+        now = datetime.utcnow()
+        period_end = now + timedelta(days=30)
+        
         if existing_sub:
-            existing_sub.plan_id = plan_id
+            existing_sub.plan_id = validated_plan
             existing_sub.status = "active"
-            existing_sub.current_period_start = datetime.utcnow()
-            existing_sub.current_period_end = datetime.utcnow() + timedelta(days=30) # Mock 30 day cycle
+            existing_sub.current_period_start = now
+            existing_sub.current_period_end = period_end
+            existing_sub.cancel_at_period_end = False # Reset cancel
+            
             db.commit()
             db.refresh(existing_sub)
             return existing_sub
         else:
             new_sub = Subscription(
+                id=str(uuid.uuid4()),
                 user_id=user_id,
-                plan_id=plan_id,
+                plan_id=validated_plan,
                 status="active",
-                current_period_start=datetime.utcnow(),
-                current_period_end=datetime.utcnow() + timedelta(days=30)
+                current_period_start=now,
+                current_period_end=period_end
             )
             db.add(new_sub)
             db.commit()
