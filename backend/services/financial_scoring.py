@@ -6,7 +6,6 @@ import math
 import statistics
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-from services.finance_service.utils import get_monthly_summary
 from loguru import logger
 from sqlalchemy.orm import Session
 from sqlalchemy import func
