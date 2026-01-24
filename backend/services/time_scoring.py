@@ -1,7 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import Dict, Any, Optional
 from services.time_data_fusion import get_time_metrics
-from models.models import User
 from loguru import logger
 
 def compute_time_score(user_id: str, db: Session, override_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -19,30 +18,25 @@ def compute_time_score(user_id: str, db: Session, override_input: Optional[Dict[
             profile = {}
         
         if override_input:
-            # Quick patch to apply overrides to profile data locally
-            try:
-                for k, v in override_input.items():
-                    if k in profile:
-                        profile[k] = v
+            # Updates existing keys and adds new ones
+            profile.update(override_input)
                         
-                # Re-calc derived metrics if needed 
-                commute_map = {"No commute": 0, "<15 min": 15, "15-30 min": 22, "30-60 min": 45, "60+": 75}
-                if "commute_duration" in override_input:
-                    val = commute_map.get(override_input["commute_duration"], 30)
-                    if "commute_minutes_per_day" in metrics:
-                        metrics["commute_minutes_per_day"]["value"] = val
-                    else:
-                        metrics["commute_minutes_per_day"] = {"value": val, "confidence": 0.5}
-                    
-                admin_map = {"<1 hour": 0.5, "1-3 hours": 2, "3-5 hours": 4, "5+ hours": 6}
-                if "time_admin_weekly" in override_input:
-                    val = admin_map.get(override_input["time_admin_weekly"], 2)
-                    if "admin_hours_per_week" in metrics:
-                         metrics["admin_hours_per_week"]["value"] = val
-                    else:
-                         metrics["admin_hours_per_week"] = {"value": val, "confidence": 0.5}
-            except:
-                pass
+            # Re-calc derived metrics if needed 
+            commute_map = {"No commute": 0, "<15 min": 15, "15-30 min": 22, "30-60 min": 45, "60+": 75}
+            if "commute_duration" in override_input:
+                val = commute_map.get(override_input["commute_duration"], 30)
+                if "commute_minutes_per_day" in metrics:
+                    metrics["commute_minutes_per_day"]["value"] = val
+                else:
+                    metrics["commute_minutes_per_day"] = {"value": val, "confidence": 0.5}
+                
+            admin_map = {"<1 hour": 0.5, "1-3 hours": 2, "3-5 hours": 4, "5+ hours": 6}
+            if "time_admin_weekly" in override_input:
+                val = admin_map.get(override_input["time_admin_weekly"], 2)
+                if "admin_hours_per_week" in metrics:
+                     metrics["admin_hours_per_week"]["value"] = val
+                else:
+                     metrics["admin_hours_per_week"] = {"value": val, "confidence": 0.5}
 
         # Helper for safer metric access
         def get_metric_val(key, default=0):
@@ -75,31 +69,35 @@ def compute_time_score(user_id: str, db: Session, override_input: Optional[Dict[
         structure_conf = get_metric_conf("calendar_usage_score")
 
         # --- Pillar 2: Load & Capacity (25%) ---
+        # Fixed: Double counting meeting_hours was removed from Pillar 3 focus, but kept here for Load.
         p2_score = 25 
         
         work_hrs = get_metric_val("avg_work_hours_per_day", 8)
-        if work_hrs > 10: p2_score -= 8
-        elif work_hrs > 8: p2_score -= 4
+        if work_hrs > 12: p2_score -= 10
+        elif work_hrs > 10: p2_score -= 6
+        elif work_hrs > 8.5: p2_score -= 2
         
         meet_hrs = get_metric_val("avg_meeting_hours_per_day", 2)
-        if meet_hrs > 5: p2_score -= 8
-        elif meet_hrs > 3: p2_score -= 4
+        if meet_hrs > 6: p2_score -= 8
+        elif meet_hrs > 4: p2_score -= 4
         
         commute = get_metric_val("commute_minutes_per_day", 30)
-        if commute > 60: p2_score -= 5
-        elif commute > 30: p2_score -= 2
+        if commute > 90: p2_score -= 5
+        elif commute > 45: p2_score -= 2
         
         load_score = max(5, p2_score)
-        load_conf = get_metric_conf("avg_work_hours_per_day")
+        load_conf = get_metric_conf("avg_work_hours_per_day", 0.6)
 
         # --- Pillar 3: Focus & Fragmentation (20%) ---
         p3_score = 20
         
-        if meet_hrs > 4: p3_score -= 6
+        # Reduced penalty for meetings here to avoid double jeopardy, 
+        # focusing only on excessive fragmentation > 4h
+        if meet_hrs > 5: p3_score -= 4 
         
         drains = profile.get("main_time_drains", [])
         if isinstance(drains, list):
-            if "Meetings" in drains: p3_score -= 3
+            if "Meetings" in drains: p3_score -= 2
             if "Emails" in drains: p3_score -= 2
             if "Last-minute tasks" in drains: p3_score -= 3
             
@@ -110,24 +108,23 @@ def compute_time_score(user_id: str, db: Session, override_input: Optional[Dict[
         p4_score = 15
         admin_hrs = get_metric_val("admin_hours_per_week", 2)
         
-        if admin_hrs > 5: p4_score -= 8
-        elif admin_hrs > 3: p4_score -= 4
-        elif admin_hrs > 1: p4_score -= 1
+        if admin_hrs > 10: p4_score -= 8 # Only punish extreme admin
+        elif admin_hrs > 5: p4_score -= 4
         
         friction_score = max(5, p4_score)
-        friction_conf = get_metric_conf("admin_hours_per_week")
+        friction_conf = get_metric_conf("admin_hours_per_week", 0.6)
 
         # --- Pillar 5: Stress & Overwhelm (15%) ---
         p5_score = 15
         overwhelm = metrics.get("time_overwhelm_level", {}).get("value", "Sometimes")
         
-        if overwhelm == "Almost always": p5_score -= 10
-        elif overwhelm == "Often": p5_score -= 7
-        elif overwhelm == "Sometimes": p5_score -= 3
+        if overwhelm == "Almost always": p5_score -= 8
+        elif overwhelm == "Often": p5_score -= 5
+        elif overwhelm == "Sometimes": p5_score -= 2
         # Rarely = 0 deduction
         
         stress_score = max(5, p5_score)
-        stress_conf = get_metric_conf("time_overwhelm_level")
+        stress_conf = get_metric_conf("time_overwhelm_level", 0.6)
 
         # --- Overall ---
         overall_score = structure_score + load_score + focus_score + friction_score + stress_score

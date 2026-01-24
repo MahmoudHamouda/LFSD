@@ -5,19 +5,11 @@ from models.models import User
 from services.health_data_fusion import get_health_metrics
 from loguru import logger
 
+
 # ============================================================================
 # Helpers
 # ============================================================================
-
-def _normalize_score(value: float, min_val: float, max_val: float, min_score: float = 0, max_score: float = 25) -> float:
-    try:
-        if value is None: return 0
-        if value <= min_val: return min_score
-        if value >= max_val: return max_score
-        ratio = (value - min_val) / (max_val - min_val)
-        return min_score + ratio * (max_score - min_score)
-    except:
-        return 0
+# (normalize helper removed as unused)
 
 # ============================================================================
 # Core Scoring Engine
@@ -28,6 +20,15 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
     Computes a comprehensive Health Score (0-100) based on 5 pillars.
     Uses fused data from WHOOP, Apple, Google, and Manual inputs.
     """
+    # Weights for the new 5 pillars (Total = 100)
+    WEIGHTS = {
+        "sleep": 25,
+        "movement": 25,
+        "recovery": 20,
+        "nutrition": 20,
+        "lifestyle": 10
+    }
+
     try:
         # 1. Fetch Fused Data
         try:
@@ -35,8 +36,8 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
             metrics = fused_data.get("metrics", {})
             profile = fused_data.get("profile", {})
         except:
-             metrics = {}
-             profile = {}
+            metrics = {}
+            profile = {}
         
         # Fallback to User Profile/Onboarding if HealthProfile is empty
         try:
@@ -54,6 +55,7 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
         
         def get_profile_val(key, fallback_key, default):
             # Profiler (DB) > Onboarding Payload > Default
+            # Fix: Ensure keys match what onboarding actually sends
             return profile.get(key) or onboarding.get(fallback_key, default)
 
         inputs = {
@@ -73,8 +75,9 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
             # D) Nutrition
             "diet_style": get_profile_val("diet_style", "diet_style", "Balanced"),
             "water_intake": get_profile_val("water_intake", "water_intake", "1-2L"),
-            "smoking": get_profile_val("smoking", "smoking_pattern", "Never"),
-            "alcohol": get_profile_val("alcohol", "alcohol_pattern", "Occasionally"),
+            # Fix: Fallback keys match likely frontend payload
+            "smoking": get_profile_val("smoking_pattern", "smoking", "Never"), 
+            "alcohol": get_profile_val("alcohol_pattern", "alcohol", "Occasionally"),
             
             # E) Lifestyle
             "eating_out_freq": onboarding.get("eating_out_frequency", "Rarely"),
@@ -125,7 +128,8 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
         else: score_wake = 1
         
         sleep_score = score_duration + score_cons + score_wake
-        sleep_conf = sleep_meta.get("confidence", 0.5) if avg_sleep_min > 0 else 0.5
+        # Improved Confidence: If data exists, trust it high, else low for manual
+        sleep_conf = sleep_meta.get("confidence", 0.9 if avg_sleep_min > 0 else 0.4)
             
         # --- Pillar 2: Movement (25%) ---
         step_meta = metrics.get("avg_daily_steps", {"value": 0, "confidence": 0})
@@ -161,7 +165,7 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
             else: score_int = 5
 
         movement_score = score_vol + score_int
-        movement_conf = step_meta.get("confidence", 0.5) if avg_steps > 0 else 0.5
+        movement_conf = step_meta.get("confidence", 0.9 if avg_steps > 0 else 0.4)
             
         # --- Pillar 3: Recovery & Stress (20%) ---
         score_stress = 0
@@ -181,10 +185,11 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
         rhr_meta = metrics.get("resting_hr_bpm", {"value": 0, "confidence": 0})
         recovery_score = score_stress + score_energy
         if rhr_meta.get("value", 0) > 0:
+            # Boost/Penalty based on biometrics
             if rhr_meta["value"] < 60: recovery_score = min(20, recovery_score + 2)
             elif rhr_meta["value"] > 80: recovery_score = max(0, recovery_score - 2)
             
-        recovery_conf = (sleep_conf + rhr_meta.get("confidence", 0.5)) / 2 if rhr_meta.get("value", 0) > 0 else 0.5
+        recovery_conf = rhr_meta.get("confidence", 0.9 if rhr_meta.get("value", 0) > 0 else 0.4)
         
         # --- Pillar 4: Nutrition & Habits (20%) ---
         score_diet = 0
@@ -214,7 +219,7 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
         else: score_alc = 1
         
         nutrition_score = score_diet + score_water + score_smoke + score_alc
-        nutrition_conf = 0.6
+        nutrition_conf = 0.4 # Mostly manual for now
         
         # --- Pillar 5: Lifestyle Load (10%) ---
         def freq_score(val, is_good_habit=False):
@@ -235,7 +240,7 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
         s_nightlife = freq_score(inputs.get("nightlife_freq", "Rarely"), False)
         
         lifestyle_score = s_eat_out + s_takeaway + s_cooking + s_nightlife
-        lifestyle_conf = 0.6
+        lifestyle_conf = 0.4
         
         # 3. Overall Score
         overall_score = sleep_score + movement_score + recovery_score + nutrition_score + lifestyle_score
@@ -246,7 +251,7 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
         elif overall_score >= 60: band = "Good"
         elif overall_score >= 40: band = "Fair"
         
-        return {
+        result = {
             "health_score": round(overall_score, 1),
             "confidence": round(overall_conf, 2),
             "band": band,
@@ -258,6 +263,12 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
                 "lifestyle": {"score": round(lifestyle_score, 1), "confidence": round(lifestyle_conf, 2), "max": 10}
             }
         }
+
+        # 4. Persist
+        _persist_score(user_id, result, db)
+
+        return result
+
     except Exception as e:
         import traceback
         logger.error(f"Health Scoring Error: {e}")
@@ -274,6 +285,29 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
                 "lifestyle": {"score": 5, "confidence": 0, "max": 10}
             }
         }
+
+def _persist_score(user_id: str, result: Dict[str, Any], db: Session):
+    try:
+        from models.models import HealthScore
+        import uuid
+        
+        score = HealthScore(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            overall_score=result["health_score"],
+            confidence=result["confidence"],
+            sleep_score=result["dimensions"]["sleep"]["score"],
+            movement_score=result["dimensions"]["movement"]["score"],
+            recovery_score=result["dimensions"]["recovery"]["score"],
+            nutrition_score=result["dimensions"]["nutrition"]["score"],
+            lifestyle_score=result["dimensions"]["lifestyle"]["score"],
+            # JSON serialization for simplicity if needed, but schema uses columns
+            time_window="last_30_days"
+        )
+        db.add(score)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Failed to persist Health Score: {e}")
 
 # Adapter for wrapper compatibility with old signature if needed
 def calculate_health_score(user_id: str, onboarding_data: Dict[str, Any], db: Session) -> Dict[str, Any]:
