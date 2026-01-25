@@ -8,8 +8,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - GEMINI_API_KEY=AIzaSyDwhejk-FKUDtA47i5qH4HHGFJEDaX2KBw
-      - GEMINI_MODEL=gemini-2.0-flash-exp
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash-exp}
       - DEBUG=1
       - PYTHONUNBUFFERED=1
     volumes:

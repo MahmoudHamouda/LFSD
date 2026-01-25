@@ -11,7 +11,7 @@ This document outlines the plan for organizing the project files, cleaning up th
 
 ### 1. Codebase Cleanup & Reorganization
 - [x] **Remove Clutter**: Deleted temporary logs, scripts, and output files.
-- [x] **Structure Documentation**: Moved all markdown docs to `docs/`.
+- [ ] **Structure Documentation**: Moved all markdown docs to `docs/`.
 - [x] **Centralize Scripts**: Created `scripts/` for utility scripts.
 - [x] **Organize Tests**: Moved tests to `tests/` with subdirectories (`integration`, `e2e`, `unit`).
 - [x] **Consolidate Config**: Managed `.env` files and templates.
@@ -19,10 +19,10 @@ This document outlines the plan for organizing the project files, cleaning up th
 - [x] **Update Imports**: Updated all imports to reflect new structure.
 
 ### 2. Documentation
-- [ ] **Database Schema**: Create `DATABASE_SCHEMA.md` in root.
-- [ ] **Architecture**: Create `APPLICATION_ARCHITECTURE.md` in root.
-- [ ] **Test Plan**: Create `TEST_PLAN.md` in root.
-- [ ] **Operationalization**: Create `OPERATIONALIZATION_PLAN.md` in root.
+- [x] **Database Schema**: Create `DATABASE_SCHEMA.md` in root.
+- [x] **Architecture**: Create `APPLICATION_ARCHITECTURE.md` in root.
+- [x] **Test Plan**: Create `TEST_PLAN.md` in root.
+- [x] **Operationalization**: Create `OPERATIONALIZATION_PLAN.md` in root.
 
 ### 3. Functional Verification (Audit)
 - [x] **App Startup**: Verify `python app.py` runs without errors.

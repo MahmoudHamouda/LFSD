@@ -26,7 +26,7 @@
     ```powershell
     ./start_all.ps1
     ```
-    This will open two new windows for the Backend (Port 8003) and Frontend (Port 3000).
+    This will open two new windows for the Backend (Port 8080) and Frontend (Port 3000).
 
 4.  **Access**:
     - App: [http://localhost:3000](http://localhost:3000)
@@ -42,5 +42,5 @@
 
 ## Operationalization
 This codebase is structured for local deployment but can be containerized.
-- **Code Cleanup**: Debug scripts have been moved to `backend/scripts/` or removed.
+- **Code Cleanup**: Debug artifacts still exist in the repo root (e.g., `debug_*.py`, `*.txt`); move them into `backend/scripts/` or remove before release.
 - **Persistence**: SQLite database `lfsd.db` stores all state.

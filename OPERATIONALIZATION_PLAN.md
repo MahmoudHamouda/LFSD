@@ -7,7 +7,8 @@ This plan details the steps to operationalize the LFSD application, ensuring all
 *Focus: "The Cost of Time" & "Context of Location"*
 
 ### A. Mobility (Moving through Space)
-**Schema**: `mobility_trips`
+**Schema**: `mobility_trips` (Check if exists, else `mobility_trips_v2` or similar)
+
 - **Operationalization**:
     - **Ingestion**:
         - **Uber/Careem/Bolt**: Use `MobilityAggregator` to fetch real-time estimates.
@@ -42,7 +43,7 @@ This plan details the steps to operationalize the LFSD application, ensuring all
 
 ### D. Lifestyle & Leisure (Quality Time)
 *Focus: "Offsetting Stress & Enjoying Life"*
-**Schema**: `lifestyle_events` (New Proposed Schema)
+**Schema**: `lifestyle_events` (Proposed — not implemented)
 - **Operationalization**:
     - **Ingestion**:
         - **Food**: Uber Eats / Deliveroo / OpenTable (Reservations).
@@ -82,7 +83,7 @@ This plan details the steps to operationalize the LFSD application, ensuring all
         - **Strain Score**: Visual indicator of daily physical load.
 
 ### C. Nutrition & Diet (Fuel)
-**Schema**: `nutrition_logs` (New Proposed Schema)
+**Schema**: `nutrition_logs` (Proposed — not implemented)
 - **Operationalization**:
     - **Ingestion**:
         - **MyFitnessPal / Cronometer**: Sync calorie and macro data.
@@ -106,7 +107,7 @@ This plan details the steps to operationalize the LFSD application, ensuring all
 *Focus: "Affordability vs. Value"*
 
 ### A. Accounts & Balances
-**Schema**: `financial_accounts`
+**Schema**: `financial_accounts_v2`
 - **Operationalization**:
     - **Ingestion**:
         - **Stripe / Plaid (Sandbox)**: Connect dummy bank accounts.
@@ -118,7 +119,7 @@ This plan details the steps to operationalize the LFSD application, ensuring all
         - **Account List**: breakdown by `institution_name` and `account_type`.
 
 ### B. Investments & Wealth (Growth)
-**Schema**: `investment_portfolios` (New Proposed Schema)
+**Schema**: `investment_portfolios` (Proposed — not implemented)
 - **Operationalization**:
     - **Ingestion**:
         - **IBKR / Betterment / Robinhood**: API or statement import.
@@ -130,7 +131,7 @@ This plan details the steps to operationalize the LFSD application, ensuring all
         - **Performance**: "Your portfolio is up 3% this month."
 
 ### C. Transactions (Spending Behavior)
-**Schema**: `transactions`
+**Schema**: `transactions_v2`
 - **Operationalization**:
     - **Ingestion**:
         - Daily transaction sync.

@@ -8,7 +8,7 @@ The application uses a relational database (SQLite for dev, PostgreSQL for prod)
 ### 1. Core User & Logic Layer
 Stores the "State" of the user and their long-term targets.
 
-- **`users`**
+- **`users_v2`**
   - `id` (PK): UUID
   - `email`: String
   - `hashed_password`: String
@@ -31,14 +31,14 @@ Stores the "State" of the user and their long-term targets.
   - `title`: String
   - `target_amount`: Float
   - `saved_amount`: Float
-  - `deadline`: DateTime
+  - `target_date`: DateTime
   - `impact_vector_json`: JSON ({"finance": -100, "health": +20})
   - `priority`: Enum ("high", "medium", "low")
 
 ### 2. Deep Finance (The "Wealth" Tenant)
 Captures WHO the merchant is, WHAT category it is, and IF it is recurring.
 
-- **`financial_accounts`**
+- **`financial_accounts_v2`**
   - `id` (PK): UUID
   - `user_id` (FK): UUID
   - `institution_name`: String
@@ -46,7 +46,7 @@ Captures WHO the merchant is, WHAT category it is, and IF it is recurring.
   - `current_balance`: Float
   - `limit`: Float
 
-- **`transactions`** (The Deep Dive)
+- **`transactions_v2`** (The Deep Dive)
   - `id` (PK): UUID
   - `account_id` (FK): UUID
   - `user_id` (FK): UUID

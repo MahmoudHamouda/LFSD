@@ -4,13 +4,13 @@
 LFSD is a modular Python application built with FastAPI (backend) and React (frontend). It follows a service-oriented architecture where core logic is separated into distinct services.
 
 ## Directory Structure
-- **`app.py`**: Main entry point, configures FastAPI app and middleware.
-- **`core/`**: Core infrastructure (Authentication, Configuration, Rate Limiting).
-- **`routes/`**: API Route Handlers (Controllers).
-- **`models/`**: Database Models (SQLAlchemy).
-- **`services/`**: Business Logic Services.
-- **`scripts/`**: Utility scripts.
-- **`tests/`**: Test suite.
+- **`backend/app.py`**: Main entry point, configures FastAPI app and middleware.
+- **`backend/core/`**: Core infrastructure (Authentication, Configuration, Rate Limiting).
+- **`backend/routes/`**: API Route Handlers (Controllers).
+- **`backend/models/`**: Database Models (SQLAlchemy).
+- **`backend/services/`**: Business Logic Services.
+- **`backend/scripts/`**: Utility scripts.
+- **`backend/tests/`**: Test suite.
 
 ## Key Components
 
@@ -36,7 +36,7 @@ Contains business logic and external integrations.
 Defines database schema and handles DB interactions via SQLAlchemy.
 
 ### 4. Core (`core/`)
-- `config.py`: Centralized configuration using Pydantic.
+- `config.py`: Centralized configuration via dotenv/env vars (Settings class).
 - `authentication.py`: JWT handling.
 - `rate_limiting.py`: API rate limiting.
 
