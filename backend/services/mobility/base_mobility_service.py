@@ -47,7 +47,7 @@ class BaseMobilityService(ABC):
     @abstractmethod
     def provider_name(self) -> str:
         """Return the provider identifier (e.g., 'uber', 'rta')."""
-        """Return the provider identifier (e.g., 'uber', 'rta')."""
+
         raise NotImplementedError
     
     @abstractmethod
@@ -66,7 +66,7 @@ class BaseMobilityService(ABC):
         Returns:
             Dict matching the PriceEstimate schema.
         """
-        """
+
         raise NotImplementedError
     
     @abstractmethod
@@ -84,7 +84,7 @@ class BaseMobilityService(ABC):
         Returns:
             Dict matching the MobilityBookingResponse schema.
         """
-        """
+
         raise NotImplementedError
     
     @abstractmethod
@@ -96,5 +96,5 @@ class BaseMobilityService(ABC):
         """
         Get status of an active ride.
         """
-        """
+
         raise NotImplementedError

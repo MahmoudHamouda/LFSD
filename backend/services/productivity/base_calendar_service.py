@@ -106,7 +106,6 @@ class BaseCalendarService(ABC):
         List events within a time range.
         Should return events that OVERLAP the [time_min, time_max] interval.
         """
-        """
         raise NotImplementedError
         
     @abstractmethod
@@ -123,7 +122,6 @@ class BaseCalendarService(ABC):
         idempotency_key: Optional[str] = None
     ) -> NormalizedEvent:
         """Create a new calendar event with built-in idempotency support."""
-        """Create a new calendar event with built-in idempotency support."""
         raise NotImplementedError
 
     @abstractmethod
@@ -134,7 +132,6 @@ class BaseCalendarService(ABC):
         account_id: Optional[str] = None,
         calendar_id: str = "primary"
     ) -> bool:
-        """Delete an event by ID."""
         """Delete an event by ID."""
         raise NotImplementedError
         
@@ -150,7 +147,6 @@ class BaseCalendarService(ABC):
         """
         Check availability for a specific slot.
         Returns the highest level of 'busyness' detected.
-        """
         """
         raise NotImplementedError
 

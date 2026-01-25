@@ -135,18 +135,6 @@ def compute_time_score(user_id: str, db: Session, override_input: Optional[Dict[
         elif overall_score >= 60: band = "Balanced"
         elif overall_score >= 40: band = "Manageable"
         
-        return {
-            "productivity_score": round(overall_score, 1),
-            "confidence": round(overall_conf, 2),
-            "band": band,
-            "dimensions": {
-                "structure": {"score": round(structure_score, 1), "max": 25},
-                "load": {"score": round(load_score, 1), "max": 25},
-                "focus": {"score": round(focus_score, 1), "max": 20},
-                "friction": {"score": round(friction_score, 1), "max": 15},
-                "stress": {"score": round(stress_score, 1), "max": 15}
-        }
-        
 
 
         return {

@@ -19,18 +19,7 @@ from models.database import get_db
 router = APIRouter(prefix="/audit", tags=["Audit"])
 
 
-    from models.logging_models import AuditLog
-    from models.database import get_db
-    from sqlalchemy.orm import Session
-    
-    # Dependencies needed since they weren't in function signature originally
-    # But for cleaner design, we should add db to function signature. 
-    # Since I can't easily change signature in single replacement without risk,
-    # I'll just rely on what's available or use the context (but depends won't work inside body)
-    # Actually, let's just do a localized import and session creation if DB isn't passed,
-    # OR better, let's assume I can modify the signature in a subsequent step or just use SessionLocal?
-    # Wait, the best way in FastAPI is to add the dependency. I will rewrite the whole function signature lines 22-27.
-    pass
+
 
 @router.get("/", summary="List audits", response_model=dict[str, Any])
 @limiter.limit("20/minute")

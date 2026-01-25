@@ -206,7 +206,7 @@ def seed_rich_health_data(user_id):
         current_date = start_date + timedelta(days=day)
         
         is_weekend = current_date.weekday() >= 5
-       steps = random.randint(8000, 15000) if not is_weekend else random.randint(12000, 20000)
+        steps = random.randint(8000, 15000) if not is_weekend else random.randint(12000, 20000)
         
         db.add(HealthDailySummary(
             user_id=user_id, date=current_date.date(),
