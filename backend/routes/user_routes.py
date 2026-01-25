@@ -204,6 +204,7 @@ async def read_users_me(request: Request, current_user=Depends(get_current_user)
 @router.patch("/me", summary="Update current user profile")
 @limiter.limit("20/minute")
 async def update_user_me(
+    request: Request,
     updates: UserUpdateRequest,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -381,6 +382,7 @@ async def update_user_me(
 @router.get("/snapshot", summary="Get user snapshot")
 @limiter.limit("60/minute")
 async def get_user_snapshot(
+    request: Request,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> dict[str, Any]:
