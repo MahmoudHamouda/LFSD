@@ -1,7 +1,8 @@
 import sys
 import logging
+from pathlib import Path
 from loguru import logger
-from core.config import get_settings
+import core.config
 from models.database import SessionLocal
 from models.logging_models import SystemLog
 import sys
@@ -61,7 +62,7 @@ class InterceptHandler(logging.Handler):
 
 def setup_logging():
     """Configure logging for the application."""
-    settings = get_settings()
+    settings = core.config.get_settings()
     
     # Remove all existing handlers
     logging.root.handlers = []

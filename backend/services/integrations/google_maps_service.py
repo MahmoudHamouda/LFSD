@@ -7,8 +7,9 @@ Standardized with structured logging, robust error handling, and connection vali
 
 import logging
 import googlemaps
-from typing import Dict, Optional, Tuple
-from core.config import get_settings
+from datetime import datetime
+import core.config
+from typing import Dict, Any, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +18,8 @@ class GoogleMapsService:
     Service for geocoding and routing analytics.
     Ensures graceful degradation if API keys are missing.
     """
-    
     def __init__(self):
-        self.settings = get_settings()
+        self.settings = core.config.get_settings()
         self.api_key = self.settings.GOOGLE_MAPS_API_KEY
         self.client = None
         

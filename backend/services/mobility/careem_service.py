@@ -7,8 +7,10 @@ Provides integration with Careem's API for ride price estimates and booking.
 import httpx
 from typing import Optional, Dict, Any, List
 from datetime import datetime
-from core.config import get_settings
+import core.config
+from sqlalchemy.orm import Session
 from .base_mobility_service import BaseMobilityService
+from services.connection_service import ConnectionService
 
 
 class CareemService(BaseMobilityService):
@@ -17,8 +19,10 @@ class CareemService(BaseMobilityService):
     # Hypothetical Base URL - would be replaced with actual production URL
     BASE_URL = "https://api.careem.com/v2"
     
-    def __init__(self):
-        self.settings = get_settings()
+    def __init__(self, db: Session):
+        self.db = db
+        self.settings = core.config.get_settings()
+        self.connection_service = ConnectionService(db)
         self.api_key = self.settings.CAREEM_API_KEY
         self.api_secret = self.settings.CAREEM_API_SECRET
     

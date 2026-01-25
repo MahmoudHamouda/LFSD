@@ -37,8 +37,8 @@ from models.growth_models import *
 target_metadata = Base.metadata
 
 # Override alembic.ini url with our config
-from core.config import get_settings
-config.set_main_option("sqlalchemy.url", get_settings().DATABASE_URL)
+import core.config
+config.set_main_option("sqlalchemy.url", core.config.get_settings().DATABASE_URL)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

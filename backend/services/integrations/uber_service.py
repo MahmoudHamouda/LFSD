@@ -7,7 +7,7 @@ Operational implementation using real API and User Context.
 
 import httpx
 from typing import Optional, Dict, Any, List
-from core.config import get_settings
+import core.config
 from models.models import Connection
 from sqlalchemy.orm import Session
 from loguru import logger
@@ -20,7 +20,7 @@ class UberService:
     BASE_URL = "https://api.uber.com/v1.2"
     
     def __init__(self, db: Session):
-        self.settings = get_settings()
+        self.settings = core.config.get_settings()
         self.db = db
         # Fallback for general estimates if no user context, though deprecated
         self.server_token = self.settings.UBER_SERVER_TOKEN 

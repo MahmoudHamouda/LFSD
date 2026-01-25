@@ -13,7 +13,7 @@ import logging
 import uuid
 import re
 
-from core.config import get_settings
+import core.config
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ class SkyscannerService:
         Initialize the service. 
         Note: Avoid persistent global instances to prevent stale config.
         """
-        self.settings = get_settings()
+        self.settings = core.config.get_settings()
         # Key Priority: Parameter > RAPIDAPI_KEY > SKYSCANNER_API_KEY (deprecated name)
         self.api_key = api_key or self.settings.RAPIDAPI_KEY or self.settings.SKYSCANNER_API_KEY
         

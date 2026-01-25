@@ -11,7 +11,7 @@ import logging
 import uuid
 import httpx
 
-from core.config import get_settings
+import core.config
 from .base_calendar_service import (
     BaseCalendarService, NormalizedEvent, EventStatus, BusyStatus, 
     CalendarAuthError, CalendarServiceError
@@ -27,9 +27,9 @@ class OutlookCalendarService(BaseCalendarService):
     
     BASE_URL = "https://graph.microsoft.com/v1.0"
     
-    def __init__(self, access_token: Optional[str] = None):
-        self.settings = get_settings()
-        self.access_token = access_token
+    def __init__(self, db: Session = None):
+        self.db = db
+        self.settings = core.config.get_settings()
         self.timeout = httpx.Timeout(30.0, connect=10.0)
         
     @property

@@ -5,14 +5,14 @@ import uuid
 from loguru import logger
 from models.models import HealthDailySummary, SleepSession, Workout
 from models.nutrition_logs import NutritionLog
-from core.config import get_settings
+import core.config
 
-settings = get_settings()
+settings = core.config.get_settings()
 
 class HealthService:
     def __init__(self, db: Session):
         self.db = db
-
+        self.settings = core.config.get_settings()
     def get_daily_summary(self, user_id: str, summary_date: date) -> Optional[HealthDailySummary]:
         """Get health summary for a specific date."""
         return self.db.query(HealthDailySummary).filter(

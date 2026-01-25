@@ -2,7 +2,8 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.header import Header
-from core.config import get_settings
+import core.config
+from jinja2 import Environment, FileSystemLoader, select_autoescaper
 import logging
 import ssl
 
@@ -10,7 +11,9 @@ logger = logging.getLogger(__name__)
 
 class EmailService:
     def __init__(self):
-        self.settings = get_settings()
+        self.settings = core.config.get_settings()
+        
+        # Configure Mailgun
         self.base_url = getattr(self.settings, "APP_BASE_URL", "http://localhost:3000")
 
     def _mask_email(self, email: str) -> str:

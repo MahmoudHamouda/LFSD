@@ -49,26 +49,12 @@ async def save_manual_time_profile(user_id: str, profile_data: Dict[str, Any], d
     return {"status": "success", "message": "Time profile updated"}
 
 
-# 2. Google Calendar Integration
-@router.post("/users/{user_id}/calendar/google/connect")
-async def connect_google_calendar(user_id: str):
-    """Start Google Calendar OAuth flow."""
-    from services.google_calendar_service import GoogleCalendarService
-    # We don't have the db session here in the signature, let's add it or just instantiate the service if it handles it?
-    # Actually, the service needs DB. Let's redirect to a frontend callback page that calls backend.
-    
-    # Actually, we need to return the Auth URL so frontend can redirect user.
-    # Service initialization requires DB, but `get_auth_url` doesn't strictly need it if we pass nothing.
-    # But let's stick to pattern.
-    
-    # We need to construct the URL manually if we don't want to instantiate the service with DB just for this.
-    # But let's check the service definition. It takes `db`.
-    pass 
+
 
 @router.get("/users/{user_id}/calendar/google/connect")
 async def get_google_auth_url(user_id: str, db: Session = Depends(get_db)):
     """Get the Google Auth URL."""
-    from services.google_calendar_service import GoogleCalendarService
+    from services.productivity.google_calendar_service import GoogleCalendarService
     service = GoogleCalendarService(db)
     # We can pass user_id as state
     url = service.get_auth_url(state=user_id)
@@ -77,7 +63,7 @@ async def get_google_auth_url(user_id: str, db: Session = Depends(get_db)):
 @router.get("/users/{user_id}/calendar/google/callback")
 async def google_auth_callback(user_id: str, code: str, db: Session = Depends(get_db)):
     """Handle OAuth callback."""
-    from services.google_calendar_service import GoogleCalendarService
+    from services.productivity.google_calendar_service import GoogleCalendarService
     service = GoogleCalendarService(db)
     connection = service.exchange_code(code, user_id)
     return {"status": "success", "message": "Google Calendar connected"}
@@ -85,7 +71,7 @@ async def google_auth_callback(user_id: str, code: str, db: Session = Depends(ge
 @router.get("/users/{user_id}/calendar/google/sync")
 async def sync_google_calendar(user_id: str, db: Session = Depends(get_db)):
     """Fetch events from Google Calendar."""
-    from services.google_calendar_service import GoogleCalendarService
+    from services.productivity.google_calendar_service import GoogleCalendarService
     service = GoogleCalendarService(db)
     try:
         count = service.fetch_events(user_id)
@@ -133,7 +119,7 @@ async def upload_calendar_screenshot(user_id: str, file: UploadFile = File(...),
         # Let's use `_extract_intent` or similar? No, that's for chat.
         # We'll validly access the model directly or add a helper.
         
-        response = gemini.model.generate_content(prompt)
+        response = await gemini.generate_content(prompt)
         import json
         
         cleaned_text = response.text.replace("```json", "").replace("```", "").strip()

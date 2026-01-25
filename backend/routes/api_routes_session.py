@@ -12,7 +12,7 @@ from core.authentication import (
     create_access_token,
     get_current_user
 )
-from core.config import settings
+import core.config
 import logging
 
 logger = logging.getLogger(__name__)
@@ -89,10 +89,10 @@ async def login(
     
     # Set HttpOnly cookie (basic implementation)
     response.set_cookie(
-        key="access_token",
+        key=core.config.get_settings().SESSION_COOKIE_NAME,
         value=f"Bearer {access_token}",
         httponly=True,
-        secure=False, # Dev mode, set True in prod
+        secure=core.config.get_settings().ENV == "production", # Dev mode, set True in prod
         samesite="lax"
     )
 
@@ -167,19 +167,19 @@ async def complete_onboarding(
         
         # Handle Plan Selection
         if payload and payload.plan_id:
-             print(f"Processing plan selection: {payload.plan_id}")
+             logger.info(f"Processing plan selection: {payload.plan_id}")
              # Validate plan_id (simple check)
              if payload.plan_id in [PlanId.FREE, PlanId.PLUS, PlanId.PRO]:
                  # Find existing sub
                  sub = db.query(Subscription).filter(Subscription.user_id == user_id).first()
                  if sub:
                      if sub.plan_id != payload.plan_id:
-                         print(f"Upgrading user {user_id} from {sub.plan_id} to {payload.plan_id}")
+                         logger.info(f"Upgrading user {user_id} from {sub.plan_id} to {payload.plan_id}")
                          sub.plan_id = payload.plan_id
                          sub.updated_at = datetime.utcnow()
                  else:
                      # Create if missing (failsafe)
-                     print(f"Creating new subscription for {user_id}: {payload.plan_id}")
+                     logger.info(f"Creating new subscription for {user_id}: {payload.plan_id}")
                      new_sub = Subscription(user_id=user_id, plan_id=payload.plan_id, status="active")
                      db.add(new_sub)
         

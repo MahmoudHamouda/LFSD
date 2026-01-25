@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import logging
+from services.gemini_service import GeminiService
 from datetime import date, datetime
 from typing import List, Optional, Dict, Any, Union
 from io import BytesIO
@@ -62,11 +63,11 @@ class ParsedStatement(BaseModel):
 # 3. Gemini LLM Parsing
 # ============================================================================
 
-from core.config import get_settings
+import core.config
 
 class GeminiParser:
     def __init__(self):
-        settings = get_settings()
+        settings = core.config.get_settings()
         api_key = settings.GEMINI_API_KEY
         
         if not api_key:
@@ -280,14 +281,15 @@ class StatementService:
     def __init__(self, db: Session):
         self.db = db
         self.pdf_processor = PDFProcessor()
-        self.gemini_parser = GeminiParser()
-
-    async def process_statement(self, user_id: str, file_content: bytes, filename: str, persist: bool = True) -> Dict[str, Any]:
+        self.gemini_service = GeminiService()
+        self.settings = core.config.get_settings()
+        
+    async def process_pdf(self, file_content: bytes, user_id: str, db: Session) -> Dict[str, Any]:
         """
         Full pipeline: PDF -> Text -> Gemini -> JSON -> DB
         """
         start_time = datetime.utcnow()
-        logger.info(f"Processing statement: {filename} for user {user_id} (Persist: {persist})")
+        logger.info(f"Processing statement for user {user_id}")
 
         try:
             # 1. Parse PDF directly with Gemini (Native Multimodal)

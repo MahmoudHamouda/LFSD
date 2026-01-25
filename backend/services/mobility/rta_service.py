@@ -12,7 +12,8 @@ import asyncio
 import logging
 from typing import Optional, Dict, Any, List, Union
 from datetime import datetime, timedelta, timezone
-from core.config import get_settings
+import core.config
+from sqlalchemy.orm import Session
 from .base_mobility_service import BaseMobilityService
 
 logger = logging.getLogger(__name__)
@@ -29,8 +30,10 @@ class RTAService(BaseMobilityService):
     # Supported public transport types
     SUPPORTED_TYPES = ["metro", "bus", "tram", "water_taxi"]
     
-    def __init__(self):
-        self.settings = get_settings()
+    def __init__(self, db: Session):
+        self.db = db
+        self.settings = core.config.get_settings()
+        self.connection_service = ConnectionService(db)
         self.api_key = self.settings.RTA_API_KEY
         # Timeout policy: 10s total, 2s connect
         self.timeout = httpx.Timeout(10.0, connect=2.0)

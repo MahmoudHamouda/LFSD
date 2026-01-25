@@ -9,15 +9,23 @@ Supports both Sandbox (dev) and Production modes.
 import httpx
 from typing import Optional, Dict, Any, List
 from datetime import datetime
-from core.config import get_settings
+import core.config
+from services.connection_service import ConnectionService
 from .base_mobility_service import BaseMobilityService
+from sqlalchemy.orm import Session
+import logging
+import uuid
+
+logger = logging.getLogger(__name__)
 
 
 class UberService(BaseMobilityService):
     """Service for interacting with Uber API (Sandbox or Production)."""
     
-    def __init__(self):
-        self.settings = get_settings()
+    def __init__(self, db: Session):
+        self.db = db
+        self.settings = core.config.get_settings()
+        self.connection_service = ConnectionService(db)
         self.server_token = self.settings.UBER_SERVER_TOKEN
         
         # Use Sandbox in development, Production in prod

@@ -47,7 +47,9 @@ async def submit_onboarding(payload: OnboardingPayload, db: Session = Depends(ge
         user_id = payload.user_id or "default_user" 
         
         # 1. Get or Create User (Must exist for Foreign Keys)
-        print(f"DEBUG: Fetching user {user_id}...")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"DEBUG: Fetching user {user_id}...")
         # Check by ID first
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
@@ -170,15 +172,13 @@ async def get_scores(
     Get current user scores and trends.
     period: 'week' (compare vs 7 days ago) or 'month' (compare vs 30 days ago)
     """
+    import core.config
+    settings = core.config.get_settings()
     try:
         user_id = current_user.id
         
         # Debug Info Injection (EARLY)
         count_viv = db.query(VivIndex).filter(VivIndex.user_id == user_id).count()
-        debug_info = {
-            "user_id": user_id,
-            "viv_count": count_viv,
-            "latest_index_found": False,
         debug_info = {
             "user_id": user_id,
             "viv_count": count_viv,
@@ -364,8 +364,9 @@ async def get_scores(
                     "coverage": coverage_days
                 }
         
-        # Inject debug info into final breakdown
-        breakdown["debug_info"] = debug_info
+        # Inject debug info into final breakdown only if DEBUG
+        if settings.DEBUG:
+            breakdown["debug_info"] = debug_info
 
         # Use productivity score from breakdown if available (from TimeScore), otherwise fallback to VivIndex
         productivity_score = latest_index.time_score
@@ -402,6 +403,10 @@ async def debug_schema(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user) # Only authenticated users (or admin)
 ):
+    import core.config
+    settings = core.config.get_settings()
+    if not settings.DEBUG and getattr(current_user, "role", "user") != "admin":
+        raise HTTPException(status_code=403, detail="Debug access forbidden")
     """
     Debug endpoint to inspect DB schema.
     """
@@ -445,6 +450,10 @@ async def debug_trigger_calc(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    import core.config
+    settings = core.config.get_settings()
+    if not settings.DEBUG and getattr(current_user, "role", "user") != "admin":
+        raise HTTPException(status_code=403, detail="Debug access forbidden")
     """
     Trigger calculation of scores for finance@helm.com (E2E Test User).
     """
@@ -511,6 +520,10 @@ async def debug_fix_viv_index(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
+    import core.config
+    settings = core.config.get_settings()
+    if not settings.DEBUG and getattr(current_user, "role", "user") != "admin":
+        raise HTTPException(status_code=403, detail="Debug access forbidden")
     """
     Debug endpoint to backfill missing VivIndex for a user by email.
     """

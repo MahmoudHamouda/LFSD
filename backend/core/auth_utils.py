@@ -9,7 +9,7 @@ from functools import wraps
 from typing import Optional
 import jwt
 from flask import request, jsonify
-from core.config import get_settings
+import core.config
 
 # ============================================================================
 # Flask-Compatible Decorators (for legacy Flask blueprints)
@@ -22,7 +22,7 @@ def validate_jwt_token(token: str) -> dict:
     Returns:
         dict with 'valid' boolean and either 'data' or 'error'
     """
-    settings = get_settings()
+    settings = core.config.get_settings()
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.JWT_ALG])
         return {"valid": True, "data": payload}

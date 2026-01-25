@@ -18,7 +18,7 @@ from urllib.parse import urlencode
 
 from sqlalchemy.orm import Session
 from models.models import Connection, HealthDataSample
-from core.config import get_settings
+import core.config
 from services.connection_service import ConnectionService
 from services.audit_service import AuditService
 
@@ -42,7 +42,7 @@ class AppleHealthService:
 
     def __init__(self, db: Session):
         self.db = db
-        self.settings = get_settings()
+        self.settings = core.config.get_settings()
         self.connection_service = ConnectionService(db)
         
         # Apple Developer Credentials

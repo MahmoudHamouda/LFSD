@@ -204,7 +204,9 @@ async def connect_health_provider(
         connection = create_health_connection(user_id, request.provider, request.permissions, db)
     
     if request.provider == "whoop":
-        redirect_url = f"https://api.whoop.com/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=YOUR_REDIRECT_URI&scope={','.join(request.permissions)}"
+        import core.config
+        settings = core.config.get_settings()
+        redirect_url = f"https://api.whoop.com/oauth/authorize?client_id={settings.WHOOP_CLIENT_ID}&redirect_uri={settings.WHOOP_REDIRECT_URI}&scope={','.join(request.permissions)}"
         
         return ConnectHealthProviderResponse(
             connection={

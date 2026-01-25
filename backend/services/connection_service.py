@@ -4,14 +4,14 @@ from typing import Optional, List, Dict, Any
 import json
 import uuid
 from datetime import datetime
-from core.config import get_settings
+import core.config
 from cryptography.fernet import Fernet
 from loguru import logger
 
 class ConnectionService:
     def __init__(self, db: Session):
         self.db = db
-        settings = get_settings()
+        settings = core.config.get_settings()
         if not hasattr(settings, "CREDENTIALS_ENCRYPTION_KEY") or not settings.CREDENTIALS_ENCRYPTION_KEY:
              raise ValueError("CREDENTIALS_ENCRYPTION_KEY is missing in configuration.")
         self.fernet = Fernet(settings.CREDENTIALS_ENCRYPTION_KEY.encode())

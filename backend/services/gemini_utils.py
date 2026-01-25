@@ -10,8 +10,9 @@ If the API call fails, it falls back to a known stable model name.
 from google.api_core import retry
 import logging
 from typing import List, Optional
+import re
+import core.config
 import google.generativeai as genai
-from core.config import get_settings
 
 log = logging.getLogger("gemini_utils")
 
@@ -41,7 +42,7 @@ def get_latest_gemini_model() -> str:
 
     # Ensure API is configured before calling list_models
     try:
-        settings = get_settings()
+        settings = core.config.get_settings()
         if not settings.GEMINI_API_KEY:
             log.warning("GEMINI_API_KEY not set. Using fallback model.")
             return "gemini-1.5-flash"

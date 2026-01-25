@@ -6,8 +6,10 @@ Provides integration with Bolt's API for ride price estimates and booking.
 
 import httpx
 from typing import Optional, Dict, Any, List
-from datetime import datetime
-from core.config import get_settings
+import datetime
+import core.config
+from sqlalchemy.orm import Session
+from services.connection_service import ConnectionService
 from .base_mobility_service import BaseMobilityService
 
 
@@ -17,8 +19,10 @@ class BoltService(BaseMobilityService):
     # Hypothetical Base URL
     BASE_URL = "https://api.bolt.eu/v1"
     
-    def __init__(self):
-        self.settings = get_settings()
+    def __init__(self, db: Session):
+        self.db = db
+        self.settings = core.config.get_settings()
+        self.connection_service = ConnectionService(db)
         self.api_key = self.settings.BOLT_API_KEY
     
     @property

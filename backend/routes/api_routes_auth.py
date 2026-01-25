@@ -8,7 +8,7 @@ import secrets
 from datetime import datetime, timedelta
 from core.authentication import get_password_hash, verify_password
 import logging
-from core.config import settings
+import core.config
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,13 @@ async def login(payload: LoginPayload, db: Session = Depends(get_db)):
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Login internal error: {e}")
     
-    access_token = create_access_token(data={"sub": user.email})
+    # This mimics what the frontend does or what we want for basic auth
+    # For now, just generate a token
+    expires = timedelta(minutes=core.config.get_settings().ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user.email, "role": "user", "id": str(user.id)},
+        expires_minutes=expires.total_seconds() / 60
+    )
     
     user_data = {
         "id": user.id,
@@ -110,7 +116,7 @@ from fastapi import Response, Request
 
 @router.get("/google/url")
 async def google_auth_url(response: Response, db: Session = Depends(get_db)):
-    from services.google_calendar_service import GoogleCalendarService
+    from services.productivity.google_calendar_service import GoogleCalendarService
     
     # Generate random state for CSRF protection
     state = secrets.token_urlsafe(32)
@@ -126,7 +132,7 @@ async def google_auth_url(response: Response, db: Session = Depends(get_db)):
         value=state,
         httponly=True,
         samesite="lax",
-        secure=settings.ENV == "production", # Conditional based on env
+        secure=core.config.get_settings().ENV == "production", # Conditional based on env
         max_age=600  # 10 minutes
     )
     
@@ -140,7 +146,7 @@ async def google_auth_callback(payload: CodePayload, request: Request, db: Sessi
         print(f"[AUTH] CSRF State Mismatch. Cookie: {cookie_state}, Payload: {payload.state}")
         raise HTTPException(status_code=400, detail="Invalid state parameter. Possible CSRF attempt.")
 
-    from services.google_calendar_service import GoogleCalendarService
+    from services.productivity.google_calendar_service import GoogleCalendarService
     from models.models import Connection # Ensure Connection is imported
     
     # We use a placeholder user_id initially because we don't know the user yet

@@ -166,7 +166,7 @@ async def upload_statement(request: Request, db: Session = Depends(get_db)):
                 })
                 
             except Exception as e:
-                print(f"DEBUG: Error processing {filename}: {e}")
+                logger.error(f"DEBUG: Error processing {filename}: {e}")
                 results.append({
                     "filename": filename,
                     "status": "error",

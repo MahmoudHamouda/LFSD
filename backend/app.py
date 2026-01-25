@@ -21,7 +21,7 @@ from contextlib import asynccontextmanager
 from typing import List
 
 # Import Routes and Models
-from core.config import get_settings
+import core.config
 from models.database import init_db, get_db
 from models.models import User
 from sqlalchemy.orm import Session
@@ -54,7 +54,7 @@ from models.auth_schemas import LoginRequest, RegisterRequest
 def create_app() -> FastAPI:
     """Create and configure a FastAPI application."""
     setup_logging() # Configure structured logging
-    settings = get_settings()
+    settings = core.config.get_settings()
     logger.error("!!! APP FACTORY CALLED - FULL PRODUCTION RESTORE !!!")
 
     # --- CLOUD SQL CONFIGURATION ---
@@ -128,7 +128,7 @@ def create_app() -> FastAPI:
         allow_origins = ["*"]
     else:
         allow_origins = [origin.strip() for origin in settings.ALLOWED_ORIGINS.split(",") if origin.strip()]
-    
+
     app.add_middleware(
         CORSMiddleware,
         allow_origins=allow_origins,

@@ -13,7 +13,7 @@ import re
 from typing import Dict, Any, Optional, List
 from datetime import datetime, timezone
 
-from core.config import get_settings
+import core.config
 from .base_messaging_service import BaseMessagingService, MessageResponse
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class WhatsAppService(BaseMessagingService):
         Initialize the service. 
         Guards against missing credentials without crashing during boot.
         """
-        self.settings = get_settings()
+        self.settings = core.config.get_settings()
         self.access_token = self.settings.WHATSAPP_ACCESS_TOKEN
         self.phone_number_id = self.settings.WHATSAPP_PHONE_NUMBER_ID
         self.version = self.settings.WHATSAPP_API_VERSION or "v22.0"

@@ -10,12 +10,12 @@ import httpx
 import logging
 import asyncio
 from datetime import datetime, timedelta, timezone
+import core.config
 from typing import Dict, Any, List, Optional
 from urllib.parse import urlencode, quote
 
 from sqlalchemy.orm import Session
 from models.models import Connection, HealthDataSample
-from core.config import get_settings
 from services.connection_service import ConnectionService
 from services.audit_service import AuditService
 
@@ -43,11 +43,8 @@ class GoogleFitService:
 
     def __init__(self, db: Session):
         self.db = db
-        self.settings = get_settings()
+        self.settings = core.config.get_settings()
         self.connection_service = ConnectionService(db)
-        
-        # Credentials from centralized config
-        self.client_id = self.settings.GOOGLE_CLIENT_ID
         self.client_secret = self.settings.GOOGLE_CLIENT_SECRET
         
         # In production, this should be the public URL of the platform

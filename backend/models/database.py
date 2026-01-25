@@ -7,9 +7,9 @@ This module provides SQLAlchemy engine and session management for the applicatio
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from core.config import get_settings
+import core.config
 
-settings = get_settings()
+settings = core.config.get_settings()
 
 # --- CLOUD SQL CONFIGURATION ---
 from google.cloud.sql.connector import Connector
@@ -64,9 +64,6 @@ if settings.ENV == "prod":
 else:
     # Use local SQLite for development
     sqlite_url = settings.DATABASE_URL or "sqlite:///backend/lfsd.db"
-    if "sqlite" not in sqlite_url and not sqlite_url.startswith("postgresql"):
-         # Basic heuristic if someone put a filename
-         pass
     print(f"DEBUG: Using database URL: {sqlite_url}")
     engine = create_engine(
         sqlite_url,

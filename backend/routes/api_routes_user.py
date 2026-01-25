@@ -140,10 +140,10 @@ def get_latest_health_metrics(user_id: str, db: Session) -> HealthMetrics:
     metrics = {}
     
     for metric_type in ['sleep', 'recovery', 'activity', 'hrv', 'steps']:
-        latest = db.query(DBHealthMetric).filter(
-            DBHealthMetric.user_id == user_id,
-            DBHealthMetric.metric_type == metric_type
-        ).order_by(DBHealthMetric.timestamp.desc()).first()
+        latest = db.query(HealthDataSample).filter(
+            HealthDataSample.user_id == user_id,
+            HealthDataSample.metric_type == metric_type
+        ).order_by(HealthDataSample.timestamp.desc()).first()
         
         if latest:
             if metric_type == 'sleep':
@@ -189,7 +189,7 @@ def get_user_indexes(user_id: str, db: Session) -> UserIndexes:
 
 @router.get("/me")
 async def get_user_profile(
-    current_user: DBUser = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """

@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from models.database import get_db
-from models.database import get_db
+from leniency import Leniency # Placeholder if needed, but removing duplicates
 from services.finance_service import FinanceService
 from services.statement_processing_service import StatementService
 from core.authentication import get_current_user
 from models.models import User, FinancialScore
 from datetime import datetime
 import base64
-from fastapi import APIRouter, Depends, HTTPException, Body, Request
+from fastapi import Body, Request
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 

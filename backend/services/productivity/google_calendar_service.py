@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Google Calendar Service - Hardened Enterprise Implementation.
 
@@ -10,13 +11,13 @@ import httpx
 import logging
 import uuid
 import json
-from datetime import datetime, timedelta, timezone
+import datetime
 from typing import List, Dict, Any, Optional, Union
 from urllib.parse import urlencode
 
 from sqlalchemy.orm import Session
 from models.models import Connection, CalendarEvent
-from core.config import get_settings
+import core.config
 from services.connection_service import ConnectionService
 from services.audit_service import AuditService
 from .base_calendar_service import (
@@ -48,7 +49,7 @@ class GoogleCalendarService(BaseCalendarService):
         Can operate with a direct access_token (stateless) or a db session (managed).
         """
         self.db = db
-        self.settings = get_settings()
+        self.settings = core.config.get_settings()
         self.access_token = access_token
         self.connection_service = ConnectionService(db) if db else None
         
@@ -96,8 +97,8 @@ class GoogleCalendarService(BaseCalendarService):
         
         should_refresh = True
         if expires_at_str:
-            expires_at = datetime.fromisoformat(expires_at_str)
-            if expires_at > datetime.now(timezone.utc) + timedelta(minutes=5):
+            expires_at = datetime.datetime.fromisoformat(expires_at_str)
+            if expires_at > datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=5):
                 should_refresh = False
 
         if should_refresh:
@@ -143,7 +144,7 @@ class GoogleCalendarService(BaseCalendarService):
                 "token_type": data.get("token_type", "Bearer")
             }
             
-            expires_at = datetime.now(timezone.utc) + timedelta(seconds=data.get("expires_in", 3600))
+            expires_at = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=data.get("expires_in", 3600))
             metadata = json.loads(connection.metadata_json or "{}")
             metadata["expires_at"] = expires_at.isoformat()
             
@@ -162,8 +163,8 @@ class GoogleCalendarService(BaseCalendarService):
     async def list_events(
         self, 
         user_id: str, 
-        time_min: datetime, 
-        time_max: datetime,
+        time_min: datetime.datetime, 
+        time_max: datetime.datetime,
         account_id: Optional[str] = None,
         calendar_id: str = "primary",
         limit: int = 500
@@ -225,8 +226,8 @@ class GoogleCalendarService(BaseCalendarService):
         self,
         user_id: str,
         summary: str,
-        start_time: datetime,
-        end_time: datetime,
+        start_time: datetime.datetime,
+        end_time: datetime.datetime,
         description: Optional[str] = None,
         location: Optional[str] = None,
         account_id: Optional[str] = None,
@@ -279,13 +280,13 @@ class GoogleCalendarService(BaseCalendarService):
         start_raw = start_data.get("dateTime") or start_data.get("date")
         end_raw = end_data.get("dateTime") or end_data.get("date")
         
-        def parse_dt(raw: str) -> datetime:
-            if not raw: return datetime.now(timezone.utc)
+        def parse_dt(raw: str) -> datetime.datetime:
+            if not raw: return datetime.datetime.now(datetime.timezone.utc)
             if len(raw) == 10: raw += "T00:00:00Z"
             # Normalize to aware UTC
-            dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-            if dt.tzinfo is None: dt = dt.replace(tzinfo=timezone.utc)
-            return dt.astimezone(timezone.utc)
+            dt = datetime.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            if dt.tzinfo is None: dt = dt.replace(tzinfo=datetime.timezone.utc)
+            return dt.astimezone(datetime.timezone.utc)
 
         status_map = {
             "confirmed": EventStatus.CONFIRMED,
@@ -358,7 +359,7 @@ class GoogleCalendarService(BaseCalendarService):
              resp = await client.delete(f"{self.API_BASE}/calendars/{calendar_id}/events/{event_id}", headers=headers)
              return resp.status_code in [200, 204]
 
-    async def check_availability(self, user_id: str, start_time: datetime, end_time: datetime, **kwargs) -> BusyStatus:
+    async def check_availability(self, user_id: str, start_time: datetime.datetime, end_time: datetime.datetime, **kwargs) -> BusyStatus:
         events = await self.list_events(user_id, start_time, end_time, **kwargs)
         for e in events:
              if e.busy_status == BusyStatus.BUSY and e.status != EventStatus.CANCELLED:

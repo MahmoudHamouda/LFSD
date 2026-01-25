@@ -6,7 +6,7 @@ from services.mobility.mobility_aggregator import MobilityAggregator
 from services.logic_engine import validate_financial_goal as validate_financial_goal_legacy
 from services.wealth_logic import validate_financial_goal
 from services.time_utils import parse_time_slot
-from core.config import get_settings
+import core.config
 import google.generativeai as genai
 import logging
 from sqlalchemy.orm import Session
@@ -19,7 +19,7 @@ from models.logging_models import AuditLog
 import uuid
 from datetime import datetime
 
-settings = get_settings()
+settings = core.config.get_settings()
 
 # Configure Gemini
 if settings.GEMINI_API_KEY:
@@ -53,6 +53,12 @@ class GeminiService:
         """
         connections = self.connection_service.get_connections(user_id)
         return [{"provider": c.provider, "status": c.status} for c in connections]
+
+    async def generate_content(self, prompt, **kwargs):
+        """
+        Public wrapper for generating content safely.
+        """
+        return await self._generate_content_safe(prompt, **kwargs)
 
     async def _generate_content_safe(self, prompt, **kwargs):
         if settings.GEMINI_API_KEY == "mock":

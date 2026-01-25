@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from models.database import get_db
-from services.google_calendar_service import GoogleCalendarService
+from services.productivity.google_calendar_service import GoogleCalendarService
 import logging
 
 router = APIRouter(prefix="/api/calendar", tags=["calendar"])

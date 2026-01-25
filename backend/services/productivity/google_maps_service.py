@@ -8,8 +8,10 @@ Includes geocoding, reverse geocoding, and distance matrix calculations.
 import httpx
 import logging
 import asyncio
-from typing import Optional, Dict, Any, List, Tuple
-from core.config import get_settings
+import googlemaps
+import core.config
+from datetime import datetime
+from typing import Dict, Any, List, Optional, Tuple
 import urllib.parse
 
 logger = logging.getLogger(__name__)
@@ -24,11 +26,13 @@ class GoogleMapsService:
     _client: Optional[httpx.AsyncClient] = None
 
     def __init__(self):
-        self.settings = get_settings()
+        self.settings = core.config.get_settings()
         self.api_key = self.settings.GOOGLE_MAPS_API_KEY
-        # Default region/language for better relevance
-        self.region = "ae" 
-        self.language = "en"
+        self.client = None
+        if self.settings.GOOGLE_MAPS_API_KEY:
+            # Default region/language for better relevance
+            self.region = "ae" 
+            self.language = "en"
 
     @classmethod
     async def get_client(cls) -> httpx.AsyncClient:

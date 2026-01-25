@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from models.database import get_db
 from models.models import User as DBUser
 from pydantic import BaseModel
-from .config import get_settings
+import core.config
 
 from passlib.context import CryptContext
 from loguru import logger
@@ -104,7 +104,7 @@ def create_access_token(data: Dict[str, Any], expires_minutes: Optional[int] = N
     Returns:
         Encoded JWT string.
     """
-    settings = get_settings()
+    settings = core.config.get_settings()
     to_encode = data.copy()
     # Set expiry on encoded payload when using PyJWT
     expire = datetime.utcnow() + timedelta(
@@ -132,7 +132,7 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
     Raises:
         HTTPException(401): If token is missing, invalid, or user not found.
     """
-    settings = get_settings()
+    settings = core.config.get_settings()
     
     # DEV BYPASS: Allow X-Test-User-Id header for testing when not in prod
     if settings.ENV != "prod":

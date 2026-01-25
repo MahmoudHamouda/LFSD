@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import json
 from pydantic import BaseModel
 from models.database import get_db
-from models.models import Transaction, VivLog, HealthDailySummary, User
+from models.models import FinancialTransaction, VivLog, HealthDailySummary, User
 from core.authentication import get_current_user
 
 router = APIRouter(prefix="/api/history", tags=["history"])
@@ -128,18 +128,20 @@ async def get_unified_history(
     start_date = None
     end_date = None
     if request.filters.dateRange:
-        start_date = datetime.fromisoformat(request.filters.dateRange.get("start"))
-        end_date = datetime.fromisoformat(request.filters.dateRange.get("end"))
+        if request.filters.dateRange.get("start"):
+            start_date = datetime.fromisoformat(request.filters.dateRange.get("start"))
+        if request.filters.dateRange.get("end"):
+            end_date = datetime.fromisoformat(request.filters.dateRange.get("end"))
     
     # Fetch transactions
     if not request.filters.types or "transaction" in request.filters.types:
-        transactions = db.query(Transaction).filter(
-            Transaction.user_id == user_id
+        transactions = db.query(FinancialTransaction).filter(
+            FinancialTransaction.user_id == user_id
         )
         if start_date and end_date:
             transactions = transactions.filter(
-                Transaction.transaction_date >= start_date,
-                Transaction.transaction_date <= end_date
+                FinancialTransaction.transaction_date >= start_date,
+                FinancialTransaction.transaction_date <= end_date
             )
         
         for txn in transactions.limit(request.limit).all():
@@ -331,6 +333,7 @@ async def generate_chat_response(
             "content": msg.get('content', '')
         })
     
+    response_data = {}
     try:
         # Pass user_id in context for GeminiService usage tracking
         gen_context = (request.context or {}).copy()
