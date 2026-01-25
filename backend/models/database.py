@@ -22,7 +22,6 @@ def getconn():
         # but maybe we are in a mode where we don't need it?
         # Check env var as fallback
         if not os.environ.get("INSTANCE_CONNECTION_NAME"):
-        if not os.environ.get("INSTANCE_CONNECTION_NAME"):
             # If we are here, we are likely in prod but missing config for Cloud SQL connector
             # return None would crash create_engine. 
             # Better to raise valid error or fallback if using a direct URL (handled by create_engine logic usually, but here creator is used)
