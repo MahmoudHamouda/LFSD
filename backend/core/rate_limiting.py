@@ -14,11 +14,10 @@ from typing import Optional
 from fastapi import Request
 try:
     # Import from slowapi if available
-    # from slowapi import Limiter  # type: ignore
-    # from slowapi.errors import RateLimitExceeded  # type: ignore
-    # from slowapi.middleware import SlowAPIMiddleware  # type: ignore
-    # from slowapi.util import get_remote_address  # type: ignore
-    raise Exception("Force dummy limiter")
+    from slowapi import Limiter  # type: ignore
+    from slowapi.errors import RateLimitExceeded  # type: ignore
+    from slowapi.middleware import SlowAPIMiddleware  # type: ignore
+    from slowapi.util import get_remote_address  # type: ignore
 except Exception:
     # Provide no‑op fallbacks when slowapi is not installed. These simple
     # implementations allow the application to run without rate limiting.

@@ -57,7 +57,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         p_hash = hashed_password.encode('utf-8')
         return bcrypt.checkpw(params, p_hash)
     except Exception as e:
-        print(f"Bcrypt verification error: {e}")
+        logger.error(f"Bcrypt verification error: {e}")
         return False
 
 
@@ -74,14 +74,12 @@ def get_user(db: Session, username: str) -> Optional[DBUser]:
     # In our model, email is the username
     user = db.query(DBUser).filter(DBUser.email == username).first()
     if not user:
-        print(f"DEBUG: User {username} not found in DB.")
+        logger.debug(f"DEBUG: User {username} not found in DB.")
         try:
-            all_users = db.query(DBUser).all()
-            print(f"DEBUG: All users in DB: {[u.email for u in all_users]}")
-            with open("auth_debug.log", "a") as f:
-                f.write(f"User {username} not found. All users: {[u.email for u in all_users]}\n")
+            # Removed heavy debug logic and file writing for production safety
+            pass
         except Exception as e:
-            print(f"DEBUG: Error listing users: {e}")
+            logger.debug(f"DEBUG: Error listing users: {e}")
     return user
 
 
@@ -112,7 +110,6 @@ def create_access_token(data: Dict[str, Any], expires_minutes: Optional[int] = N
     expire = datetime.utcnow() + timedelta(
         minutes=expires_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
-    to_encode.update({"exp": expire})
     to_encode.update({"exp": expire})
     # Use PyJWT to create a signed token
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALG)

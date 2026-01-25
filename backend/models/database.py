@@ -22,7 +22,11 @@ def getconn():
         # but maybe we are in a mode where we don't need it?
         # Check env var as fallback
         if not os.environ.get("INSTANCE_CONNECTION_NAME"):
-            return None
+        if not os.environ.get("INSTANCE_CONNECTION_NAME"):
+            # If we are here, we are likely in prod but missing config for Cloud SQL connector
+            # return None would crash create_engine. 
+            # Better to raise valid error or fallback if using a direct URL (handled by create_engine logic usually, but here creator is used)
+            raise ValueError("Missing INSTANCE_CONNECTION_NAME for Cloud SQL")
 
     instance_connection_name = settings.INSTANCE_CONNECTION_NAME
     db_user = settings.DB_USER
@@ -60,8 +64,11 @@ if settings.ENV == "prod":
     )
 else:
     # Use local SQLite for development
-    sqlite_url = "sqlite:///backend/lfsd.db"
-    print(f"DEBUG: Using local SQLite database at {sqlite_url}")
+    sqlite_url = settings.DATABASE_URL or "sqlite:///backend/lfsd.db"
+    if "sqlite" not in sqlite_url and not sqlite_url.startswith("postgresql"):
+         # Basic heuristic if someone put a filename
+         pass
+    print(f"DEBUG: Using database URL: {sqlite_url}")
     engine = create_engine(
         sqlite_url,
         connect_args={"check_same_thread": False},

@@ -34,7 +34,8 @@ class DatabaseSink:
         except Exception as e:
             # Fallback to stderr if DB fails to avoid crash/loops
             # We don't log here to avoid infinite recursion
-            pass
+            # Fallback to stderr if DB fails to avoid crash/loops
+            sys.stderr.write(f"Database logging failed: {e}\n")
         finally:
             session.close()
 
@@ -79,7 +80,7 @@ def setup_logging():
             {
                 "sink": sys.stdout, 
                 "level": "DEBUG" if settings.DEBUG else "INFO",
-                "serialize": False, # Enforce JSON for Cloud Run
+                "serialize": False, # Set to True for JSON logs in Cloud Run
             },
             # {
             #     "sink": DatabaseSink(),

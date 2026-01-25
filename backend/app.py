@@ -165,16 +165,18 @@ def create_app() -> FastAPI:
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         import traceback
         error_details = f"Internal Server Error: {str(exc)}"
-        # logger.exception("Unhandled exception") # Already logged
-        print(f"CRITICAL ERROR: {error_details}")
-        print(traceback.format_exc())
+        # logger.exception("Unhandled exception") # Already logged via middleware usually
+        # But if it reaches here, middleware might have missed it or re-raised
+        logger.error(f"CRITICAL ERROR: {error_details}")
+        logger.error(traceback.format_exc())
+        
+        content = {"detail": "Internal Server Error"}
+        if settings.DEBUG:
+            content["detail"] = error_details
+            
         return JSONResponse(
             status_code=500,
-            content={
-                "detail": error_details,
-                "debug_models": [k for k in sys.modules.keys() if 'models' in k],
-                "debug_backend": [k for k in sys.modules.keys() if 'backend' in k]
-            },
+            content=content,
         )
 
     # Register routers
@@ -290,20 +292,21 @@ def create_app() -> FastAPI:
     app.include_router(recommendation_routes.router, prefix="/api/home")
 
     # --- DEBUG ENDPOINT FOR DB PATCH ---
-    @app.get("/api/debug/patch_schema")
-    async def debug_patch_schema(secret: str):
-        if secret != settings.ADMIN_SECRET:
-             raise HTTPException(status_code=403, detail="Forbidden")
-        try:
-            from models.database import SessionLocal
-            from sqlalchemy import text
-            with SessionLocal() as db:
-                print("DEBUG: Attempting to add pillar column...")
-                db.execute(text("ALTER TABLE life_goals ADD COLUMN IF NOT EXISTS pillar VARCHAR DEFAULT 'finance';"))
-                db.commit()
-                return {"status": "success", "message": "Schema patch executed."}
-        except Exception as e:
-            return {"status": "error", "message": str(e)}
+    if settings.DEBUG:
+        @app.get("/api/debug/patch_schema")
+        async def debug_patch_schema(secret: str):
+            if secret != settings.ADMIN_SECRET:
+                 raise HTTPException(status_code=403, detail="Forbidden")
+            try:
+                from models.database import SessionLocal
+                from sqlalchemy import text
+                with SessionLocal() as db:
+                    logger.info("DEBUG: Attempting to add pillar column...")
+                    db.execute(text("ALTER TABLE life_goals ADD COLUMN IF NOT EXISTS pillar VARCHAR DEFAULT 'finance';"))
+                    db.commit()
+                    return {"status": "success", "message": "Schema patch executed."}
+            except Exception as e:
+                return {"status": "error", "message": str(e)}
 
     @app.post("/api/debug/seed_growth")
     async def seed_growth_data(
@@ -378,8 +381,7 @@ def create_app() -> FastAPI:
         """
         params = request.query_params
         secret = params.get("secret")
-        # Check against ADMIN_SECRET from settings, falling back to original code for transition if needed but hardcoded check is insecure
-        if secret != settings.ADMIN_SECRET and secret != "lfsd_backup_2024":
+        if secret != settings.ADMIN_SECRET:
              raise HTTPException(status_code=403, detail="Invalid Secret")
              
         try:

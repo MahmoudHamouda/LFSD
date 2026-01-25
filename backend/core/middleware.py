@@ -44,21 +44,23 @@ class BugReportMiddleware(BaseHTTPMiddleware):
             # 3. Save to Database
             try:
                 db = SessionLocal()
-                bug = BugReport(
-                    error_type=error_type,
-                    error_message=error_message,
-                    stack_trace=stack_trace,
-                    request_id=request_id,
-                    endpoint=str(request.url),
-                    method=request.method,
-                    system_info={"platform": sys.platform},
-                    status=BugStatus.OPEN
-                )
-                db.add(bug)
-                db.commit()
-                db.refresh(bug)
-                bug_id = bug.id
-                db.close()
+                try:
+                    bug = BugReport(
+                        error_type=error_type,
+                        error_message=error_message,
+                        stack_trace=stack_trace,
+                        request_id=request_id,
+                        endpoint=str(request.url),
+                        method=request.method,
+                        system_info={"platform": sys.platform},
+                        status=BugStatus.OPEN
+                    )
+                    db.add(bug)
+                    db.commit()
+                    db.refresh(bug)
+                    bug_id = bug.id
+                finally:
+                    db.close()
             except Exception as db_exc:
                 logger.error(f"Failed to save BugReport: {db_exc}")
                 bug_id = "unknown"
