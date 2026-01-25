@@ -1,32 +1,63 @@
-from sqlalchemy import Column, String, Float, DateTime, ForeignKey, Integer, JSON
-from sqlalchemy.orm import relationship
-from datetime import datetime
-from .database import Base
-import uuid
+"""
+Investment Portfolios - Tracking user financial assets.
 
-def generate_uuid():
+Stores manual or synced investment portfolios with performance metrics.
+"""
+
+import uuid
+from datetime import datetime, timezone
+
+from sqlalchemy import (
+    Column, String, DateTime, ForeignKey, JSON, 
+    UniqueConstraint, Numeric
+)
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from .database import Base
+
+
+def generate_uuid() -> str:
+    """Generate UUID string for primary keys."""
     return str(uuid.uuid4())
+
 
 class InvestmentPortfolio(Base):
     """
-    Tracks investment accounts and their performance.
+    User investment portfolio.
+    
+    Tracks value, returns, and asset allocation.
     """
     __tablename__ = "investment_portfolios"
 
-    id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
-    
-    institution_name = Column(String, nullable=False) # IBKR, Robinhood
-    portfolio_name = Column(String, nullable=True)
-    
-    total_value = Column(Float, nullable=False)
-    currency = Column(String, default="USD")
-    
-    daily_change_percent = Column(Float, nullable=True)
-    total_return_percent = Column(Float, nullable=True)
-    
-    asset_allocation_json = Column(JSON, nullable=True) # {"stocks": 60, "bonds": 40}
-    
-    last_updated = Column(DateTime, default=datetime.utcnow)
+    __table_args__ = (
+        # Prevent duplicate portfolios
+        UniqueConstraint("user_id", "institution_name", "portfolio_name", 
+                        name="uq_portfolio_user_institution_name"),
+    )
 
-    user = relationship("User")
+    id = Column(String(36), primary_key=True, default=generate_uuid)
+    
+    # ✅ Fixed FK to users_v2
+    user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
+
+    institution_name = Column(String(100), nullable=False)
+    portfolio_name = Column(String(255), nullable=True)
+
+    # ✅ Numeric for money (precision 18, 2 decimal places)
+    total_value = Column(Numeric(18, 2), nullable=False)
+    currency = Column(String(3), default="USD", nullable=False)
+    
+    # Performance metrics
+    daily_change_percent = Column(Numeric(7, 4), nullable=True)
+    total_return_percent = Column(Numeric(7, 4), nullable=True)
+
+    # Asset allocation (stocks, bonds, crypto, etc.)
+    asset_allocation_json = Column(JSON, nullable=False, default=dict)
+
+    # ✅ Timezone-aware timestamp
+    last_updated = Column(DateTime(timezone=True), 
+                         server_default=func.now(), 
+                         onupdate=func.now(),
+                         index=True)
+
+    user = relationship("User", back_populates="investment_portfolios")
