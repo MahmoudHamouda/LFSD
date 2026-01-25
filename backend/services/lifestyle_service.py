@@ -5,7 +5,7 @@ from models.lifestyle_events import LifestyleEvent
 from models.models import LifeGoal
 from loguru import logger
 import uuid
-import pytz
+import uuid
 
 class LifestyleService:
     def __init__(self, db: Session):
@@ -60,6 +60,7 @@ class LifestyleService:
     def get_recommendations(self, user_id: str, mood: str = "stress") -> List[dict]:
         """
         Get 'Treat Yourself' recommendations based on mood.
+        """
         from models.models import User
         user = self.db.query(User).filter(User.id == user_id).first()
         prefs = user.profile_json.get("preferences", {}) if user and user.profile_json else {}
@@ -71,8 +72,8 @@ class LifestyleService:
             if "vegan" in diet_pref.lower():
                 recommendations.append({"title": "Order Comfort Food", "type": "dining", "suggestion": "Vegan Bowl Place"})
             else:
-                 recommendations.append({"title": "Order Comfort Food", "type": "dining", "suggestion": "Nando's"})
-                 
+                    recommendations.append({"title": "Order Comfort Food", "type": "dining", "suggestion": "Nando's"})
+                    
             recommendations.append({"title": "Relaxing Spa Day", "type": "wellness", "suggestion": "Local Spa"})
             
         return recommendations

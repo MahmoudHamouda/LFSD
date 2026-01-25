@@ -2,6 +2,10 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 from datetime import datetime
 from typing import Dict, Any, List
+import logging
+import os
+
+logger = logging.getLogger(__name__)
 
 from models.database import get_db
 from models.models import User, TimeProfile, TimeEvent
@@ -102,8 +106,8 @@ async def upload_calendar_screenshot(user_id: str, file: UploadFile = File(...),
         image = Image.open(io.BytesIO(contents))
         
         # 2. Extract Text via OCR
-        # Explicitly set path for Windows
-        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+        # Use env var or default path, or rely on PATH
+        # pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
         text = pytesseract.image_to_string(image)
         
         if not text or len(text) < 10:
@@ -160,7 +164,7 @@ async def upload_calendar_screenshot(user_id: str, file: UploadFile = File(...),
                 db.add(event)
                 count += 1
             except Exception as e:
-                print(f"Skipping event due to parse error: {e}")
+                logger.warning(f"Skipping event due to parse error: {e}")
                 continue
                 
         db.commit()
@@ -169,11 +173,7 @@ async def upload_calendar_screenshot(user_id: str, file: UploadFile = File(...),
         
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        # Log to file for easier debugging
-        with open("error_log.txt", "a") as f:
-             f.write(f"OCR Error: {str(e)}\n\n")
-             traceback.print_exc(file=f)
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"OCR Failed: {str(e)}")
 
 from core.authentication import get_current_user

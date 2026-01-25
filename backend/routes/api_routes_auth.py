@@ -7,6 +7,10 @@ import uuid
 import secrets
 from datetime import datetime, timedelta
 from core.authentication import get_password_hash, verify_password
+import logging
+from core.config import settings
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -23,11 +27,11 @@ class AuthResponse(BaseModel):
 @router.post("/signup", response_model=AuthResponse)
 async def signup(payload: SignupPayload, db: Session = Depends(get_db)):
     try:
-        print(f"[AUTH] Signup attempt for {payload.email}")
+        logger.info(f"[AUTH] Signup attempt for {payload.email}")
         # Check if user exists
         existing_user = db.query(User).filter(User.email == payload.email).first()
         if existing_user:
-            print(f"[AUTH] User {payload.email} already exists")
+            logger.warning(f"[AUTH] User {payload.email} already exists")
             raise HTTPException(status_code=409, detail="Account already exists. Please log in.")
 
         new_user = User(
@@ -54,8 +58,8 @@ async def signup(payload: SignupPayload, db: Session = Depends(get_db)):
         db.rollback()
         import traceback
         error_msg = f"Signup Error: {str(e)}"
-        print(f"[AUTH-ERROR] {error_msg}")
-        print(traceback.format_exc())
+        logger.error(f"[AUTH-ERROR] {error_msg}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Signup failed: {str(e)}")
 
 class LoginPayload(BaseModel):
@@ -76,8 +80,8 @@ async def login(payload: LoginPayload, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         import traceback
-        print(f"[LOGIN CRITICAL ERROR] {e}")
-        traceback.print_exc()
+        logger.critical(f"[LOGIN CRITICAL ERROR] {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Login internal error: {e}")
     
     access_token = create_access_token(data={"sub": user.email})
@@ -122,7 +126,7 @@ async def google_auth_url(response: Response, db: Session = Depends(get_db)):
         value=state,
         httponly=True,
         samesite="lax",
-        secure=True, # Should be True in Prod, ensure SSL is used
+        secure=settings.ENV == "production", # Conditional based on env
         max_age=600  # 10 minutes
     )
     
@@ -170,7 +174,7 @@ async def google_auth_callback(payload: CodePayload, request: Request, db: Sessi
             "redirect_uri": service.REDIRECT_URI
         }
         
-        token_resp = requests.post(service.TOKEN_URL, data=token_payload)
+        token_resp = requests.post(service.TOKEN_URL, data=token_payload, timeout=10)
         if token_resp.status_code != 200:
              raise Exception(f"Failed to exchange code: {token_resp.text}")
         
@@ -260,7 +264,7 @@ async def google_auth_callback(payload: CodePayload, request: Request, db: Sessi
             "id": user.id 
         }
     except Exception as e:
-        print(f"Google Auth Error: {e}")
+        logger.error(f"Google Auth Error: {e}")
         raise HTTPException(status_code=400, detail="Authentication failed")
 
 class ForgotPasswordPayload(BaseModel):

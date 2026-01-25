@@ -5,6 +5,11 @@ from models.chat_models import ChatSession, ChatHistory
 from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional, List
+from core.authentication import get_current_user
+from models.models import User
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -44,9 +49,17 @@ import json
 async def handle_message(
     session_id: int = Path(...),
     data: ChatMessageRequest = Body(...),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    user_id = data.user_id
+    # Verify user_id from payload matches authenticated user (or ignore payload user_id)
+    user_id = current_user.id
+    if data.user_id and data.user_id != user_id:
+        # We can either raise error or just override it. Let's override safely.
+        # But if they are trying to spoof, maybe 403.
+        # For now, simpler: Use current_user.id
+        pass
+
     message = data.message
 
     # 1. Validate Input
@@ -84,9 +97,9 @@ async def handle_message(
         if chat_session.context:
             context["session_context"] = chat_session.context
         
-        print(f"DEBUG: Generating response for user {user_id}...")
+        logger.debug(f"DEBUG: Generating response for user {user_id}...")
         response_json_str = await gemini_service.generate_response(history, context)
-        print(f"DEBUG: Gemini response: {response_json_str[:100]}...")
+        logger.debug(f"DEBUG: Gemini response: {response_json_str[:100]}...")
         
         # Parse the response
         try:
@@ -119,6 +132,6 @@ async def handle_message(
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        print(f"ERROR in chat_message: {str(e)}")
+        logger.error(traceback.format_exc())
+        logger.error(f"ERROR in chat_message: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")

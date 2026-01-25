@@ -239,9 +239,11 @@ async def connect_health_provider(
 @router.post("/google/auth-url")
 async def get_google_auth_url(db: Session = Depends(get_db)):
     from services.google_fit_service import GoogleFitService
+    import secrets
     service = GoogleFitService(db)
     # Generate a random state for security in prod
-    return {"url": service.get_auth_url(state="security_token")}
+    state = secrets.token_urlsafe(16)
+    return {"url": service.get_auth_url(state=state)}
 
 @router.post("/google/callback")
 async def google_auth_callback(
@@ -267,8 +269,10 @@ async def google_auth_callback(
 @router.post("/apple/auth-url")
 async def get_apple_auth_url(db: Session = Depends(get_db)):
     from services.apple_health_service import AppleHealthService
+    import secrets
     service = AppleHealthService(db)
-    return {"url": service.get_auth_url(state="security_token")}
+    state = secrets.token_urlsafe(16)
+    return {"url": service.get_auth_url(state=state)}
 
 @router.post("/apple/callback")
 async def apple_auth_callback(
@@ -448,9 +452,9 @@ async def get_user_health_score(
         user_id = current_user.id
         
     # Security check: users can only see their own score unless admin (not impl yet)
-    if user_id != current_user.id and user_id != "default_user":
-        # For dev testing, we might allow generic access, but best practice is 403
-        pass # raise HTTPException(status_code=403, detail="Forbidden")
+    if user_id != current_user.id:
+        # Check permissions or role if implemented, otherwise strictly forbid
+        raise HTTPException(status_code=403, detail="Forbidden: You can only view your own score.")
 
     from services.health_scoring import compute_health_score
     result = compute_health_score(user_id, db)

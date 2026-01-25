@@ -14,6 +14,9 @@ def get_time_metrics(user_id: str, db: Session, period_days: int = 30) -> Dict[s
     user = db.query(User).filter(User.id == user_id).first()
     time_profile = db.query(TimeProfile).filter(TimeProfile.user_id == user_id).first()
     
+    if not user:
+        return {"metrics": {}, "profile": {}}
+
     # Fallback to Onboarding Data if TimeProfile missing
     onboarding = (user.profile_json or {}).get("onboarding_data", {})
     productivity_input = onboarding.get("productivity", {})

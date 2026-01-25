@@ -32,7 +32,7 @@ router = APIRouter(prefix="/audit", tags=["Audit"])
     # Wait, the best way in FastAPI is to add the dependency. I will rewrite the whole function signature lines 22-27.
     pass
 
-@router.get("/", summary="List audits")
+@router.get("/", summary="List audits", response_model=dict[str, Any])
 @limiter.limit("20/minute")
 async def list_audits(
     *,
@@ -41,10 +41,17 @@ async def list_audits(
     limit: int = Query(20, ge=1, le=100),
     cursor: Optional[str] = Query(None),
 ) -> dict[str, Any]:
-    """Return a paginated list of audits for the authenticated user."""
+    """Return a paginated list of audits for the authenticated user and/or system admins."""
+    # Ensure AuditLog model is imported
     from models.logging_models import AuditLog
     
-    query = db.query(AuditLog).filter(AuditLog.actor_id == current_user.id)
+    # Filter by user (actors can see their own actions, or maybe restrict to admin? 
+    # Usually audit logs are for admins, but let's assume personal audit trail if not admin)
+    query = db.query(AuditLog)
+    
+    # If not admin, restrict to own actions
+    if getattr(current_user, "role", "user") != "admin":
+        query = query.filter(AuditLog.actor_id == current_user.id)
     
     if cursor:
         query = query.filter(AuditLog.timestamp < cursor)
@@ -63,7 +70,7 @@ async def list_audits(
                     "id": item.id,
                     "action": item.action,
                     "entity_type": item.entity_type,
-                    "timestamp": item.timestamp,
+                    "timestamp": item.timestamp.isoformat(),
                     "details": item.changes_json
                 } for item in items
             ], 

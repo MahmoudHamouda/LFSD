@@ -6,7 +6,8 @@ from models.database import get_db
 from services.finance_service import FinanceService
 from services.statement_processing_service import StatementService
 from core.authentication import get_current_user
-from models.models import User
+from models.models import User, FinancialScore
+from datetime import datetime
 import base64
 from fastapi import APIRouter, Depends, HTTPException, Body, Request
 

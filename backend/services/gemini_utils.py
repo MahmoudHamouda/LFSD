@@ -42,8 +42,8 @@ def get_latest_gemini_model() -> str:
     # Ensure API is configured before calling list_models
     try:
         settings = get_settings()
-        if not settings.GOOGLE_API_KEY:
-            log.warning("GOOGLE_API_KEY not set. Using fallback model.")
+        if not settings.GEMINI_API_KEY:
+            log.warning("GEMINI_API_KEY not set. Using fallback model.")
             return "gemini-1.5-flash"
         
         # Check if already configured? genai doesn't expose is_configured() 

@@ -179,9 +179,12 @@ async def get_scores(
             "user_id": user_id,
             "viv_count": count_viv,
             "latest_index_found": False,
-            "db_url_hint": str(db.get_bind().url)
+        debug_info = {
+            "user_id": user_id,
+            "viv_count": count_viv,
+            "latest_index_found": False
         }
-        print(f"DEBUG_CLOUD_RUN: {debug_info}")
+        # logger.debug(f"DEBUG_CLOUD_RUN: {debug_info}")
 
         # Get latest VivIndex
         latest_index = db.query(VivIndex).filter(VivIndex.user_id == user_id).order_by(VivIndex.timestamp.desc()).first()
@@ -395,11 +398,17 @@ async def get_scores(
         )
 
 @router.get("/debug/schema")
-async def debug_schema(db: Session = Depends(get_db)):
+async def debug_schema(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user) # Only authenticated users (or admin)
+):
     """
     Debug endpoint to inspect DB schema.
     """
     try:
+        # Only allow admin or specific users
+        # if current_user.role != "admin": raise HTTPException(403)
+        
         from sqlalchemy import inspect
         inspector = inspect(db.get_bind())
         tables = inspector.get_table_names()
@@ -432,7 +441,10 @@ async def debug_fix_permissions(db: Session = Depends(get_db)):
         return {"status": "error", "message": str(e)}
 
 @router.post("/debug/trigger_calc")
-async def debug_trigger_calc(db: Session = Depends(get_db)):
+async def debug_trigger_calc(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """
     Trigger calculation of scores for finance@helm.com (E2E Test User).
     """
@@ -494,7 +506,11 @@ async def get_financial_score_details(user_id: str, db: Session = Depends(get_db
     }
 
 @router.post("/debug/fix_viv_index")
-async def debug_fix_viv_index(email: str, db: Session = Depends(get_db)):
+async def debug_fix_viv_index(
+    email: str, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(get_current_user)
+):
     """
     Debug endpoint to backfill missing VivIndex for a user by email.
     """

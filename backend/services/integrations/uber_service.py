@@ -147,10 +147,10 @@ class UberService:
         try:
             payload = {
                 "product_id": product_id,
-                "start_latitude": start_location["latitude"],
-                "start_longitude": start_location["longitude"],
-                "end_latitude": end_location["latitude"],
-                "end_longitude": end_location["longitude"]
+                "start_latitude": start_location.get("lat") or start_location.get("latitude"),
+                "start_longitude": start_location.get("lng") or start_location.get("longitude"),
+                "end_latitude": end_location.get("lat") or end_location.get("latitude"),
+                "end_longitude": end_location.get("lng") or end_location.get("longitude")
             }
             if fare_id:
                 payload["fare_id"] = fare_id

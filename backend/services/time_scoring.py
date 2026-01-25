@@ -147,18 +147,7 @@ def compute_time_score(user_id: str, db: Session, override_input: Optional[Dict[
                 "stress": {"score": round(stress_score, 1), "max": 15}
         }
         
-        # 3. Persist
-        _persist_score(user_id, {
-            "productivity_score": overall_score,
-            "confidence": overall_conf,
-            "dimensions": {
-                 "structure": {"score": structure_score},
-                 "load": {"score": load_score},
-                 "focus": {"score": focus_score},
-                 "friction": {"score": friction_score},
-                 "stress": {"score": stress_score}
-            }
-        }, db)
+
 
         return {
             "productivity_score": round(overall_score, 1),

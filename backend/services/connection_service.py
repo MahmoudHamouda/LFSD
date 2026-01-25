@@ -12,6 +12,8 @@ class ConnectionService:
     def __init__(self, db: Session):
         self.db = db
         settings = get_settings()
+        if not hasattr(settings, "CREDENTIALS_ENCRYPTION_KEY") or not settings.CREDENTIALS_ENCRYPTION_KEY:
+             raise ValueError("CREDENTIALS_ENCRYPTION_KEY is missing in configuration.")
         self.fernet = Fernet(settings.CREDENTIALS_ENCRYPTION_KEY.encode())
 
     def _encrypt(self, data: Dict) -> str:

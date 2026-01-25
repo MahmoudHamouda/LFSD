@@ -11,6 +11,9 @@ import traceback
 from datetime import datetime, date
 from services.statement_processing_service import StatementService
 from typing import List, Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/onboarding", tags=["onboarding"])
 
@@ -54,13 +57,13 @@ async def upload_statement(request: Request, db: Session = Depends(get_db)):
     Refactored to use StatementService while maintaining frontend compatibility.
     """
     try:
-        print(f"DEBUG: HEADERS: {request.headers}")
+        logger.debug(f"DEBUG: HEADERS: {request.headers}")
         try:
             data = await request.json()
-            print("DEBUG: JSON parsed successfully")
-            print(f"DEBUG: Received payload keys: {list(data.keys())}")
+            logger.debug("DEBUG: JSON parsed successfully")
+            logger.debug(f"DEBUG: Received payload keys: {list(data.keys())}")
         except Exception as json_error:
-            print(f"DEBUG: JSON parse failed: {json_error}")
+            logger.error(f"DEBUG: JSON parse failed: {json_error}")
             raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
         # Support both single file and multiple files
@@ -180,12 +183,8 @@ async def upload_statement(request: Request, db: Session = Depends(get_db)):
 
     except Exception as e:
         error_msg = f"CRITICAL UPLOAD ERROR: {str(e)}\n{traceback.format_exc()}"
-        print(f"DEBUG: Unexpected error: {e}")
-        try:
-            with open("upload_error.log", "w") as f:
-                f.write(error_msg)
-        except:
-            pass
+        logger.error(f"DEBUG: Unexpected error: {e}")
+        logger.error(error_msg)
         raise HTTPException(status_code=500, detail=f"Server processing failed: {str(e)}")
 @router.post("/upload-whoop")
 async def upload_whoop(request: Request, db: Session = Depends(get_db)):

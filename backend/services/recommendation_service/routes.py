@@ -20,7 +20,7 @@ def _validate_user_access(target_user_id: str):
     # current_user_id = auth_provider.get_user_id()
     # if current_user_id != target_user_id:
     #     raise PermissionError("Unauthorized access to user recommendations")
-    pass
+    logger.warning("Auth placeholder used - validation skipped.")
 
 # --- Endpoints ---
 

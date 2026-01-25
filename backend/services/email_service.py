@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 class EmailService:
     def __init__(self):
         self.settings = get_settings()
-        self.base_url = self.settings.APP_BASE_URL or "http://localhost:3000"
+        self.base_url = getattr(self.settings, "APP_BASE_URL", "http://localhost:3000")
 
     def _mask_email(self, email: str) -> str:
         try:

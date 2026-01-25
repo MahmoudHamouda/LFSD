@@ -3,7 +3,11 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Literal
 import uuid
 from models.models import FinancialAccount, FinancialTransaction
-from models.investment_portfolios import InvestmentPortfolio
+try:
+    from models.investment_portfolios import InvestmentPortfolio
+except ImportError:
+    InvestmentPortfolio = None
+    logger.warning("InvestmentPortfolio model not found. Portfolio features disabled.")
 from loguru import logger 
 
 class FinanceService:
@@ -17,7 +21,10 @@ class FinanceService:
         - Liabilities: Credit, Loans
         """
         accounts = self.db.query(FinancialAccount).filter(FinancialAccount.user_id == user_id).all()
-        portfolios = self.db.query(InvestmentPortfolio).filter(InvestmentPortfolio.user_id == user_id).all()
+        
+        portfolios = []
+        if InvestmentPortfolio:
+            portfolios = self.db.query(InvestmentPortfolio).filter(InvestmentPortfolio.user_id == user_id).all()
         
         assets = 0.0
         liabilities = 0.0
@@ -37,8 +44,10 @@ class FinanceService:
         
         return round(assets - liabilities, 2)
 
-    def get_portfolio_performance(self, user_id: str) -> dict:
         """Get aggregated portfolio performance."""
+        if not InvestmentPortfolio:
+             return {"total_value": 0, "daily_change_percent": 0}
+             
         portfolios = self.db.query(InvestmentPortfolio).filter(InvestmentPortfolio.user_id == user_id).all()
         
         if not portfolios:

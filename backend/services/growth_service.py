@@ -19,9 +19,13 @@ class GrowthService:
         # Using filter over 'active' ensures we don't fall back to an expired PRO plan when it should be FREE
         subscription = db.query(Subscription).filter(
             Subscription.user_id == user_id, 
-            Subscription.status == "active",
-            Subscription.current_period_end >= datetime.utcnow() # Ensure valid period
+            Subscription.status == "active"
         ).first()
+
+        # Handle expiration logic explicitly (treat NULL end_date as expired per audit reqs)
+        if subscription:
+            if not subscription.current_period_end or subscription.current_period_end < datetime.utcnow():
+                subscription = None
         
         plan_id = PlanId.FREE
         status = "active" # Free is always active

@@ -40,7 +40,7 @@ def calculate_financial_wellbeing_index(user_id: str, db: Session) -> Dict[str, 
         debt_balance = sum(abs(acc.current_balance) for acc in accounts if str(acc.account_type).lower() in ['credit', 'loan', 'liability'])
         
         # 2. Fetch Transactions (Flow)
-        thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         transactions = db.query(FinancialTransaction).filter(
             FinancialTransaction.user_id == user_id,
             FinancialTransaction.transaction_date >= thirty_days_ago
@@ -86,7 +86,7 @@ def calculate_time_saved_index(user_id: str, db: Session) -> Dict[str, Any]:
     Based on automation/action logs with normalized weights.
     """
     try:
-        thirty_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
         logs = db.query(VivLog).filter(
             VivLog.user_id == user_id,
             VivLog.timestamp >= thirty_days_ago
@@ -174,7 +174,7 @@ def calculate_index_trend(user_id: str, current_val: float, index_type: str, db:
     Calculate trend vs previous snapshot (approx 7 days ago).
     """
     try:
-        target_date = datetime.now(timezone.utc) - timedelta(days=7)
+        target_date = datetime.utcnow() - timedelta(days=7)
         start_win = target_date - timedelta(days=2)
         end_win = target_date + timedelta(days=2)
         
@@ -214,7 +214,7 @@ def calculate_user_indexes(user_id: str, db: Session) -> dict:
     Calculate all user indexes, persist snapshot, and return current stats.
     """
     # 1. Check for duplicate calc today
-    today = datetime.now(timezone.utc).date()
+    today = datetime.utcnow().date()
     existing = db.query(VivIndex).filter(
         VivIndex.user_id == user_id,
         func.date(VivIndex.timestamp) == today
@@ -234,7 +234,7 @@ def calculate_user_indexes(user_id: str, db: Session) -> dict:
     
     # 4. Aggregated Metrics
     avg_conf = (fin_res["confidence"] + time_res["confidence"] + health_res["confidence"]) / 3.0
-    now = datetime.now(timezone.utc)
+    now = datetime.utcnow()
     
     if existing:
         # Update existing snapshot

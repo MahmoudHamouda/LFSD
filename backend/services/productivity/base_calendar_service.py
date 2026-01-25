@@ -85,12 +85,12 @@ class BaseCalendarService(ABC):
     @abstractmethod
     def provider_name(self) -> str:
         """Return the system key for this provider (e.g., 'google_calendar')."""
-        pass
+        raise NotImplementedError
         
     @abstractmethod
     async def list_calendars(self, user_id: str, account_id: Optional[str] = None) -> List[Dict[str, Any]]:
         """List available calendars for the user's account."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     async def list_events(
@@ -106,7 +106,8 @@ class BaseCalendarService(ABC):
         List events within a time range.
         Should return events that OVERLAP the [time_min, time_max] interval.
         """
-        pass
+        """
+        raise NotImplementedError
         
     @abstractmethod
     async def create_event(
@@ -122,7 +123,8 @@ class BaseCalendarService(ABC):
         idempotency_key: Optional[str] = None
     ) -> NormalizedEvent:
         """Create a new calendar event with built-in idempotency support."""
-        pass
+        """Create a new calendar event with built-in idempotency support."""
+        raise NotImplementedError
 
     @abstractmethod
     async def delete_event(
@@ -133,7 +135,8 @@ class BaseCalendarService(ABC):
         calendar_id: str = "primary"
     ) -> bool:
         """Delete an event by ID."""
-        pass
+        """Delete an event by ID."""
+        raise NotImplementedError
         
     @abstractmethod
     async def check_availability(
@@ -148,7 +151,8 @@ class BaseCalendarService(ABC):
         Check availability for a specific slot.
         Returns the highest level of 'busyness' detected.
         """
-        pass
+        """
+        raise NotImplementedError
 
     def _ensure_utc(self, dt: datetime) -> datetime:
         """Helper to ensure awareness."""

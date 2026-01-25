@@ -71,8 +71,8 @@ class AuditService:
                 action=action,
                 entity_type=entity_type.upper().strip(),
                 entity_id=str(entity_id),
-                changes_json=changes,
-                metadata_json=actual_metadata,
+                changes_json=changes or {},
+                metadata_json=actual_metadata or {},
                 timestamp=datetime.utcnow(),
                 correlation_id=correlation_id
             )

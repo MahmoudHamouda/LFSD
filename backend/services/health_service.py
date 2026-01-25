@@ -5,6 +5,9 @@ import uuid
 from loguru import logger
 from models.models import HealthDailySummary, SleepSession, Workout
 from models.nutrition_logs import NutritionLog
+from core.config import get_settings
+
+settings = get_settings()
 
 class HealthService:
     def __init__(self, db: Session):
@@ -20,6 +23,8 @@ class HealthService:
     def log_workout(self, user_id: str, workout_data: dict) -> Workout:
         """Log a new workout with validation."""
         try:
+            if not workout_data.get("start_time") or not workout_data.get("end_time"):
+                 raise ValueError("Start and End times are required")
             start_time = datetime.fromisoformat(workout_data.get("start_time"))
             end_time = datetime.fromisoformat(workout_data.get("end_time"))
             
@@ -74,6 +79,8 @@ class HealthService:
     def log_nutrition(self, user_id: str, nutrition_data: dict) -> NutritionLog:
         """Log nutrition data with validation."""
         try:
+            if not nutrition_data.get("date"):
+                raise ValueError("Date is required")
             log_date = date.fromisoformat(nutrition_data.get("date"))
             
             log = NutritionLog(
@@ -143,7 +150,9 @@ class HealthService:
         WARNING: Only for dev/test environments.
         """
         # Safety check: Should ideally be gated by env var
-        # if not settings.DEBUG: return None 
+        if not settings.DEBUG: 
+             logger.warning("Mock data sync blocked: DEBUG mode is off")
+             return None 
         
         today = datetime.utcnow().date()
         

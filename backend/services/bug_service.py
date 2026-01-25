@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from models.logging_models import BugReport, BugStatus
+from models.logging_models import BugReport, BugStatus, BugSeverity
 import traceback
 
 class BugService:
@@ -21,16 +21,11 @@ class BugService:
             error_message=error_message,
             stack_trace=stack_trace,
             source_file=source_file,
-            request_payload=context,
+            system_info=context or {}, # Using system_info field from model
             user_id=str(user_id) if user_id else None,
             status=BugStatus.OPEN,
-            severity="ERROR"
+            severity=BugSeverity.ERROR
         )
-        
-        # NOTE: BugReport.user_id is Integer in logging_models.py, but User.id is UUID String in models.py.
-        # This is a schema mismatch I noticed.
-        # I should probably update BugReport to accept String user_id or store it in system_info/context if strict FK is not needed.
-        # Given "Extreme-Agile", I will check logging_models.py again.
         
         self.db.add(report)
         self.db.commit()

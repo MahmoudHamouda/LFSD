@@ -177,6 +177,9 @@ class WhatsAppService(BaseMessagingService):
         if not signature_header or not self.settings.SECRET_KEY:
             return False
             
+        if '=' not in signature_header:
+            return False
+
         sha_name, signature = signature_header.split('=')
         if sha_name != 'sha256':
             return False

@@ -8,7 +8,7 @@ from loguru import logger
 from fastapi import APIRouter, HTTPException, Response, Depends, Request
 from sqlalchemy.orm import Session
 from models.database import get_db
-from models.models import DBConversation, DBMessage, DBFinancial, DBTransaction, DBOrder, DBNotification, DBActivity
+from models.models import DBConversation, DBMessage, DBFinancial, DBTransaction, DBOrder, DBActivity
 from core.authentication import get_current_user
 from models.api_models import (
     Conversation,

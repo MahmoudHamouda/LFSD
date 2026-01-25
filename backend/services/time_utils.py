@@ -57,7 +57,7 @@ def parse_datetime(
              logger.warning(f"Parsed date is in the past: {dt} (Input: {time_str})")
              # We assume if they said "yesterday" they meant it, but if we strictly wanted future:
              # return None 
-             pass
+             # pass # Allow past dates for flexibility
 
         # Max horizon (e.g., 5 years) to prevent typos like "in 200 years"
         if dt > (now + datetime.timedelta(days=365*5)):

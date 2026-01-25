@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from models.database import get_db
-from models import User
+from models.models import User
 from models.growth_models import Subscription
 from models.growth_schemas import PlanId
 from core.auth0_utils import verify_auth0_token
@@ -14,6 +14,9 @@ from core.auth0_config import get_auth0_settings
 import uuid
 from datetime import datetime
 from typing import Optional
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -71,10 +74,10 @@ async def auth0_callback(
         settings = get_auth0_settings()
         
         userinfo_url = f"https://{settings.AUTH0_DOMAIN}/userinfo"
-        userinfo_resp = requests.get(userinfo_url, headers={"Authorization": f"Bearer {payload.token}"})
+        userinfo_resp = requests.get(userinfo_url, headers={"Authorization": f"Bearer {payload.token}"}, timeout=10)
         
         if not userinfo_resp.ok:
-             print(f"Failed to fetch userinfo: {userinfo_resp.text}")
+             logger.error(f"Failed to fetch userinfo: {userinfo_resp.text}")
              # Fallback to token claims if userinfo fails (unlikely)
              user_info = token_payload
         else:
@@ -124,7 +127,7 @@ async def auth0_callback(
                 db.add(user)
                 
                 # AUTOMATICALLY CREATE FREE SUBSCRIPTION
-                print(f"Creating FREE subscription for new user {email}")
+                logger.info(f"Creating FREE subscription for new user {email}")
                 new_sub = Subscription(
                     user_id=user.id,
                     plan_id=PlanId.FREE,
@@ -151,8 +154,8 @@ async def auth0_callback(
     except Exception as e:
         db.rollback()
         import traceback
-        print(f"[AUTH0 CALLBACK ERROR] {e}")
-        traceback.print_exc()
+        logger.error(f"[AUTH0 CALLBACK ERROR] {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=500,
             detail=f"Authentication callback failed: {str(e)}"
@@ -182,15 +185,13 @@ async def get_current_user(
                 detail="User not found. Please complete signup."
             )
         
-        # Universal JIT Auto-Seeding
-        # If user has no financial accounts, seed them with sample data (demo mode)
-        # This ensures every new signup immediately sees the "Happy Path"
-        from core.seeding import seed_user_data
-        # seed_user_data internally checks if data exists before writing
-        seeded = seed_user_data(db, user.id, "finance")
-        if seeded:
-             print(f"Universal seeding applied for {user.email}")
-             db.commit()
+        # Universal JIT Auto-Seeding: Removed for Production
+        # if settings.DEBUG:
+        #     from core.seeding import seed_user_data
+        #     seeded = seed_user_data(db, user.id, "finance")
+        #     if seeded:
+        #          logger.info(f"Universal seeding applied for {user.email}")
+        #          db.commit()
                  
         user_data = {
             "id": user.id,
@@ -210,8 +211,8 @@ async def get_current_user(
         raise
     except Exception as e:
         import traceback
-        print(f"[GET USER ERROR] {e}")
-        traceback.print_exc()
+        logger.error(f"[GET USER ERROR] {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=500,
             detail=f"Failed to fetch user: {str(e)}"

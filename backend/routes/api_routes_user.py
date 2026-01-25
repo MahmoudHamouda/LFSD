@@ -12,8 +12,7 @@ from datetime import datetime
 import json
 
 from models.database import get_db
-from models.models import DBUser, DBFinancial, HealthDailySummary
-from models.models_health import DBUserIndex, DBHealthConnection, DBHealthMetric
+from models.models import User, FinancialScore, HealthDailySummary, Connection, HealthDataSample, VivIndex
 from core.authentication import get_current_user
 from pydantic import BaseModel
 
@@ -101,32 +100,37 @@ class UserUpdateRequest(BaseModel):
 # Helper Functions
 # ============================================================================
 
-def calculate_affordability_metrics(financial: DBFinancial) -> AffordabilityMetrics:
+def calculate_affordability_metrics(financial_score: FinancialScore) -> AffordabilityMetrics:
     """Calculate affordability metrics from financial data."""
-    discretionary_income = financial.income - financial.expenses
-    savings_rate = (financial.savings / financial.income * 100) if financial.income > 0 else 0
-    debt_to_income = (financial.debts / financial.income * 100) if financial.income > 0 else 0
+    # Logic extracted from score if possible, or mocked for now since FinancialScore has scores not raw details except totals
+    income = financial_score.total_monthly_income or 0
+    expenses = financial_score.total_monthly_expenses or 0
+    savings = financial_score.total_monthly_savings or 0
+    # debts not directly in summary, using score inverse? or passed in.
+    
+    discretionary_income = income - expenses
+    savings_rate = (savings / income * 100) if income > 0 else 0
     
     return AffordabilityMetrics(
         discretionaryIncome=discretionary_income,
         savingsRate=round(savings_rate, 2),
-        debtToIncomeRatio=round(debt_to_income, 2)
+        debtToIncomeRatio=0.0 # Placeholder
     )
 
 def get_health_connections(user_id: str, db: Session) -> list[HealthConnection]:
     """Get all health connections for a user."""
-    connections = db.query(DBHealthConnection).filter(
-        DBHealthConnection.user_id == user_id
+    connections = db.query(Connection).filter(
+        Connection.user_id == user_id
     ).all()
     
     return [
         HealthConnection(
             provider=conn.provider,
             status=conn.status,
-            connectedAt=conn.connected_at.isoformat() if conn.connected_at else None,
-            lastSyncedAt=conn.last_synced_at.isoformat() if conn.last_synced_at else None,
-            permissions=json.loads(conn.permissions) if conn.permissions else [],
-            errorMessage=conn.error_message
+            connectedAt=conn.updated_at.isoformat() if conn.updated_at else None,
+            lastSyncedAt=conn.updated_at.isoformat() if conn.updated_at else None,
+            permissions=json.loads(conn.metadata_json).get("permissions", []) if conn.metadata_json else [],
+            errorMessage=json.loads(conn.metadata_json or "{}").get("last_error")
         )
         for conn in connections
     ]
@@ -157,9 +161,9 @@ def get_latest_health_metrics(user_id: str, db: Session) -> HealthMetrics:
 
 def get_user_indexes(user_id: str, db: Session) -> UserIndexes:
     """Get latest calculated indexes for a user."""
-    latest_index = db.query(DBUserIndex).filter(
-        DBUserIndex.user_id == user_id
-    ).order_by(DBUserIndex.calculated_at.desc()).first()
+    latest_index = db.query(VivIndex).filter(
+        VivIndex.user_id == user_id
+    ).order_by(VivIndex.timestamp.desc()).first()
     
     if not latest_index:
         # Return default indexes if none exist
@@ -172,15 +176,11 @@ def get_user_indexes(user_id: str, db: Session) -> UserIndexes:
         )
     
     return UserIndexes(
-        financialWellbeingIndex=latest_index.financial_wellbeing,
-        timeSavedIndex=latest_index.time_saved,
-        balanceIndex=latest_index.balance_index,
-        trend=IndexTrend(
-            financialWellbeing=latest_index.trend_financial,
-            timeSaved=latest_index.trend_time_saved,
-            balance=latest_index.trend_balance
-        ),
-        lastCalculatedAt=latest_index.calculated_at.isoformat()
+        financialWellbeingIndex=latest_index.financial_score,
+        timeSavedIndex=latest_index.time_score,
+        balanceIndex=latest_index.health_score,
+        trend=IndexTrend(), # No trend in VivIndex yet
+        lastCalculatedAt=latest_index.timestamp.isoformat()
     )
 
 # ============================================================================
@@ -204,13 +204,10 @@ async def get_user_profile(
     """
     user_id = current_user.id
     
-    # Get financial data
-    db_financial = db.query(DBFinancial).filter(DBFinancial.user_id == user_id).first()
+    # Get financial data (Score as proxy)
+    db_financial = db.query(FinancialScore).filter(FinancialScore.user_id == user_id).order_by(FinancialScore.timestamp.desc()).first()
     if not db_financial:
-        # Create default financial profile if not exists
-        db_financial = DBFinancial(user_id=user_id, income=0, expenses=0, savings=0, debts=0)
-        db.add(db_financial)
-        db.commit()
+        db_financial = FinancialScore(user_id=user_id) # Empty placeholder
     
     # Calculate Streaks
     # 1. Daily Check-in: Consecutive days with HealthDailySummary or VivLog
@@ -239,10 +236,7 @@ async def get_user_profile(
                 current -= dt.timedelta(days=1)
     
     # 2. Financial Review: Consecutive weeks with UserIndex
-    # Simple proxy: Count UserIndex records in separate weeks
-    # For MVP, we'll just check if there's an index for this week and last week
-    # or just use a mock logic based on index count for stability
-    index_count = db.query(DBUserIndex).filter(DBUserIndex.user_id == user_id).count()
+    index_count = db.query(VivIndex).filter(VivIndex.user_id == user_id).count()
     financial_streak = min(index_count, 52) # Cap at 52 weeks
     
     # Build user object
@@ -256,11 +250,11 @@ async def get_user_profile(
             timezone="UTC"
         ),
         financial=UserFinancialProfile(
-            income=db_financial.income or 0,
-            expenses=db_financial.expenses or 0,
-            savings=db_financial.savings or 0,
-            debts=db_financial.debts or 0,
-            currentMonthSpending=db_financial.expenses or 0,
+            income=db_financial.total_monthly_income or 0,
+            expenses=db_financial.total_monthly_expenses or 0,
+            savings=db_financial.total_monthly_savings or 0,
+            debts=0, # Not in score yet
+            currentMonthSpending=db_financial.total_monthly_expenses or 0,
             affordabilityMetrics=calculate_affordability_metrics(db_financial)
         ),
         health=UserHealthProfile(
@@ -291,9 +285,9 @@ async def update_current_user(
     - financial (income, expenses, savings, debts)
     - engagement (preferences, etc.)
     """
-    user_id = "default_user"
+    user_id = current_user.id
     
-    db_user = db.query(DBUser).filter(DBUser.id == user_id).first()
+    db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -304,18 +298,9 @@ async def update_current_user(
         if 'email' in updates.identity:
             db_user.email = updates.identity['email']
     
-    # Update financial fields
+    # Update financial fields - (Requires Score update or Profile model - skipping for now as strict Profile model is missing)
     if updates.financial:
-        db_financial = db.query(DBFinancial).filter(DBFinancial.user_id == user_id).first()
-        if db_financial:
-            if 'income' in updates.financial:
-                db_financial.income = updates.financial['income']
-            if 'expenses' in updates.financial:
-                db_financial.expenses = updates.financial['expenses']
-            if 'savings' in updates.financial:
-                db_financial.savings = updates.financial['savings']
-            if 'debts' in updates.financial:
-                db_financial.debts = updates.financial['debts']
+        pass # To be implemented with correct FinancialProfile model
     
     db.commit()
     

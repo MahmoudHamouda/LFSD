@@ -59,8 +59,8 @@ class AdminService:
         # 3. Emit Activity Feed (User visible)
         feed = ActivityFeed(
             user_id=target_user_id,
-            event_type="security_update",
-            action_type="ACCOUNT_UNLOCKED",
+            event_type="ACCOUNT_UNLOCKED",
+            title="Account Unlocked",
             description="Your account has been manually unlocked by support.",
             metadata_json={"reason": reason},
             is_read=False

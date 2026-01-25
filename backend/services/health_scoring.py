@@ -35,7 +35,8 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
             fused_data = get_health_metrics(user_id, db, period_days=30)
             metrics = fused_data.get("metrics", {})
             profile = fused_data.get("profile", {})
-        except:
+        except Exception as e:
+            logger.warning(f"Error fetching fused data: {e}")
             metrics = {}
             profile = {}
         
@@ -46,7 +47,8 @@ def compute_health_score(user_id: str, db: Session, override_input: Optional[Dic
                 db_onboarding = user.profile_json.get("onboarding_data", {})
             else:
                 db_onboarding = {}
-        except:
+        except Exception as e:
+            logger.warning(f"Error fetching user profile: {e}")
             db_onboarding = {}
         
         # Use override input (from API payload) if provided, otherwise DB

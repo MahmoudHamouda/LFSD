@@ -27,7 +27,8 @@ class BaseMessagingService(ABC):
     @abstractmethod
     def provider_name(self) -> str:
         """Return the provider identifier (e.g., 'whatsapp', 'sms')."""
-        pass
+        """Return the provider identifier (e.g., 'whatsapp', 'sms')."""
+        raise NotImplementedError
     
     @abstractmethod
     async def send_text_message(
@@ -38,7 +39,8 @@ class BaseMessagingService(ABC):
         **kwargs
     ) -> MessageResponse:
         """Send a plain text message."""
-        pass
+        """Send a plain text message."""
+        raise NotImplementedError
 
     @abstractmethod
     async def send_template_message(
@@ -51,4 +53,5 @@ class BaseMessagingService(ABC):
         **kwargs
     ) -> MessageResponse:
         """Send a pre-approved template message."""
-        pass
+        """Send a pre-approved template message."""
+        raise NotImplementedError

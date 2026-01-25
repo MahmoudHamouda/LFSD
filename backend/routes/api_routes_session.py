@@ -10,9 +10,12 @@ from models.models import User
 from core.authentication import (
     authenticate_user,
     create_access_token,
-    get_current_user,
-    get_settings  # Ensure this works or mock it
+    get_current_user
 )
+from core.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Define schemas
 class SessionLoginRequest(BaseModel):
@@ -43,7 +46,7 @@ async def check_session(
     """
     # Ensure we return the freshest data
     db.refresh(current_user)
-    print(f"DEBUG: /session checking user {current_user.id}. Status from DB: {current_user.onboarding_status}")
+    logger.debug(f"DEBUG: /session checking user {current_user.id}. Status from DB: {current_user.onboarding_status}")
     
     return SessionResponse(
         authenticated=True,
@@ -155,7 +158,7 @@ async def complete_onboarding(
 ):
     # Re-query user to ensure attached to current session and avoid detachment issues
     user_to_update = db.query(User).filter(User.id == current_user.id).first()
-    print(f"DEBUG: /complete called for user {current_user.id}. Current status: {user_to_update.onboarding_status if user_to_update else 'NOT FOUND'}")
+    logger.debug(f"DEBUG: /complete called for user {current_user.id}. Current status: {user_to_update.onboarding_status if user_to_update else 'NOT FOUND'}")
     
     if user_to_update:
         user_to_update.onboarding_status = "COMPLETE"
@@ -182,7 +185,7 @@ async def complete_onboarding(
         
         db.commit()
         db.refresh(user_to_update)
-        print(f"DEBUG: /complete committed. New status: {user_to_update.onboarding_status}")
+        logger.debug(f"DEBUG: /complete committed. New status: {user_to_update.onboarding_status}")
     
     return {"status": "success", "message": "Onboarding complete"}
 

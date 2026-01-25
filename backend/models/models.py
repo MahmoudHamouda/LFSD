@@ -506,10 +506,7 @@ class Order(Base):
 # Alias for backward compatibility if needed, but we prefer Order
 DBOrder = Order
 
-class DBNotification(Base):
-    __tablename__ = "notifications"
-    __table_args__ = {'extend_existing': True}
-    id = Column(String, primary_key=True, default=generate_uuid)
+
 
 
 class OnboardingSession(Base):

@@ -1,7 +1,7 @@
 import json
 import logging
 logger = logging.getLogger("gemini_service")
-logger.error("DEBUG: GEMINI_SERVICE MODULE RELOADED AT TOP")
+logger = logging.getLogger("gemini_service")
 from services.mobility.mobility_aggregator import MobilityAggregator
 from services.logic_engine import validate_financial_goal as validate_financial_goal_legacy
 from services.wealth_logic import validate_financial_goal
@@ -32,7 +32,7 @@ class GeminiService:
         self.db = db
         self.connection_service = ConnectionService(db)
         self.finance_service = FinanceService(db)
-        self.uber_service = UberService()
+        self.uber_service = UberService(db)
         self.mobility_aggregator = MobilityAggregator()
         
         # Initialize model - use exact model name from settings; DO NOT configure or fallback here.
@@ -717,12 +717,12 @@ class GeminiService:
                 
                 # Aggregation
                 breakdown_query = self.db.query(
-                    Transaction.category_primary, 
-                    func.sum(Transaction.amount).label('total')
+                    FinancialTransaction.category_primary, 
+                    func.sum(FinancialTransaction.amount).label('total')
                 ).filter(
-                    Transaction.user_id == user_id,
-                    Transaction.amount > 0
-                ).group_by(Transaction.category_primary).all()
+                    FinancialTransaction.user_id == user_id,
+                    FinancialTransaction.amount > 0
+                ).group_by(FinancialTransaction.category_primary).all()
                 
                 breakdown = [
                     {"category": row.category_primary or "Uncategorized", "amount": float(row.total)}
@@ -1004,11 +1004,11 @@ class GeminiService:
                 
                 if health_summary:
                     health_data = {
-                        "sleep_hours": health_summary.sleep_hours,
+                        "sleep_hours": (health_summary.sleep_duration_minutes or 0) / 60.0,
                         "sleep_quality": health_summary.sleep_quality_score,
                         "hrv": health_summary.hrv_average,
                         "steps": health_summary.steps_count,
-                        "calories": health_summary.active_calories
+                        "calories": 0 # health_summary.calories_burned not in model yet
                     }
             else:
                 print(f"DEBUG: Health data sharing disabled for user {user_id}")
@@ -1025,7 +1025,6 @@ class GeminiService:
                         "priority": g.priority
                     } for g in user.life_goals
                 ],
-                "preferences": user.viv_preferences if user.viv_preferences else {"risk_tolerance": "medium", "trade_off_rule": "balanced_living"},
                 "preferences": user.viv_preferences if user.viv_preferences else {"risk_tolerance": "medium", "trade_off_rule": "balanced_living"},
                 "crisis_mode": crisis_mode,
                 "recent_health_data": health_data,
@@ -1187,7 +1186,7 @@ class GeminiService:
         sys.stdout.flush()
 
         # Mock block disabled. Logic continues to normal flow.
-        pass
+        # Mock block disabled. Logic continues to normal flow.
 
         if not settings.GEMINI_API_KEY:
             return json.dumps({
@@ -1531,8 +1530,7 @@ Your goal is to *actively* optimize the user's life by balancing **Current Metri
         """
         Parses a bank statement PDF using Gemini 1.5 Flash (Multimodal).
         """
-        with open("debug_log.txt", "a") as f: f.write("DEBUG: parse_bank_statement called\n")
-        print("DEBUG: parse_bank_statement called")
+        logger.debug("DEBUG: parse_bank_statement called")
         
         prompt = """
         You are a financial data extraction expert. 
@@ -1570,8 +1568,7 @@ Your goal is to *actively* optimize the user's life by balancing **Current Metri
                 prompt
             ]
             
-            print("DEBUG: Calling Gemini generate_content (async)...")
-            with open("debug_log.txt", "a") as f: f.write("DEBUG: Calling Gemini generate_content (async)...\n")
+            logger.debug("DEBUG: Calling Gemini generate_content (async)...")
             
             # Use a simpler timeout approach - just return mock data if it takes too long
             # This is a temporary workaround until we can properly cancel the Gemini API call
@@ -1585,8 +1582,7 @@ Your goal is to *actively* optimize the user's life by balancing **Current Metri
                     timeout=30.0
                 )
                 
-                with open("debug_log.txt", "a") as f: f.write("DEBUG: Gemini response received\n")
-                print("DEBUG: Gemini response received")
+                logger.debug("DEBUG: Gemini response received")
                 
                 response_text = response.text
                 # Clean up markdown code blocks if present
@@ -1596,7 +1592,7 @@ Your goal is to *actively* optimize the user's life by balancing **Current Metri
                     response_text = response_text[:-3]
                     
                 data = json.loads(response_text)
-                with open("debug_log.txt", "a") as f: f.write("DEBUG: JSON parsed successfully\n")
+                logger.debug("DEBUG: JSON parsed successfully")
                 return data
                 
             except asyncio.TimeoutError:

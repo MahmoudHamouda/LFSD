@@ -1,5 +1,7 @@
 """
 Index API Routes
+from core.authentication import get_current_user
+from models.models import User
 
 Endpoints for calculating and retrieving user wellbeing indexes.
 """
@@ -34,7 +36,10 @@ class UserIndexes(BaseModel):
 # ============================================================================
 
 @router.post("/calculate")
-async def calculate_indexes(db: Session = Depends(get_db)):
+async def calculate_indexes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """
     Calculate user wellbeing indexes.
     
@@ -45,7 +50,8 @@ async def calculate_indexes(db: Session = Depends(get_db)):
     
     Stores results in database and returns calculated values with trends.
     """
-    user_id = "default_user"
+    user_id = current_user.id
+    
     
     try:
         indexes = calculate_user_indexes(user_id, db)
@@ -54,34 +60,39 @@ async def calculate_indexes(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Failed to calculate indexes: {str(e)}")
 
 @router.get("/current")
-async def get_current_indexes(db: Session = Depends(get_db)):
+async def get_current_indexes(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     """
     Get current user indexes without recalculating.
     
     Returns the most recently calculated indexes.
     """
-    user_id = "default_user"
+    user_id = current_user.id
     
-    from models.models_health import DBUserIndex
+    from models.models import VivIndex
     
-    latest = db.query(DBUserIndex).filter(
-        DBUserIndex.user_id == user_id
-    ).order_by(DBUserIndex.calculated_at.desc()).first()
+    latest = db.query(VivIndex).filter(
+        VivIndex.user_id == user_id
+    ).order_by(VivIndex.timestamp.desc()).first()
     
     if not latest:
         # Calculate if no indexes exist
-        return await calculate_indexes(db)
+        return await calculate_indexes(db, current_user)
     
     return {
         "indexes": {
-            "financialWellbeingIndex": latest.financial_wellbeing,
-            "timeSavedIndex": latest.time_saved,
-            "balanceIndex": latest.balance_index,
+        "indexes": {
+            "financialWellbeingIndex": latest.financial_score,
+            "timeSavedIndex": latest.time_score,
+            "balanceIndex": latest.health_score,
             "trend": {
-                "financialWellbeing": latest.trend_financial,
-                "timeSaved": latest.trend_time_saved,
-                "balance": latest.trend_balance
+                "financialWellbeing": 0.0,
+                "timeSaved": 0.0,
+                "balance": 0.0
             },
-            "lastCalculatedAt": latest.calculated_at.isoformat()
+            "lastCalculatedAt": latest.timestamp.isoformat()
+        }
         }
     }

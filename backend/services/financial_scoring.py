@@ -99,13 +99,11 @@ def calculate_financial_health_score(
         # Pillar 3: Discretionary Control
         discretionary_score = _compute_discretionary_control(transactions, onboarding_data, has_statements, verified_bills)
         
-        # Pillar 3: Discretionary Control
-        discretionary_score = _compute_discretionary_control(transactions, onboarding_data, has_statements, verified_bills)
-        
         # Pillar 4: Savings Rate
         savings_score = _compute_savings_rate(transactions, onboarding_data, has_statements)
         
-        # Pillar 5: Emergency Buffer (Now passing liquid_cash)
+        # Pillar 5: Emergency Buffer
+        liquid_cash = float(onboarding_data.get("cash_balance", 0) or 0)
         buffer_score = _compute_emergency_buffer(transactions, onboarding_data, has_statements, liquid_cash=liquid_cash)
         
         # Pillar 6: Debt Load
@@ -193,7 +191,7 @@ def calculate_financial_health_score(
 
     except Exception as e:
         import traceback
-        print(f"SCORING CRASH: {str(e)}\n{traceback.format_exc()}")
+        logger.error(f"SCORING CRASH: {str(e)}\n{traceback.format_exc()}")
         return {
             "overall_score": 0.0,
             "subscores": {k: 0.0 for k in WEIGHTS.keys()},

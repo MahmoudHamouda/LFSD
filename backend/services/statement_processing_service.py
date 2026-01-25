@@ -151,12 +151,8 @@ class GeminiParser:
                 
                 response_text = response.text
                 
-                # --- DEBUG LOGGING TO FILE ---
-                try:
-                    with open("debug_output.txt", "a", encoding="utf-8") as f:
-                        f.write(f"Gemini Response ({model_name}): {response_text[:500]}...\n")
-                except:
-                    pass
+                # --- DEBUG LOGGING ---
+                logger.debug(f"Gemini Response ({model_name}): {response_text[:500]}...")
                 # -----------------------------
 
                 # Clean up potential markdown code blocks
@@ -186,19 +182,14 @@ class GeminiParser:
                 # Validate with Pydantic
                 return ParsedStatement(**data)
 
-            except asyncio.TimeoutError:
                 msg = f"Model {model_name} timed out."
                 logger.warning(msg)
                 errors.append(msg)
-                with open("debug_output.txt", "a", encoding="utf-8") as f:
-                    f.write(f"ERROR: {msg}\n")
                 continue # Try next model
             except Exception as e:
                 msg = f"Model {model_name} failed: {e}"
                 logger.error(msg)
                 errors.append(msg)
-                with open("debug_output.txt", "a", encoding="utf-8") as f:
-                    f.write(f"ERROR: {msg}\n")
                 continue # Try next model
         
         # If all multimodal attempts failed, try text-based fallback
@@ -380,7 +371,7 @@ class StatementService:
 
             return {
                 "status": "success",
-                "statement_id": statement.id,
+                "statement_id": statement_id,
                 "data": parsed_data.dict(),
                 "processing_time": processing_time
             }

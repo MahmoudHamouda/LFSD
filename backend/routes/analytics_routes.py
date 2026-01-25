@@ -7,13 +7,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Dict, Any
 from models.database import get_db
-from models.models import DBInteraction, DBPriceHistory
-from core.authentication import get_current_user
-from core.rate_limiting import limiter
+from models.models import ActivityFeed, MobilityTrip, Order
 import json
-
-router = APIRouter(prefix="/analytics", tags=["Analytics"])
-
 
 @router.get("/interactions")
 @limiter.limit("60/minute")
@@ -22,23 +17,22 @@ async def get_user_interactions(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
-    """Get user's interaction history."""
+    """Get user's activity/interaction history."""
     user_id = current_user.id
     
-    interactions = db.query(DBInteraction).filter(
-        DBInteraction.user_id == user_id
-    ).order_by(DBInteraction.timestamp.desc()).limit(limit).all()
+    # Use ActivityFeed as primary source of "interactions"
+    query = db.query(ActivityFeed).filter(ActivityFeed.user_id == user_id)
+    interactions = query.order_by(ActivityFeed.created_at.desc()).limit(limit).all()
     
     return {
         "total": len(interactions),
         "interactions": [
             {
                 "id": i.id,
-                "type": i.interaction_type,
-                "provider": i.provider,
-                "details": json.loads(i.details) if i.details else {},
-                "timestamp": i.timestamp.isoformat(),
-                "conversation_id": i.conversation_id
+                "type": i.action_type,
+                "description": i.description,
+                "details": i.metadata_json,
+                "timestamp": i.created_at.isoformat()
             }
             for i in interactions
         ]
@@ -53,31 +47,37 @@ async def get_price_history(
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
-    """Get user's price history."""
+    """Get user's mobility price history (trips)."""
     user_id = current_user.id
     
-    query = db.query(DBPriceHistory).filter(DBPriceHistory.user_id == user_id)
+    query = db.query(MobilityTrip).filter(MobilityTrip.user_id == user_id)
     
     if provider:
-        query = query.filter(DBPriceHistory.provider == provider)
+        query = query.filter(MobilityTrip.provider == provider)
     
-    prices = query.order_by(DBPriceHistory.timestamp.desc()).limit(limit).all()
+    # Exclude trips without cost
+    query = query.filter(MobilityTrip.cost_amount.isnot(None))
     
+    trips = query.order_by(MobilityTrip.id.desc()).limit(limit).all() # No timestamp directly on Trip? 
+    # MoblityTrip has pickup_time
+    
+    results = []
+    for t in trips:
+        ts = t.pickup_time or datetime.utcnow()
+        results.append({
+            "id": t.id,
+            "provider": t.provider,
+            "ride_type": t.trip_type,
+            "price": t.cost_amount,
+            "currency": t.currency,
+            "start": {"lat": t.origin_lat, "lon": t.origin_lon},
+            "end": {"lat": t.destination_lat, "lon": t.destination_lon},
+            "timestamp": ts.isoformat()
+        })
+        
     return {
-        "total": len(prices),
-        "prices": [
-            {
-                "id": p.id,
-                "provider": p.provider,
-                "ride_type": p.ride_type,
-                "price": p.price_estimate,
-                "currency": p.currency,
-                "start": json.loads(p.start_location) if p.start_location else None,
-                "end": json.loads(p.end_location) if p.end_location else None,
-                "timestamp": p.timestamp.isoformat()
-            }
-            for p in prices
-        ]
+        "total": len(results),
+        "prices": results
     }
 
 
@@ -90,26 +90,33 @@ async def get_popular_routes(
     """Get user's most requested routes."""
     user_id = current_user.id
     
-    # Group by start/end location pairs
+    # Group by lat/lon roughly? 
+    # For now, simplistic exact match on coords (unlikely to hit often without snapping)
+    # or just return raw list
+    
     routes = db.query(
-        DBPriceHistory.start_location,
-        DBPriceHistory.end_location,
-        func.count(DBPriceHistory.id).label('count'),
-        func.avg(DBPriceHistory.price_estimate).label('avg_price')
+        MobilityTrip.origin_lat,
+        MobilityTrip.origin_lon,
+        MobilityTrip.destination_lat,
+        MobilityTrip.destination_lon,
+        func.count(MobilityTrip.id).label('count'),
+        func.avg(MobilityTrip.cost_amount).label('avg_price')
     ).filter(
-        DBPriceHistory.user_id == user_id
+        MobilityTrip.user_id == user_id
     ).group_by(
-        DBPriceHistory.start_location,
-        DBPriceHistory.end_location
-    ).order_by(func.count(DBPriceHistory.id).desc()).limit(10).all()
+        MobilityTrip.origin_lat,
+        MobilityTrip.origin_lon,
+        MobilityTrip.destination_lat,
+        MobilityTrip.destination_lon
+    ).order_by(func.count(MobilityTrip.id).desc()).limit(10).all()
     
     return {
         "routes": [
             {
-                "start": json.loads(r.start_location) if r.start_location else None,
-                "end": json.loads(r.end_location) if r.end_location else None,
+                "start": {"lat": r.origin_lat, "lon": r.origin_lon},
+                "end": {"lat": r.destination_lat, "lon": r.destination_lon},
                 "request_count": r.count,
-                "average_price": round(r.avg_price, 2)
+                "average_price": round(r.avg_price, 2) if r.avg_price else 0
             }
             for r in routes
         ]
@@ -125,13 +132,15 @@ async def get_provider_usage(
     """Get provider usage statistics."""
     user_id = current_user.id
     
-    # Count interactions by provider
+    # combine mobility and orders?
+    # For now, just MobilityTrip
+    
     provider_stats = db.query(
-        DBInteraction.provider,
-        func.count(DBInteraction.id).label('count')
+        MobilityTrip.provider,
+        func.count(MobilityTrip.id).label('count')
     ).filter(
-        DBInteraction.user_id == user_id
-    ).group_by(DBInteraction.provider).all()
+        MobilityTrip.user_id == user_id
+    ).group_by(MobilityTrip.provider).all()
     
     return {
         "providers": [
