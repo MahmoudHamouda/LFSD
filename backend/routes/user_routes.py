@@ -179,7 +179,7 @@ async def login_for_access_token(
 
 @router.get("/me", summary="Get current user profile")
 @limiter.limit("60/minute")
-async def read_users_me(*, current_user=Depends(get_current_user)) -> dict[str, Any]:
+async def read_users_me(request: Request, current_user=Depends(get_current_user)) -> dict[str, Any]:
     """Return the profile of the authenticated user."""
     return {
         "user": {
