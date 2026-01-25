@@ -7,7 +7,7 @@ endpoints in this router require authentication and may be rate limited.
 
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from core.authentication import get_current_user
 from core.rate_limiting import limiter
@@ -20,6 +20,7 @@ router = APIRouter(prefix="/feedback", tags=["Feedback"])
 @limiter.limit("20/minute")
 async def list_feedback(
     *,
+    request: Request,
     current_user=Depends(get_current_user),
     limit: int = Query(20, ge=1, le=100),
     cursor: Optional[str] = Query(None),
@@ -32,6 +33,7 @@ async def list_feedback(
 @limiter.limit("10/minute")
 async def create_feedback(
     *,
+    request: Request,
     current_user=Depends(get_current_user),
     message: str,
 ) -> dict[str, Any]:

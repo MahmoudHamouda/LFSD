@@ -5,7 +5,7 @@ Expose endpoints to retrieve user activity feeds.
 """
 
 from typing import Any, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from core.authentication import get_current_user
@@ -19,6 +19,7 @@ router = APIRouter(prefix="/activity", tags=["Activity"])
 @limiter.limit("30/minute")
 async def get_activity_feed(
     *,
+    request: Request,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
     limit: int = Query(20, ge=1, le=100),

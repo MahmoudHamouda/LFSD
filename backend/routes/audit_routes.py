@@ -8,7 +8,7 @@ with real business logic and persistent storage.
 
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from core.authentication import get_current_user
 from core.rate_limiting import limiter
@@ -25,6 +25,7 @@ router = APIRouter(prefix="/audit", tags=["Audit"])
 @limiter.limit("20/minute")
 async def list_audits(
     *,
+    request: Request,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
     limit: int = Query(20, ge=1, le=100),

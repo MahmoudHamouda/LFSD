@@ -2,7 +2,7 @@
 Analytics routes for viewing user interactions and usage patterns.
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Dict, Any
@@ -13,6 +13,7 @@ import json
 @router.get("/interactions")
 @limiter.limit("60/minute")
 async def get_user_interactions(
+    request: Request,
     limit: int = 50,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -42,6 +43,7 @@ async def get_user_interactions(
 @router.get("/price-history")
 @limiter.limit("60/minute")
 async def get_price_history(
+    request: Request,
     provider: str = None,
     limit: int = 50,
     current_user=Depends(get_current_user),
@@ -84,6 +86,7 @@ async def get_price_history(
 @router.get("/popular-routes")
 @limiter.limit("60/minute")
 async def get_popular_routes(
+    request: Request,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
@@ -126,6 +129,7 @@ async def get_popular_routes(
 @router.get("/provider-usage")
 @limiter.limit("60/minute")
 async def get_provider_usage(
+    request: Request,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
