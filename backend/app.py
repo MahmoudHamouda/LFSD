@@ -44,7 +44,6 @@ except Exception:
     logging.basicConfig(level=logging.INFO)
     logger = _FallbackLogger(name="lfsd_app", level=logging.INFO)  # type: ignore
 
-from core.config import get_settings
 from core.rate_limiting import RateLimitExceeded, RateLimitMiddleware, limiter
 
 
@@ -55,6 +54,7 @@ from models.auth_schemas import LoginRequest, RegisterRequest
 def create_app() -> FastAPI:
     """Create and configure a FastAPI application."""
     setup_logging() # Configure structured logging
+    settings = get_settings()
     logger.error("!!! APP FACTORY CALLED - FULL PRODUCTION RESTORE !!!")
 
     # --- CLOUD SQL CONFIGURATION ---
@@ -256,7 +256,6 @@ def create_app() -> FastAPI:
         raise e
     
     from routes import recommendation_routes, partner_routes, api_routes
-    app.include_router(recommendation_routes.router, prefix="/api")
     app.include_router(partner_routes.router, prefix="/api")
     app.include_router(api_routes.router) # Exposes /.auth/me and others at root
     
@@ -483,25 +482,11 @@ def create_app() -> FastAPI:
     
     
     @app.on_event("startup")
+    @app.on_event("startup")
     async def startup_event():
         print("Startup event fired.")
-        # Auto-migrate: Add auth0_id if missing
-        try:
-            from models.database import SessionLocal
-            from sqlalchemy import text
-            with SessionLocal() as db:
-                print("Checking schema for auth0_id...")
-                db.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS auth0_id VARCHAR;"))
-                print("Checking schema for life_goals.pillar...")
-                # Try adding pillar column; ignore errors if exists (using exception handling as IF NOT EXISTS for column is Postgres 9.6+, safe to just catch)
-                try:
-                    db.execute(text("ALTER TABLE life_goals ADD COLUMN IF NOT EXISTS pillar VARCHAR DEFAULT 'finance';"))
-                except Exception as ex:
-                    print(f"Migration note: {ex}")
-                db.commit()
-                print("Schema check/migration completed successfully.")
-        except Exception as e:
-            print(f"Schema migration warning: {e}") 
+        # NOTE: Schema migrations should be handled via Alembic, not here.
+        pass 
         
     @app.on_event("shutdown")
     async def shutdown_event():

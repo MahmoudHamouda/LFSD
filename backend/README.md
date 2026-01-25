@@ -22,14 +22,14 @@ The backend for the Life Operating System (LFSD), built with FastAPI and SQLAlch
 1.  **Prerequisites**: Python 3.9+
 2.  **Install Dependencies**:
     ```bash
-    pip install -r requirements.txt
+    pip install -r backend/requirements.txt
     ```
-    *(Note: Ensure you are in the root or have the correct virtual environment active)*
+    *(Note: Use root requirements.txt only if you are containerizing the entire repo)*
 
 3.  **Environment Variables**:
     Create a `.env` file in the `backend/` directory (or root, depending on config):
     ```env
-    DATABASE_URL=sqlite:///./lfsd.db
+    DATABASE_URL=sqlite:///backend/lfsd.db
     SECRET_KEY=your_secret_key
     GEMINI_API_KEY=your_gemini_key_or_mock
     DEBUG=True
