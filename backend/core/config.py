@@ -7,6 +7,8 @@ load_dotenv()
 class Settings:
     # Application Configuration
     ENV = os.getenv('ENV', 'dev')
+    DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
+    API_V1_STR = os.getenv('API_V1_STR', '/api')
     
     # Security Secrets
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
