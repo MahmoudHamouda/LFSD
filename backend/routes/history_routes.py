@@ -25,8 +25,7 @@ from models.api_models import (
 )
 import traceback
 import sys
-sys.path.append('services')
-from services.integrations.uber_service import get_uber_service
+
 
 router = APIRouter(prefix="/history")
 
