@@ -1,12 +1,23 @@
+
 steps:
-  # Build the container image
+  # Build the container image (tag with commit SHA)
   - name: "gcr.io/cloud-builders/docker"
     dir: "backend"
-    args: ["build", "-t", "gcr.io/newprojectlfsd/backend:latest", "."]
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/newprojectlfsd/backend:${SHORT_SHA}",
+        "."
+      ]
 
   # Push the container image
   - name: "gcr.io/cloud-builders/docker"
-    args: ["push", "gcr.io/newprojectlfsd/backend:latest"]
+    args:
+      [
+        "push",
+        "gcr.io/newprojectlfsd/backend:${SHORT_SHA}"
+      ]
 
   # Deploy container image to Cloud Run
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
@@ -15,8 +26,9 @@ steps:
       - "run"
       - "deploy"
       - "lfsd-backend"
+      - "--quiet"
       - "--image"
-      - "gcr.io/newprojectlfsd/backend:latest"
+      - "gcr.io/newprojectlfsd/backend:${SHORT_SHA}"
       - "--region"
       - "us-central1"
       - "--platform"
@@ -24,6 +36,10 @@ steps:
       - "--allow-unauthenticated"
       - "--port"
       - "8080"
+      # labels MUST be a single arg, no spaces
+      - "--update-labels=managed-by=cloud-build,commit-sha=${COMMIT_SHA}"
+      # optional: deploy new revision but keep traffic on current
+      # - "--no-traffic"
 
 images:
-  - "gcr.io/newprojectlfsd/backend:latest"
+  - "gcr.io/newprojectlfsd/backend:${SHORT_SHA}"
