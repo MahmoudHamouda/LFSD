@@ -1,8 +1,8 @@
-"""modernization_fixes
+"""initial_schema_unified
 
-Revision ID: edca6614b3e8
+Revision ID: fa3544f15155
 Revises: 
-Create Date: 2026-01-25 07:19:13.951892
+Create Date: 2026-01-25 07:26:37.468519
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'edca6614b3e8'
+revision: str = 'fa3544f15155'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -653,7 +653,7 @@ def upgrade() -> None:
     sa.Column('financial_index', sa.Float(), nullable=False),
     sa.Column('time_index', sa.Float(), nullable=False),
     sa.Column('balance_index', sa.Float(), nullable=False),
-    sa.Column('time_window', sa.String(length=20), nullable=False),
+    sa.Column('time_window', sa.Enum('LAST_7_DAYS', 'LAST_30_DAYS', 'LAST_90_DAYS', 'ALL_TIME', name='timewindow'), nullable=False),
     sa.Column('confidence', sa.Float(), nullable=False),
     sa.Column('calculated_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=False),
     sa.Column('data_sources', sa.JSON(), nullable=False),

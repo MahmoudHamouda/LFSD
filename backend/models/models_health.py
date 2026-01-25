@@ -59,12 +59,21 @@ class MetricType(str, enum.Enum):
     OXYGEN_SATURATION = "oxygen_saturation"
 
 
+
 class SyncFrequency(str, enum.Enum):
     """Data sync frequency options."""
     REALTIME = "realtime"
     HOURLY = "hourly"
     DAILY = "daily"
     WEEKLY = "weekly"
+
+
+class TimeWindow(str, enum.Enum):
+    """Time windows for index calculation."""
+    LAST_7_DAYS = "last_7_days"
+    LAST_30_DAYS = "last_30_days"
+    LAST_90_DAYS = "last_90_days"
+    ALL_TIME = "all_time"
 
 
 # ============================================================================
@@ -165,7 +174,9 @@ class DBUserIndex(Base):
     balance_index = Column(Float, default=0.0, nullable=False)
     
     # Metadata
-    time_window = Column(String(20), default="last_30_days", nullable=False)  # TODO: Enum
+
+    # Metadata
+    time_window = Column(Enum(TimeWindow), default=TimeWindow.LAST_30_DAYS, nullable=False)
     confidence = Column(Float, default=0.0, nullable=False)
     
     calculated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
