@@ -193,6 +193,7 @@ async def read_users_me(*, current_user=Depends(get_current_user)) -> dict[str, 
                 "username": current_user.email,
                 "firstName": current_user.profile_json.get("name", "").split(" ")[0] if current_user.profile_json else "",
                 "lastName": current_user.profile_json.get("name", "").split(" ")[1] if current_user.profile_json and " " in current_user.profile_json.get("name", "") else "",
+                "phoneNumber": current_user.profile_json.get("phone", "") if current_user.profile_json else "",
                 "profile": current_user.profile_json,
                 "vivPreferences": current_user.viv_preferences
             },
@@ -223,7 +224,11 @@ async def update_user_me(
             profile["name"] = full_name
             current_user.profile_json = profile
 
-        # TODO: Handle other identity fields like phone if we add columns
+        if ident.phoneNumber:
+             profile = current_user.profile_json or {}
+             profile = dict(profile)
+             profile["phone"] = ident.phoneNumber
+             current_user.profile_json = profile
 
     # 2. Update Preferences
     if updates.vivPreferences:

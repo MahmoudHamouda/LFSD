@@ -58,7 +58,6 @@ async def list_users(
 ) -> Any:
     """
     List users with status.
-    TODO: Add isAdmin check for current_user.
     """
     # Verify Admin
     if getattr(current_user, "role", None) != "admin":

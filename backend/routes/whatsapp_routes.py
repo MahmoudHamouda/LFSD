@@ -67,8 +67,28 @@ async def receive_webhook(request: Request) -> Dict[str, str]:
                             text_body = message.get("text", {}).get("body")
                             logger.info(f"Text message: {text_body}")
                             
-                            # TODO: Process message with Gemini AI
-                            # TODO: Send response back via WhatsApp
+                            # Process message with Gemini AI
+                            try:
+                                from services.gemini_service import GeminiService
+                                from services.messaging.whatsapp_service import WhatsAppService
+                                from models.database import SessionLocal
+                                
+                                # Use a fresh session for this background-like processing
+                                with SessionLocal() as db:
+                                    gemini = GeminiService(db)
+                                    # Identify user by phone number (from_number)
+                                    # For now, we might need a lookup utility or assume from_number is the ID if we had phone auth
+                                    # Fallback: Treat as anonymous or find user by phone (TODO: implement phone lookup)
+                                    user_id = "whatsapp_user" 
+                                    
+                                    response_text = gemini.generate_response(user_id, text_body)
+                                    
+                                    # Send response back
+                                    whatsapp_svc = WhatsAppService()
+                                    whatsapp_svc.send_message(to_number=from_number, message_text=response_text)
+                                    
+                            except Exception as ai_error:
+                                logger.error(f"AI processing failed: {ai_error}")
         
         return {"status": "ok"}
         

@@ -61,17 +61,42 @@ class Observability:
         """
         Sends event to Google Analytics 4.
         """
-        # TODO: Implement actual HTTP call to GA4 Measurement Protocol
-        # For now, just structured log it
-        logger.info(
-            f"GA4 EVENT: {event_name}",
-            extra={
-                "event_type": "ga4_event",
-                "ga4_name": event_name,
-                "ga4_params": params,
-                "user_id": user_id
+        if not user_id:
+            # GA4 prefers user_id if available, otherwise we use client_id if we had it.
+            # For backend tracking, without a client_id from frontend, it's hard to session stitch.
+            # We'll rely on the logger for now if no user_id, but try to send if we have credentials.
+            pass
+
+        try:
+            # Basic Fire-and-Forget implementation
+            import httpx
+            
+            measurement_id = "G-XXXXXXXXXX"  # TODO: Move to config
+            api_secret = "wu89723h...."     # TODO: Move to config
+            
+            if "G-" not in measurement_id:
+                # If not configured, just log
+                logger.info(f"GA4 (Mock): {event_name} - {params}")
+                return
+
+            payload = {
+                "client_id": user_id or str(uuid.uuid4()), # Fallback client_id
+                "user_id": user_id,
+                "events": [{
+                    "name": event_name,
+                    "params": params
+                }]
             }
-        )
+            
+            # Fire sync for now to keep it simple, or use background task if within FastAPI context
+            # For this static method, we'll swallow errors to avoid breaking app flow
+            httpx.post(
+                f"https://www.google-analytics.com/mp/collect?measurement_id={measurement_id}&api_secret={api_secret}",
+                json=payload,
+                timeout=2.0
+            )
+        except Exception as e:
+            logger.warning(f"Failed to send GA4 event: {e}")
 
     @staticmethod
     def _safe_commit(session: Session, obj):

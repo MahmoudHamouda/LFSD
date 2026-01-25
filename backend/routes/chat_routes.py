@@ -17,10 +17,56 @@ from core.rate_limiting import limiter
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
-def _send_message_async(message: str) -> None:
-    """Stubbed background task to process chat messages."""
-    # TODO: integrate with chat service
-    return None
+def _send_message_async(message: str, user_id: str) -> None:
+    """Background task to process chat messages."""
+    from models.database import SessionLocal
+    from models.chat_models import Message, Conversation
+    from services.gemini_service import GeminiService
+    import uuid
+    from datetime import datetime
+    
+    db = SessionLocal()
+    try:
+        # 1. Ensure Conversation Exists (simple assumption: 1 active convo for now or create new)
+        # For simplicity, let's create a new conversation id or find latest
+        convo = db.query(Conversation).filter(Conversation.user_id == user_id).order_by(Conversation.date.desc()).first()
+        if not convo:
+            convo = Conversation(id=str(uuid.uuid4()), user_id=user_id, title="New Chat", date=datetime.utcnow())
+            db.add(convo)
+            db.commit()
+            
+        # 2. Save User Message
+        user_msg = Message(
+            id=str(uuid.uuid4()),
+            conversation_id=convo.id,
+            user_id=user_id,
+            role="user",
+            content=message,
+            date=datetime.utcnow()
+        )
+        db.add(user_msg)
+        db.commit()
+        
+        # 3. Generate AI Response
+        gemini = GeminiService(db)
+        ai_response_text = gemini.generate_response(user_id, message)
+        
+        # 4. Save AI Response
+        ai_msg = Message(
+            id=str(uuid.uuid4()),
+            conversation_id=convo.id,
+            user_id=user_id,
+            role="assistant",
+            content=ai_response_text,
+            date=datetime.utcnow()
+        )
+        db.add(ai_msg)
+        db.commit()
+        
+    except Exception as e:
+        print(f"Error in chat background task: {e}")
+    finally:
+        db.close()
 
 
 @router.post("/messages", summary="Send a chat message")
@@ -35,7 +81,7 @@ async def send_message(
     Accept a chat message from the authenticated user and trigger asynchronous
     processing. Returns a 202 response indicating acceptance.
     """
-    background_tasks.add_task(_send_message_async, message)
+    background_tasks.add_task(_send_message_async, message, current_user.id)
     return {"data": {"accepted": True}}
 
 

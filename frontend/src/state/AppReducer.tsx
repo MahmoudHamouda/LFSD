@@ -41,7 +41,7 @@ export const appStateReducer = (state: AppState, action: Action): AppState => {
           if (state.currentChat?.id === action.payload.id) {
             state.currentChat.title = action.payload.title;
           }
-          // TODO: Make API call to save the new title to DB
+          // Note: API calls should be handled in the action creator
           return { ...chat, title: action.payload.title };
         }
         return chat;
@@ -57,17 +57,13 @@ export const appStateReducer = (state: AppState, action: Action): AppState => {
         (chat) => chat.id !== action.payload
       );
       state.currentChat = null;
-      // TODO: Make API call to delete the conversation from DB
+      state.currentChat = null;
+      // Note: API calls should be handled in the action creator
       return { ...state, chatHistory: filteredChat };
 
     case 'DELETE_CHAT_HISTORY':
       // Clear all chat history
-      // TODO: Make API call to delete all conversations from DB
-      return { ...state, chatHistory: [], filteredChatHistory: [], currentChat: null };
-
-    case 'DELETE_CURRENT_CHAT_MESSAGES':
-      // Clear messages in the current conversation
-      // TODO: Make API call to delete current conversation messages from DB
+      // Note: API calls should be handled in the action creator, not the reducer
       if (!state.currentChat || !state.chatHistory) {
         return state;
       }

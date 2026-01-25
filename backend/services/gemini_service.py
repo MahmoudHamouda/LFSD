@@ -715,7 +715,19 @@ class GeminiService:
                 # For Demo purposes, if we have seed data, we might want to show SOMETHING? 
                 # No, audit requirement is "Do not lie".
                 
-                breakdown = [] # TODO: implement real group_by logic
+                # Aggregation
+                breakdown_query = self.db.query(
+                    Transaction.category_primary, 
+                    func.sum(Transaction.amount).label('total')
+                ).filter(
+                    Transaction.user_id == user_id,
+                    Transaction.amount > 0
+                ).group_by(Transaction.category_primary).all()
+                
+                breakdown = [
+                    {"category": row.category_primary or "Uncategorized", "amount": float(row.total)}
+                    for row in breakdown_query
+                ]
             except Exception as e:
                 logger.error(f"Error querying financials: {e}")
                 return {"type": "error", "text": "I had trouble accessing your financial records."}
