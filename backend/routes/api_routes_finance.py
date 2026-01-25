@@ -2,14 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from models.database import get_db
-from leniency import Leniency # Placeholder if needed, but removing duplicates
+# from leniency import Leniency # Removed invalid import
 from services.finance_service import FinanceService
 from services.statement_processing_service import StatementService
 from core.authentication import get_current_user
 from models.models import User, FinancialScore
 from datetime import datetime
 import base64
+import logging
 from fastapi import Body, Request
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/finance", tags=["finance"])
 
@@ -213,9 +216,7 @@ async def get_category_coverage(
             "expected_unlock_date": (datetime.utcnow() + timedelta(days=max(0, required - days_with_data))).strftime("%Y-%m-%d")
         }
     except Exception as e:
-        import traceback
-        print(f"ERROR in coverage: {e}")
-        traceback.print_exc()
+        logger.error(f"ERROR in coverage: {e}", exc_info=True)
         return {
             "category_id": category_id,
             "error": str(e),
