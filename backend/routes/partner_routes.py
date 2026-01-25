@@ -8,7 +8,7 @@ real partner onboarding and management features.
 
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 
 from core.authentication import get_current_user
 from core.rate_limiting import limiter
@@ -21,6 +21,7 @@ router = APIRouter(prefix="/partners", tags=["Partners"])
 @limiter.limit("10/minute")
 async def list_partners(
     *,
+    request: Request,
     current_user=Depends(get_current_user),
     limit: int = Query(20, ge=1, le=100),
     cursor: Optional[str] = Query(None),
@@ -54,6 +55,7 @@ async def list_partners(
 @limiter.limit("5/minute")
 async def connect_partner(
     partner_id: str,
+    request: Request,
     current_user=Depends(get_current_user)
 ) -> dict[str, Any]:
     """Connect a partner integration."""
@@ -72,6 +74,7 @@ async def connect_partner(
 @limiter.limit("5/minute")
 async def disconnect_partner(
     partner_id: str,
+    request: Request,
     current_user=Depends(get_current_user)
 ) -> dict[str, Any]:
     """Disconnect a partner integration."""
@@ -90,6 +93,7 @@ async def disconnect_partner(
 async def update_partner_permissions(
     partner_id: str,
     permissions: dict[str, bool],
+    request: Request,
     current_user=Depends(get_current_user)
 ) -> dict[str, Any]:
     """Update permissions for a partner."""
@@ -105,6 +109,7 @@ async def update_partner_permissions(
 @router.get("/inventory", summary="Get partner inventory")
 @limiter.limit("20/minute")
 async def get_inventory(
+    request: Request,
     type: str = Query(..., description="Type of inventory (e.g., car)"),
     budget_max: Optional[float] = Query(None),
     city: Optional[str] = Query(None),

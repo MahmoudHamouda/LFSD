@@ -1,5 +1,5 @@
 from typing import Any, Optional
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy.orm import Session
 
 from core.authentication import get_current_user
@@ -14,6 +14,7 @@ router = APIRouter(prefix="", tags=["Home"])
 @router.get("/recommendations", summary="Get recommendations")
 @limiter.limit("15/minute")
 async def get_recommendations(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> dict[str, Any]:
@@ -24,6 +25,7 @@ async def get_recommendations(
 @router.get("/treats", summary="Get treats")
 @limiter.limit("15/minute")
 async def get_treats(
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> dict[str, Any]:

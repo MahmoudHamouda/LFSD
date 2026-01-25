@@ -6,7 +6,7 @@ authentication via JWT and are rate limited.
 """
 
 from typing import Any, Optional, List
-from fastapi import APIRouter, Depends, Query, HTTPException, Body
+from fastapi import APIRouter, Depends, Query, HTTPException, Body, Request
 from sqlalchemy.orm import Session
 
 from core.authentication import get_current_user
@@ -51,6 +51,7 @@ class AuditLogOut(BaseModel):
 @limiter.limit("20/minute")
 async def list_users(
     *,
+    request: Request,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
     skip: int = Query(0, ge=0),
@@ -71,6 +72,7 @@ async def list_users(
 @limiter.limit("5/minute")
 async def unlock_user(
     *,
+    request: Request,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
     payload: UnlockRequest
@@ -95,6 +97,7 @@ async def unlock_user(
 @limiter.limit("20/minute")
 async def list_audits(
     *,
+    request: Request,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
     limit: int = Query(50, ge=1, le=100),

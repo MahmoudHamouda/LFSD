@@ -5,7 +5,7 @@ Provides REST API endpoints for mobility services including price comparison,
 ride booking, and ride tracking across multiple providers.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from typing import Optional, Dict, Any
 from pydantic import BaseModel
 from core.authentication import get_current_user
@@ -36,6 +36,7 @@ class BookRideRequest(BaseModel):
 @router.get("/compare-prices", summary="Compare prices across providers")
 @limiter.limit("30/minute")
 async def compare_prices(
+    request: Request,
     start_lat: float = Query(..., description="Starting latitude"),
     start_lng: float = Query(..., description="Starting longitude"),
     end_lat: float = Query(..., description="Ending latitude"),
@@ -71,6 +72,7 @@ async def compare_prices(
 @router.get("/cheapest", summary="Get cheapest ride option")
 @limiter.limit("30/minute")
 async def get_cheapest(
+    request: Request,
     start_lat: float = Query(..., description="Starting latitude"),
     start_lng: float = Query(..., description="Starting longitude"),
     end_lat: float = Query(..., description="Ending latitude"),
@@ -113,6 +115,7 @@ async def get_cheapest(
 @limiter.limit("10/minute")
 async def book_ride(
     request: BookRideRequest,
+    req: Request,
     current_user = Depends(get_current_user)
 ):
     """
@@ -143,6 +146,7 @@ async def book_ride(
 async def book_cheapest(
     start_location: LocationModel,
     end_location: LocationModel,
+    request: Request,
     current_user = Depends(get_current_user)
 ):
     """
@@ -170,6 +174,7 @@ async def book_cheapest(
 async def get_ride_status(
     provider: str,
     ride_id: str,
+    request: Request,
     current_user = Depends(get_current_user)
 ):
     """
