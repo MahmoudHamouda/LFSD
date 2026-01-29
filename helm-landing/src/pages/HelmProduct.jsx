@@ -65,7 +65,7 @@ const HelmProduct = () => {
             <section className="section container text-center">
                 <h2>Ready to start?</h2>
                 <div className="flex justify-center gap-sm">
-                    <button className="btn btn-primary">Sign up now</button>
+                    <a href="https://app.helmory.com/signup" className="btn btn-primary">Sign up now</a>
                 </div>
             </section>
         </div>
