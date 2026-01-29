@@ -17,7 +17,10 @@ function App() {
       <div className="app-layout">
         <header style={{ height: 'var(--header-height)', borderBottom: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', position: 'sticky', top: 0, zIndex: 100 }}>
           <div className="container flex items-center justify-between" style={{ height: '100%' }}>
-            <Link to="/" style={{ fontWeight: 700, fontSize: '1.25rem' }}>Helmory</Link>
+            <Link to="/" style={{ fontWeight: 700, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <img src="/helm-logo.png" alt="Helmory" style={{ height: '32px' }} />
+              <span>Helmory</span>
+            </Link>
 
             {/* Desktop Nav */}
             <nav className="desktop-nav flex items-center gap-md" style={{ display: 'none' }}>
@@ -29,8 +32,8 @@ function App() {
             </nav>
 
             <div className="desktop-nav flex items-center gap-sm">
-              <button className="btn btn-ghost">Log in</button>
-              <button className="btn btn-primary">Sign up</button>
+              <a href="https://app.helmory.com/login" className="btn btn-ghost">Log in</a>
+              <a href="https://app.helmory.com/signup" className="btn btn-primary">Sign up</a>
             </div>
 
             {/* Mobile Menu Btn */}
@@ -48,8 +51,8 @@ function App() {
             <Link to="/trust" onClick={() => setMobileMenuOpen(false)}>Trust</Link>
             <Link to="/about" onClick={() => setMobileMenuOpen(false)}>About</Link>
             <hr style={{ border: 0, borderTop: '1px solid var(--color-border)' }} />
-            <button className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>Log in</button>
-            <button className="btn btn-primary">Sign up</button>
+            <a href="https://app.helmory.com/login" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>Log in</a>
+            <a href="https://app.helmory.com/signup" className="btn btn-primary">Sign up</a>
           </div>
         )}
 

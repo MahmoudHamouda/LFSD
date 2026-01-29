@@ -19,7 +19,7 @@ const Home = () => {
           <Link to="/helm" className="btn btn-primary">
             Explore HELM
           </Link>
-          <button className="btn btn-ghost">Sign up</button>
+          <a href="https://app.helmory.com/signup" className="btn btn-ghost">Sign up</a>
         </div>
       </section>
 
@@ -28,10 +28,10 @@ const Home = () => {
         <div className="surface-1">
           <div className="grid grid-cols-2 gap-lg items-center">
             <div>
-              <span style={{ 
-                textTransform: 'uppercase', 
-                fontSize: '0.875rem', 
-                letterSpacing: '0.05em', 
+              <span style={{
+                textTransform: 'uppercase',
+                fontSize: '0.875rem',
+                letterSpacing: '0.05em',
                 color: 'var(--color-text-muted)',
                 fontWeight: 600
               }}>Core Product</span>
@@ -39,11 +39,11 @@ const Home = () => {
               <p>
                 It helps you understand your money, time, and choices — and turn that into clear, practical actions.
               </p>
-              
+
               <ul style={{ listStyle: 'none', margin: '2rem 0' }}>
                 {[
                   "See patterns without spreadsheets",
-                  "Make trade-offs with less stress", 
+                  "Make trade-offs with less stress",
                   "Act when you're ready — not when you're pressured"
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-sm" style={{ marginBottom: '0.75rem', color: 'var(--color-text-muted)' }}>
@@ -54,34 +54,34 @@ const Home = () => {
               </ul>
 
               <Link to="/helm" className="btn btn-primary">
-                See how HELM works <ArrowRight size={18} style={{ marginLeft: '0.5rem' }}/>
+                See how HELM works <ArrowRight size={18} style={{ marginLeft: '0.5rem' }} />
               </Link>
             </div>
-            
+
             {/* Screenshot Stack Placeholder - will replace with real image */}
             <div style={{ position: 'relative', height: '400px' }}>
-              <div className="card" style={{ 
-                position: 'absolute', 
-                top: 0, 
-                right: 0, 
-                width: '80%', 
-                height: '300px', 
+              <div className="card" style={{
+                position: 'absolute',
+                top: 0,
+                right: 0,
+                width: '80%',
+                height: '300px',
                 zIndex: 2,
                 backgroundImage: 'url(/screenshots/dashboard_mobile.png)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'top'
               }}></div>
-              <div className="card" style={{ 
-                position: 'absolute', 
-                top: '40px', 
-                right: '40px', 
-                width: '80%', 
-                height: '300px', 
-                zIndex: 1, 
+              <div className="card" style={{
+                position: 'absolute',
+                top: '40px',
+                right: '40px',
+                width: '80%',
+                height: '300px',
+                zIndex: 1,
                 opacity: 0.7,
                 backgroundImage: 'url(/screenshots/spending_mobile.png)',
                 backgroundSize: 'cover',
-                 backgroundPosition: 'top'
+                backgroundPosition: 'top'
               }}></div>
             </div>
           </div>
@@ -98,7 +98,7 @@ const Home = () => {
               desc: "Plan, prioritize, and follow through."
             },
             {
-              title: "Personal Finance", 
+              title: "Personal Finance",
               desc: "Understand spending, habits, commitments."
             },
             {
