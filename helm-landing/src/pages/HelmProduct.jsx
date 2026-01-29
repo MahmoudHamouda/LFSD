@@ -23,15 +23,10 @@ const HelmProduct = () => {
 
                     {/* Simple horizontal scroll for screenshots */}
                     <div className="flex gap-md" style={{ overflowX: 'auto', padding: '1rem', paddingBottom: '2rem' }}>
-                        {/* Replace with real screenshots */}
-                        <img src="/screenshots/dashboard_mobile.png" alt="Dashboard" className="card" style={{ height: '500px', minWidth: '240px', objectFit: 'contain', background: 'white' }} />
-                        <img src="/screenshots/spending_mobile.png" alt="Spending" className="card" style={{ height: '500px', minWidth: '240px', objectFit: 'contain', background: 'white' }} />
-                        <div className="card" style={{ height: '500px', minWidth: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white' }}>
-                            <p>Recommendation Screen</p>
-                        </div>
-                        <div className="card" style={{ height: '500px', minWidth: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'white' }}>
-                            <p>Activity Log</p>
-                        </div>
+                        {/* Real app screenshots */}
+                        <img src="/screenshots/home_gauges_mobile.png" alt="Score Dashboard" className="card" style={{ height: '500px', minWidth: '240px', objectFit: 'contain', background: 'white' }} />
+                        <img src="/screenshots/dashboard_mobile.png" alt="Spending Dashboard" className="card" style={{ height: '500px', minWidth: '240px', objectFit: 'contain', background: 'white' }} />
+                        <img src="/screenshots/chat_booking_mobile.png" alt="Chat Assistant" className="card" style={{ height: '500px', minWidth: '240px', objectFit: 'contain', background: 'white' }} />
                     </div>
                 </div>
             </section>
