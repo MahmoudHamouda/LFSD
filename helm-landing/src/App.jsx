@@ -30,7 +30,7 @@ function App() {
 
             <div className="desktop-nav flex items-center gap-sm">
               <a href="https://app.helmory.com/login" className="btn btn-ghost">Log in</a>
-              <a href="https://app.helmory.com/signup" className="btn btn-primary">Sign up</a>
+              <a href="https://app.helmory.com/login?returnTo=%2Fsignup" className="btn btn-primary">Sign up</a>
             </div>
 
             {/* Mobile Menu Btn */}
@@ -49,7 +49,7 @@ function App() {
             <Link to="/about" onClick={() => setMobileMenuOpen(false)}>About</Link>
             <hr style={{ border: 0, borderTop: '1px solid var(--color-border)' }} />
             <a href="https://app.helmory.com/login" className="btn btn-ghost" style={{ justifyContent: 'flex-start' }}>Log in</a>
-            <a href="https://app.helmory.com/signup" className="btn btn-primary">Sign up</a>
+            <a href="https://app.helmory.com/login?returnTo=%2Fsignup" className="btn btn-primary">Sign up</a>
           </div>
         )}
 

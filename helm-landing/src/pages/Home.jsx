@@ -1,4 +1,4 @@
-import React from 'react';
+Vjiycdm3"123mahaimport React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Shield } from 'lucide-react';
 
@@ -19,7 +19,7 @@ const Home = () => {
           <Link to="/helm" className="btn btn-primary">
             Explore HELM
           </Link>
-          <a href="https://app.helmory.com/signup" className="btn btn-ghost">Sign up</a>
+          <a href="https://app.helmory.com/login?returnTo=%2Fsignup" className="btn btn-ghost">Sign up</a>
         </div>
       </section>
 
