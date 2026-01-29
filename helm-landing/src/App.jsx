@@ -17,10 +17,7 @@ function App() {
       <div className="app-layout">
         <header style={{ height: 'var(--header-height)', borderBottom: '1px solid var(--color-border)', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)', position: 'sticky', top: 0, zIndex: 100 }}>
           <div className="container flex items-center justify-between" style={{ height: '100%' }}>
-            <Link to="/" style={{ fontWeight: 700, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <img src="/helm-logo.png" alt="Helmory" style={{ height: '32px' }} />
-              <span>Helmory</span>
-            </Link>
+            <Link to="/" style={{ fontWeight: 700, fontSize: '1.25rem' }}>Helmory</Link>
 
             {/* Desktop Nav */}
             <nav className="desktop-nav flex items-center gap-md" style={{ display: 'none' }}>
