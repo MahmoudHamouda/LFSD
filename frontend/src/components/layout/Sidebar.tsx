@@ -13,6 +13,7 @@ import {
     LogOut
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
+import logoUrl from '../../assets/helm-logo.png';
 
 
 interface SidebarProps {
@@ -100,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isCollapsed, onToggle, onTogg
                         }
                     }}
                 >
-                    <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold', fontFamily: 'var(--font-heading)' }}>H</h1>
+                    <img src={logoUrl} alt="Helmory" style={{ height: '32px', width: 'auto' }} />
                 </Link>
 
                 <button className={`${styles.toggleButton} ${styles.desktopOnly}`} onClick={onToggleCollapse} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>

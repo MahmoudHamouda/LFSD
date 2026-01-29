@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthProvider'; // Fixed path
-import logoUrl from '../../assets/helm-logo.svg';
+import logoUrl from '../../assets/helm-logo.png';
 import styles from './Login.module.css';
 
 const LoginNative: React.FC = () => {
