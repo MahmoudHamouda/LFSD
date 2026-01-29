@@ -1,0 +1,119 @@
+﻿
+> helm-landing@0.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32mÔ£ô[39m 20 modules transformed.
+node.exe : 
+[31mÔ£ù[39m Build 
+failed in 1.08s
+At line:1 char:1
++ & "C:\Program File
+s\nodejs/node.exe" 
+"C:\Program Files\no
+dejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: ([31   
+ mÔ£ù[39m Build    
+ failed in 1.08    
+s:String) [], R    
+emoteException
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+[31merror during 
+build:
+[31m[vite:esbuild] 
+Transform failed 
+with 1 error:
+C:/Users/hmahm/OneDr
+ive/Desktop/LFSD Cod
+ebase/LFSD/helm-land
+ing/src/pages/Home.j
+sx:1:42: ERROR: 
+Unterminated string 
+literal[31m
+file: [36mC:/Users/
+hmahm/OneDrive/Deskt
+op/LFSD Codebase/LFS
+D/helm-landing/src/p
+ages/Home.jsx:1:42[
+31m
+[33m
+[33mUnterminated 
+string literal[33m
+1  |  Vjiycdm3"123ma
+haimport React from 
+'react';
+   |                
+                    
+        ^
+2  |  import { Link 
+} from 
+'react-router-dom';
+3  |  import { 
+ArrowRight, 
+CheckCircle2, 
+Shield } from 
+'lucide-react';
+[31m
+    at 
+failureErrorWithLog 
+(C:\Users\hmahm\OneD
+rive\Desktop\LFSD Co
+debase\LFSD\helm-lan
+ding\node_modules\es
+build\lib\main.js:14
+67:15)
+    at C:\Users\hmah
+m\OneDrive\Desktop\L
+FSD Codebase\LFSD\he
+lm-landing\node_modu
+les\esbuild\lib\main
+.js:736:50
+    at responseCallb
+acks.<computed> (C:\
+Users\hmahm\OneDrive
+\Desktop\LFSD Codeba
+se\LFSD\helm-landing
+\node_modules\esbuil
+d\lib\main.js:603:9)
+    at handleIncomin
+gPacket (C:\Users\hm
+ahm\OneDrive\Desktop
+\LFSD Codebase\LFSD\
+helm-landing\node_mo
+dules\esbuild\lib\ma
+in.js:658:12)
+    at Socket.readFr
+omStdout (C:\Users\h
+mahm\OneDrive\Deskto
+p\LFSD Codebase\LFSD
+\helm-landing\node_m
+odules\esbuild\lib\m
+ain.js:581:7)
+    at Socket.emit 
+(node:events:508:28)
+    at addChunk (nod
+e:internal/streams/r
+eadable:559:12)
+    at readableAddCh
+unkPushByteMode (nod
+e:internal/streams/r
+eadable:510:3)
+    at 
+Readable.push (node:
+internal/streams/rea
+dable:390:5)
+    at 
+Pipe.onStreamRead (n
+ode:internal/stream_
+base_commons:189:23)
+[39m
