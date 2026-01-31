@@ -12,6 +12,7 @@ class Settings:
     
     # Security Secrets
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+    GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-1.5-flash')  # Cost-efficient default
     ADMIN_SECRET = os.getenv('ADMIN_SECRET')
     CREDENTIALS_ENCRYPTION_KEY = os.getenv('CREDENTIALS_ENCRYPTION_KEY')
     
