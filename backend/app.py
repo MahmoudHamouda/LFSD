@@ -263,14 +263,14 @@ def create_app() -> FastAPI:
     print("Database Initialized.")
 
     
-    # Seed disabled temporarily for debugging
-    # try:
-    #     from seed_users import seed_all_users
-    #     print("Running startup seeds (SYNC)...")
-    #     seed_all_users()
-    #     print("Startup seeds completed (SYNC).")
-    # except Exception as e:
-    #     print(f"Startup seed failed: {e}")
+    # Auto-seed on startup (Persistent fix for Cloud Run SQLite)
+    try:
+        from seed_users import safe_seed_users
+        print("Running startup seeds (SYNC)...")
+        safe_seed_users()
+        print("Startup seeds completed (SYNC).")
+    except Exception as e:
+        print(f"Startup seed failed: {e}")
         # traceback.print_exc()
 
     try:

@@ -42,12 +42,17 @@ def random_date(start_days_ago=90, end_days_ago=0):
 # USER CREATION
 # ============================================================================
 
-def create_base_user(user_id, email, name, persona_type, bio):
+def create_base_user(user_id, email, name, persona_type, bio, auth0_id=None):
     print(f"   Creating {name} ({email})...")
     # Check if exists
     existing = db.query(User).filter(User.email == email).first()
     if existing:
         print(f"   User {email} already exists. Skipping creation, but will seed data.")
+        # Ensure Auth0 ID is set if provided
+        if auth0_id and existing.auth0_id != auth0_id:
+             print(f"   UPDATING Auth0 ID for {email}...")
+             existing.auth0_id = auth0_id
+             db.commit()
         return existing
 
     user = User(
@@ -56,7 +61,8 @@ def create_base_user(user_id, email, name, persona_type, bio):
         hashed_password=PASSWORD_HASH,
         profile_json={"name": name, "type": persona_type, "bio": bio},
         viv_preferences={"risk_tolerance": "medium"},
-        onboarding_status="COMPLETED"
+        onboarding_status="COMPLETED",
+        auth0_id=auth0_id
     )
     db.add(user)
     db.commit()
@@ -193,7 +199,9 @@ def safe_seed_users():
         
         # 2. Finance User
         print("2️⃣  Finance User")
-        user2 = create_base_user("user-finance", "finance@helm.com", "Finance User", "Planner", "Wealth focus.")
+        # HARDCODED AUTH0 ID FOR DEMO STABILITY
+        AUTH0_ID_FINANCE = "auth0|69597173abf4ff34ae629c16" 
+        user2 = create_base_user("user-finance", "finance@helm.com", "Finance User", "Planner", "Wealth focus.", auth0_id=AUTH0_ID_FINANCE)
         seed_rich_finance_data(user2.id)
         seed_minimal_health_data(user2.id)
         seed_minimal_time_data(user2.id)
