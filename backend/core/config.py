@@ -16,6 +16,9 @@ class Settings:
     ADMIN_SECRET = os.getenv('ADMIN_SECRET')
     CREDENTIALS_ENCRYPTION_KEY = os.getenv('CREDENTIALS_ENCRYPTION_KEY')
     
+    # Integration Tokens
+    UBER_SERVER_TOKEN = os.getenv('UBER_SERVER_TOKEN')
+    
     # CORS Configuration
     ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'https://dev.example.com,https://staging.example.com')
 
