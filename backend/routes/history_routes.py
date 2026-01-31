@@ -169,12 +169,15 @@ async def generate_history(request: Request, db: Session = Depends(get_db), curr
             raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
         
         # Generate AI response using Gemini
+        gemini_service = None
+        model_used = 'gemini-1.5-flash'
         try:
             print("DEBUG: Importing GeminiService...")
             from services.gemini_service import GeminiService
             import json
             
             gemini_service = GeminiService(db)
+            model_used = gemini_service.model_name
             
             # Prepare history for Gemini
             history = [{"role": msg.get("role"), "content": msg.get("content")} for msg in messages_data]
@@ -203,7 +206,7 @@ async def generate_history(request: Request, db: Session = Depends(get_db), curr
             date=datetime.utcnow(),
             input_tokens=usage.get("input_tokens", 0),
             output_tokens=usage.get("output_tokens", 0),
-            model_used=getattr(gemini_service, 'model_name', 'gemini-1.5-flash')
+            model_used=model_used
         )
         db.add(db_response)
         
