@@ -43,18 +43,31 @@ def random_date(start_days_ago=90, end_days_ago=0):
 # ============================================================================
 
 def create_base_user(user_id, email, name, persona_type, bio, auth0_id=None):
-    print(f"   Creating {name} ({email})...")
-    # Check if exists
-    existing = db.query(User).filter(User.email == email).first()
+    """
+    Create or update a user. If user already exists (by email OR auth0_id),
+    returns the existing user instead of creating a new one with the provided user_id.
+    """
+    print(f"   Creating/Updating {name} ({email})...")
+    
+    # Check if exists by email OR auth0_id
+    existing = db.query(User).filter(
+        (User.email == email) | (User.auth0_id == auth0_id)
+    ).first() if auth0_id else db.query(User).filter(User.email == email).first()
+    
     if existing:
-        print(f"   User {email} already exists. Skipping creation, but will seed data.")
+        print(f"   User {email} already exists with ID {existing.id}. Will seed data for this ID.")
         # Ensure Auth0 ID is set if provided
         if auth0_id and existing.auth0_id != auth0_id:
              print(f"   UPDATING Auth0 ID for {email}...")
              existing.auth0_id = auth0_id
              db.commit()
+        # Update profile to ensure consistency
+        existing.profile_json = {"name": name, "type": persona_type, "bio": bio}
+        existing.onboarding_status = "COMPLETED"
+        db.commit()
         return existing
 
+    # Create new user ONLY if doesn't exist
     user = User(
         id=user_id,
         email=email,
@@ -67,6 +80,7 @@ def create_base_user(user_id, email, name, persona_type, bio, auth0_id=None):
     db.add(user)
     db.commit()
     db.refresh(user)
+    print(f"   Created new user with ID {user.id}")
     return user
 
 # ============================================================================
