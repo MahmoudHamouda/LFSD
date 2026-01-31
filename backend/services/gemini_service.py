@@ -37,7 +37,7 @@ class GeminiService:
         
         # Initialize model - use exact model name from settings; DO NOT configure or fallback here.
         # genai should be configured at app startup or safely wrapped.
-        self.model_name = settings.GEMINI_MODEL or "gemini-1.5-pro"
+        self.model_name = settings.GEMINI_MODEL or "gemini-2.5-flash"  # Updated to 2.5 (2.0 deprecated March 2026)
         self.model = genai.GenerativeModel(self.model_name)
         
         # Initialize Google Calendar Service

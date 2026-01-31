@@ -170,7 +170,7 @@ async def generate_history(request: Request, db: Session = Depends(get_db), curr
         
         # Generate AI response using Gemini
         gemini_service = None
-        model_used = 'gemini-1.5-flash'
+        model_used = 'gemini-2.5-flash'  # Updated to 2.5 (2.0 deprecated March 2026)
         try:
             print("DEBUG: Importing GeminiService...")
             from services.gemini_service import GeminiService
