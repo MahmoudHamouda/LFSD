@@ -219,7 +219,27 @@ def safe_seed_users():
         seed_rich_finance_data(user2.id)
         seed_minimal_health_data(user2.id)
         seed_minimal_time_data(user2.id)
-        db.add(VivIndex(user_id=user2.id, financial_score=85, health_score=50, time_score=50))
+        
+        # Calculate scores dynamically from seeded data
+        print("   Calculating scores from seeded data...")
+        from services.financial_scoring import calculate_financial_health_score
+        from services.health_scoring import calculate_health_score
+        from services.time_service import calculate_time_score
+        
+        # Financial score
+        fin_result = calculate_financial_health_score(user2.id, {}, db, is_manual_mode=False)
+        financial_score = fin_result.get("overall_score", 50)
+        
+        # Health score - needs onboarding data structure
+        health_result = calculate_health_score(user2.id, {}, db)
+        health_score = health_result.get("score", 50) if isinstance(health_result, dict) else 50
+        
+        # Time score - returns TimeScore object
+        time_result = calculate_time_score(db, user2.id, window_days=30)
+        time_score = time_result.overall_score if time_result else 50
+        
+        print(f"   Calculated scores - Financial: {financial_score}, Health: {health_score}, Time: {time_score}")
+        db.add(VivIndex(user_id=user2.id, financial_score=financial_score, health_score=health_score, time_score=time_score))
         db.commit()
 
         # 3. Health User
