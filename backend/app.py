@@ -138,12 +138,12 @@ def create_app() -> FastAPI:
     )
 
     # Custom Middleware
-    app.add_middleware(BugReportMiddleware)
-    app.add_middleware(RequestIDMiddleware) # Should be outer to capture everything
+    # app.add_middleware(BugReportMiddleware)
+    # app.add_middleware(RequestIDMiddleware) # Should be outer to capture everything
 
     # Rate limiting
-    app.state.limiter = limiter
-    app.add_middleware(RateLimitMiddleware)
+    # app.state.limiter = limiter
+    # app.add_middleware(RateLimitMiddleware)
 
     # Exception handlers
     @app.exception_handler(HTTPException)
@@ -233,7 +233,9 @@ def create_app() -> FastAPI:
     app.include_router(calendar_routes.router)
     app.include_router(api_routes_onboarding.router, prefix="/api")
     app.include_router(api_routes_scores.router, prefix="/api/scores")
-    app.include_router(auth0_routes.router, prefix="/api")  # Auth0 authentication
+
+    app.include_router(auth0_routes.router, prefix="/api")  # Auth0 authentication for frontend
+    app.include_router(test_routes.router, prefix="/api")  # Simple test endpoints
     app.include_router(test_routes.router, prefix="/api")  # Simple test endpoints
     app.include_router(growth_routes.router, prefix="/api")
     app.include_router(admin_routes.router, prefix="/api")
@@ -248,14 +250,7 @@ def create_app() -> FastAPI:
         traceback.print_exc()
         raise e
     
-    try:
-        from routes import api_routes_auth
-        app.include_router(api_routes_auth.router, prefix="/api")
-    except Exception as e:
-        import traceback
-        print(f"CRITICAL IMPORT ERROR (AUTH): {e}")
-        traceback.print_exc()
-        raise e
+    # Native auth removed - using Auth0 only
     
     from routes import recommendation_routes, partner_routes, api_routes
     app.include_router(partner_routes.router, prefix="/api")

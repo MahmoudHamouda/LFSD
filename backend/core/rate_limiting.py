@@ -50,7 +50,7 @@ except Exception:
         interface of SlowAPIMiddleware so application code does not crash.
         """
 
-        def __init__(self, app, handler: Optional[callable] = None) -> None:  # type: ignore[override]
+        def __init__(self, app) -> None:  # Removed handler=None
             self.app = app
 
         async def __call__(self, scope, receive, send) -> None:  # type: ignore[override]
@@ -99,9 +99,7 @@ if 'SlowAPIMiddleware' in globals():
 
         Inherits from SlowAPIMiddleware to integrate with FastAPI's middleware stack.
         """
-
-        def __init__(self, app) -> None:
-            super().__init__(app, handler=None)
+        pass # Removed __init__ override
 
 
 __all__ = ["limiter", "RateLimitMiddleware", "RateLimitExceeded"]

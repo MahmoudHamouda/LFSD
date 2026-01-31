@@ -56,3 +56,35 @@ async def get_status(db: Session = Depends(get_db)):
     if conn and conn.status == "connected":
         return {"status": "connected"}
     return {"status": "disconnected"}
+
+from datetime import datetime
+from models.models import CalendarEvent
+from core.authentication import get_current_user
+from models.models import User
+import uuid
+
+class EventCreate(BaseModel):
+    title: str
+    start_time: str
+    end_time: str
+    is_meeting: bool = False
+
+@router.post("/events")
+async def create_event(
+    event: EventCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Manual event creation for seeding."""
+    e = CalendarEvent(
+        id=str(uuid.uuid4()),
+        user_id=current_user.id,
+        title=event.title,
+        start_time=datetime.fromisoformat(event.start_time.replace("Z", "+00:00")),
+        end_time=datetime.fromisoformat(event.end_time.replace("Z", "+00:00")),
+        is_meeting=event.is_meeting,
+        source="manual_seeding"
+    )
+    db.add(e)
+    db.commit()
+    return {"status": "success", "id": e.id}

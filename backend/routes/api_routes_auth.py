@@ -12,7 +12,7 @@ import core.config
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/v1/auth", tags=["native-auth"])
 
 class SignupPayload(BaseModel):
     email: str
@@ -27,21 +27,31 @@ class AuthResponse(BaseModel):
 @router.post("/signup", response_model=AuthResponse)
 async def signup(payload: SignupPayload, db: Session = Depends(get_db)):
     try:
+        print(f"[DEBUG] Signup called for {payload.email}")
         logger.info(f"[AUTH] Signup attempt for {payload.email}")
         # Check if user exists
+        print("[DEBUG] Checking for existing user...")
         existing_user = db.query(User).filter(User.email == payload.email).first()
         if existing_user:
+            print("[DEBUG] User exists")
             logger.warning(f"[AUTH] User {payload.email} already exists")
             raise HTTPException(status_code=409, detail="Account already exists. Please log in.")
+
+        print(f"[DEBUG] Hashing password for {payload.email}...")
+        hashed = get_password_hash(payload.password)
+        print("[DEBUG] Password hashed.")
 
         new_user = User(
             id=str(uuid.uuid4()),
             email=payload.email,
-            hashed_password=get_password_hash(payload.password),
+            hashed_password=hashed,
             profile_json={"name": payload.name}
         )
+        print(f"[DEBUG] Adding user {new_user.id} to session...")
         db.add(new_user)
+        print("[DEBUG] Committing...")
         db.commit()
+        print("[DEBUG] Refreshing...")
         db.refresh(new_user)
         
         print(f"[AUTH] User {new_user.id} created successfully")

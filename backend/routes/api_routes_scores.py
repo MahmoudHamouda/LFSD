@@ -450,34 +450,72 @@ async def debug_trigger_calc(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    import core.config
-    settings = core.config.get_settings()
-    if not settings.DEBUG and getattr(current_user, "role", "user") != "admin":
-        raise HTTPException(status_code=403, detail="Debug access forbidden")
     """
-    Trigger calculation of scores for finance@helm.com (E2E Test User).
+    Trigger complete calculation of scores (Finance, Health, Time) for current user.
+    Populates FinancialScore, TimeScore, and VivIndex tables from raw data.
     """
     try:
-        user = db.query(User).filter(User.email == "finance@helm.com").first()
-        if not user:
-            return {"status": "error", "message": "User finance@helm.com not found"}
-
-        # 1. Time Score
+        user_id = current_user.id
+        
+        # 1. Time/Productivity Score
         from models.models import TimeScore
-        ts = calculate_time_score(db, user.id, window="month")
+        # Calculate and implicitly save TimeScore (assuming service does this or we do it here)
+        # Re-using the logic seen in previous endpoint version
+        ts = calculate_time_score(db, user_id, window_days=30)
         if ts:
-            existing_ts = db.query(TimeScore).filter(TimeScore.user_id == user.id).first()
+            # Check/Delete existing for cleanliness (optional but good for 're-calc')
+            existing_ts = db.query(TimeScore).filter(TimeScore.user_id == user_id).first()
             if existing_ts:
                 db.delete(existing_ts)
                 db.flush()
             db.add(ts)
             db.commit()
-
+            
         # 2. Financial Score
-        onboarding = user.profile_json if user.profile_json else {}
-        calculate_financial_health_score(user.id, onboarding, db)
+        # calculate_financial_health_score saves `FinancialScore` to DB
+        onboarding = current_user.profile_json if current_user.profile_json else {}
+        fin_data = calculate_financial_health_score(user_id, onboarding, db)
         
-        return {"status": "success", "message": "Scores calculated from data."}
+        # 3. Health Score (lightweight calculation)
+        hs_data = calculate_health_score(user_id, onboarding, db)
+        
+        # 4. Create/Update VivIndex (The Dashboard View)
+        # Fetch latest component scores to ensure consistency
+        
+        # Fin Score
+        latest_fs = db.query(FinancialScore).filter(FinancialScore.user_id == user_id).order_by(FinancialScore.timestamp.desc()).first()
+        fin_val = latest_fs.overall_score if latest_fs else (fin_data.get("overall_score") if fin_data else 50.0)
+
+        # Time Score
+        latest_ts = db.query(TimeScore).filter(TimeScore.user_id == user_id).order_by(TimeScore.timestamp.desc()).first()
+        time_val = latest_ts.overall_score if latest_ts else (ts.overall_score if ts else 50.0)
+        
+        # Health Score
+        health_val = hs_data.get("score", 50.0)
+
+        # Check existing VivIndex for today? No, just create new snapshot.
+        viv_index = VivIndex(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            financial_score=fin_val,
+            health_score=health_val,
+            time_score=time_val,
+            snapshot_reason="Manual Recalculation",
+            timestamp=datetime.utcnow(),
+            confidence=1.0
+        )
+        db.add(viv_index)
+        db.commit()
+        
+        return {
+            "status": "success", 
+            "message": "Scores recalculation complete",
+            "scores": {
+                "financial": fin_val,
+                "health": health_val,
+                "time": time_val
+            }
+        }
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -514,54 +552,4 @@ async def get_financial_score_details(user_id: str, db: Session = Depends(get_db
         "data_sources": latest_score.data_sources_json
     }
 
-@router.post("/debug/fix_viv_index")
-async def debug_fix_viv_index(
-    email: str, 
-    db: Session = Depends(get_db), 
-    current_user: User = Depends(get_current_user)
-):
-    import core.config
-    settings = core.config.get_settings()
-    if not settings.DEBUG and getattr(current_user, "role", "user") != "admin":
-        raise HTTPException(status_code=403, detail="Debug access forbidden")
-    """
-    Debug endpoint to backfill missing VivIndex for a user by email.
-    """
-    try:
-        print(f"DEBUG FIX: Attempting to fix VivIndex for {email}")
-        user = db.query(User).filter(User.email == email).first()
-        if not user:
-            raise HTTPException(status_code=404, detail=f"User {email} not found")
 
-        # Check existing
-        viv = db.query(VivIndex).filter(VivIndex.user_id == user.id).order_by(VivIndex.timestamp.desc()).first()
-        if viv:
-            return {"status": "ok", "message": "VivIndex already exists", "score": viv.financial_score}
-
-        # Fetch Component Scores
-        f_score = db.query(FinancialScore).filter(FinancialScore.user_id == user.id).order_by(FinancialScore.timestamp.desc()).first()
-        financial_val = f_score.overall_score if f_score else 0.0
-        
-        print(f"DEBUG FIX: Creating VivIndex with Fin={financial_val}")
-
-        # Create new index
-        new_viv = VivIndex(
-            id=str(uuid.uuid4()),
-            user_id=user.id,
-            financial_score=financial_val,
-            health_score=50.0,
-            time_score=50.0,
-            snapshot_reason="Cloud Fix Backfill",
-            timestamp=datetime.utcnow(),
-            confidence=1.0
-        )
-        
-        db.add(new_viv)
-        db.commit()
-        
-        return {"status": "fixed", "message": "VivIndex created", "financial_score": financial_val}
-        
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))

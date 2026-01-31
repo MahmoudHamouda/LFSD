@@ -8,8 +8,6 @@ from pydantic import BaseModel
 from models.database import get_db
 from models.models import User
 from core.authentication import (
-    authenticate_user,
-    create_access_token,
     get_current_user
 )
 import core.config
@@ -67,45 +65,7 @@ async def login(
     response: Response,
     db: Session = Depends(get_db)
 ):
-    identifier = payload.email if payload.email else payload.username
-    if not identifier:
-         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email or username required"
-        )
-    
-    user = authenticate_user(db, identifier, payload.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password"
-        )
-    
-    # Create tokens
-    access_token_expires = timedelta(minutes=60 * 24) # 1 day for dev
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_minutes=access_token_expires.total_seconds() / 60
-    )
-    
-    # Set HttpOnly cookie (basic implementation)
-    response.set_cookie(
-        key=core.config.get_settings().SESSION_COOKIE_NAME,
-        value=f"Bearer {access_token}",
-        httponly=True,
-        secure=core.config.get_settings().ENV == "production", # Dev mode, set True in prod
-        samesite="lax"
-    )
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "email": user.email,
-            "onboarding_status": user.onboarding_status,
-            "onboarding_step": user.onboarding_step
-        }
-    }
+    raise HTTPException(status_code=410, detail="Native login is deprecated. Use Auth0.")
 
 @router.post("/logout")
 async def logout(response: Response):

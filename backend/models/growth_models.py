@@ -68,6 +68,7 @@ class UserLimitOverride(Base):
     overrides_json = Column(JSON, nullable=False, default=dict)
     
     reason = Column(String, nullable=True)
+    expiration_date = Column(DateTime, nullable=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

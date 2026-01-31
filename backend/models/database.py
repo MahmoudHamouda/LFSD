@@ -54,20 +54,42 @@ def getconn():
         )
     return conn
 
-if settings.ENV == "prod":
-    # Create SQLAlchemy engine with Cloud SQL Connector
+if settings.INSTANCE_CONNECTION_NAME:
+    # Cloud SQL Connector Case
     engine = create_engine(
         "postgresql+pg8000://",
         creator=getconn,
         echo=settings.DEBUG,
     )
+elif settings.DATABASE_URL and settings.DATABASE_URL.startswith("postgres"):
+    # Direct Postgres Connection (e.g. Supabase, standard URL)
+    db_url = settings.DATABASE_URL
+    if "sslmode" not in db_url:
+        if "?" in db_url:
+            db_url += "&sslmode=require"
+        else:
+            db_url += "?sslmode=require"
+            
+    engine = create_engine(
+        db_url,
+        echo=settings.DEBUG,
+    )
 else:
-    # Use local SQLite for development
+    # Local SQLite Fallback
     sqlite_url = settings.DATABASE_URL or "sqlite:///backend/lfsd.db"
+    if not sqlite_url.startswith("sqlite"):
+         # Safe fallback if empty string or weird config, default to sqlite file
+         sqlite_url = "sqlite:///backend/lfsd.db"
+         
     print(f"DEBUG: Using database URL: {sqlite_url}")
+    
+    connect_args = {}
+    if sqlite_url.startswith("sqlite"):
+        connect_args["check_same_thread"] = False
+        
     engine = create_engine(
         sqlite_url,
-        connect_args={"check_same_thread": False},
+        connect_args=connect_args,
         echo=settings.DEBUG,
     )
 
@@ -101,4 +123,12 @@ def init_db():
     from . import lifestyle_events  # noqa: F401
     from . import nutrition_logs  # noqa: F401
     from . import investment_portfolios  # noqa: F401
+    # Import additional models to ensure Mappers are initialized
+    from . import health_models  # noqa: F401
+    from . import models_health  # noqa: F401
+    from . import models_scores  # noqa: F401
+    from . import growth_models  # noqa: F401
+    from . import chat_models  # noqa: F401
+    from . import logging_models  # noqa: F401
+    
     Base.metadata.create_all(bind=engine)

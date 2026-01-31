@@ -96,8 +96,8 @@ class FinanceService:
             amount=final_amount, 
             merchant_name=transaction_data.get("merchant_name"),
             category_primary=transaction_data.get("category"),
-            description=transaction_data.get("description"), # Ensure this is passed
-            transaction_date=datetime.utcnow(),
+            description=transaction_data.get("description"),
+            transaction_date=datetime.fromisoformat(transaction_data.get("date")) if transaction_data.get("date") else datetime.utcnow(),
             currency_code=transaction_data.get("currency_code", "USD")
         )
         self.db.add(transaction)

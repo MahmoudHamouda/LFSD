@@ -63,6 +63,7 @@ class User(Base):
     health_scores = relationship("HealthScore", back_populates="user", cascade="all, delete-orphan")
     subscription = relationship("Subscription", uselist=False, back_populates="user", cascade="all, delete-orphan")
     conversations = relationship("DBConversation", back_populates="user", cascade="all, delete-orphan")
+    # nutrition_logs = relationship("NutritionLog", back_populates="user", cascade="all, delete-orphan")
     
     # Extended Relationships
     feature_interests = relationship("FeatureInterest", back_populates="user", cascade="all, delete-orphan")
@@ -72,6 +73,16 @@ class User(Base):
     recurring_bills = relationship("RecurringBill", back_populates="user", cascade="all, delete-orphan")
     recommendations = relationship("Recommendation", back_populates="user", cascade="all, delete-orphan")
     activity_feed = relationship("ActivityFeed", back_populates="user", cascade="all, delete-orphan")
+    investment_portfolios = relationship("InvestmentPortfolio", back_populates="user", cascade="all, delete-orphan")
+    lifestyle_events = relationship("LifestyleEvent", back_populates="user", cascade="all, delete-orphan")
+    
+    # Health & Scores Links
+    health_connections = relationship("DBHealthConnection", back_populates="user", cascade="all, delete-orphan")
+    health_metrics = relationship("DBHealthMetric", back_populates="user", cascade="all, delete-orphan")
+    health_indexes = relationship("DBUserIndex", back_populates="user", cascade="all, delete-orphan")
+    health_insights = relationship("DBHealthInsight", back_populates="user", cascade="all, delete-orphan")
+    health_settings = relationship("DBHealthSettings", back_populates="user", cascade="all, delete-orphan")
+    scores = relationship("DBUserScore", back_populates="user", cascade="all, delete-orphan")
 
 
 class Connection(Base):
@@ -272,6 +283,7 @@ class RecurringBill(Base):
     cadence = Column(String, default="monthly") # monthly, unknown
     next_due_date = Column(Date, nullable=True)
     category = Column(String, nullable=True)
+    status = Column(String, default="active") # active, inactive
     
     is_verified = Column(Boolean, default=False)
     

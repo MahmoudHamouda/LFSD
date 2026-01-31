@@ -407,16 +407,57 @@ async def get_recovery_score(
     return {"score": service.calculate_recovery_score(current_user.id)}
 
 @router.post("/sync", summary="Sync mock health data")
-async def sync_health_data(
+async def sync_mock_data(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    service = HealthService(db)
+    summary = service.sync_mock_data(current_user.id)
+    return {"message": "Synced mock data", "summary": summary}
+
+@router.post("/seed", summary="Bulk seed health history")
+async def seed_health_history(
+    payload: dict,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Force sync mock data for testing.
+    Bulk insert health daily summaries for seeding.
+    Payload: { "days": [ { "date": "YYYY-MM-DD", "sleep_hours": 7.5, ... } ] }
     """
-    service = HealthService(db)
-    summary = service.sync_mock_data(current_user.id)
-    return {"message": "Synced mock data", "summary": summary}
+    days = payload.get("days", [])
+    count = 0 
+    for d in days:
+        try:
+            date_obj = datetime.strptime(d["date"], "%Y-%m-%d").date()
+            existing = db.query(HealthDailySummary).filter(
+                HealthDailySummary.user_id == current_user.id,
+                HealthDailySummary.date == date_obj
+            ).first()
+            
+            if not existing:
+                existing = HealthDailySummary(
+                    id=str(uuid.uuid4()),
+                    user_id=current_user.id, 
+                    date=date_obj
+                )
+                db.add(existing)
+
+            # Map fields
+            if "sleep_hours" in d: 
+                existing.sleep_duration_minutes = int(float(d["sleep_hours"]) * 60)
+            if "sleep_quality" in d: existing.sleep_quality_score = d["sleep_quality"]
+            if "hrv" in d: existing.hrv_average = d["hrv"]
+            if "rhr" in d: existing.resting_heart_rate = d["rhr"]
+            if "steps" in d: existing.steps_count = d["steps"]
+            if "active_minutes" in d: existing.active_minutes = d["active_minutes"]
+            
+            count += 1
+        except Exception as e:
+            continue
+            
+    db.commit()
+    return {"message": f"Seeded {count} days of health data"}
 @router.post("/interest", summary="Track feature interest")
 async def track_interest(
     payload: dict,

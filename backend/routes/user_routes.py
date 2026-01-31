@@ -13,8 +13,6 @@ from models.database import get_db
 
 from datetime import datetime
 from core.authentication import (
-    authenticate_user,
-    create_access_token,
     get_current_user,
 )
 from core.rate_limiting import limiter
@@ -25,7 +23,7 @@ router = APIRouter(prefix="/user", tags=["User"])
 
 
 from models.models import FinancialAccount, FinancialTransaction, VivLog, User, OnboardingSession, VivIndex
-from core.authentication import get_password_hash
+# from core.authentication import get_password_hash # Removed for Auth0 migration
 import uuid
 from models.api_models import UserUpdateRequest
 from services.financial_scoring import calculate_financial_health_score
@@ -53,15 +51,18 @@ async def register_user(
         raise HTTPException(status_code=400, detail="Email already registered")
         
     # Create user
-    hashed_password = get_password_hash(password)
-    new_user = User(
-        email=email,
-        hashed_password=hashed_password,
-        profile_json=user_data.get("profile", {})
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    # Native registration disabled - using Auth0 for registration
+    raise HTTPException(status_code=400, detail="Native registration is disabled. Please use Auth0.")
+    
+#    hashed_password = get_password_hash(password)
+#    new_user = User(
+#        email=email,
+#        hashed_password=hashed_password,
+#        profile_json=user_data.get("profile", {})
+#    )
+#    db.add(new_user)
+#    db.commit()
+#    db.refresh(new_user)
     
     # Handle onboarding session
     if onboarding_session_id:
@@ -130,52 +131,9 @@ async def login_for_access_token(
     db: Session = Depends(get_db)
 ) -> dict[str, str]:
     """
-    Validate user credentials and return a JWT access token.
+    DEPRECATED: Use Auth0 endpoints instead.
     """
-    # Try to parse JSON body first
-    username = None
-    password = None
-    try:
-        data = await request.json()
-        if isinstance(data, dict):
-            username = data.get("username")
-            password = data.get("password")
-    except Exception:
-        pass
-    if username is None or password is None:
-        # Fallback: parse urlencoded body manually
-        body_bytes = await request.body()
-        try:
-            from urllib.parse import parse_qs
-
-            parsed = parse_qs(body_bytes.decode())
-            username = parsed.get("username", [None])[0]
-            password = parsed.get("password", [None])[0]
-        except Exception:
-            username = None
-            password = None
-    if not username or not password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username and password must be provided",
-        )
-    # DEBUG: Check if user exists
-    debug_user = db.query(User).filter(User.email == username).first()
-    if debug_user:
-        print(f"DEBUG: user_routes found user: {debug_user.email}")
-    else:
-        print(f"DEBUG: user_routes did NOT find user: {username}")
-        
-    user = authenticate_user(db, username, password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token = create_access_token({"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}
-
+    raise HTTPException(status_code=410, detail="This endpoint is deprecated. Use Auth0 authentication.")
 
 @router.get("/me", summary="Get current user profile")
 @limiter.limit("60/minute")
