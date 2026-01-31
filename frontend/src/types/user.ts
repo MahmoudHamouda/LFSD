@@ -82,6 +82,16 @@ export interface User {
     recentTransactions: Transaction[];
     healthSummary?: HealthDailySummary;
     healthConnections: HealthConnection[];
+
+    // Engagement Metrics
+    engagement?: {
+        lastActive?: string;
+        streaks?: {
+            dailyCheckIn: number;
+            financialReview: number;
+        };
+        mostUsedJourneys?: string[];
+    };
 }
 
 // ============================================================================
