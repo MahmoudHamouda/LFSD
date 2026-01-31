@@ -22,10 +22,11 @@ logger = logging.getLogger(__name__)
 class UberService(BaseMobilityService):
     """Service for interacting with Uber API (Sandbox or Production)."""
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Optional[Session] = None):
         self.db = db
         self.settings = core.config.get_settings()
-        self.connection_service = ConnectionService(db)
+        if db:
+            self.connection_service = ConnectionService(db)
         self.server_token = self.settings.UBER_SERVER_TOKEN
         
         # Use Sandbox in development, Production in prod
