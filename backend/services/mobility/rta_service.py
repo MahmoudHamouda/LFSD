@@ -30,10 +30,11 @@ class RTAService(BaseMobilityService):
     # Supported public transport types
     SUPPORTED_TYPES = ["metro", "bus", "tram", "water_taxi"]
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Optional[Session] = None):
         self.db = db
         self.settings = core.config.get_settings()
-        self.connection_service = ConnectionService(db)
+        if db:
+            self.connection_service = ConnectionService(db)
         self.api_key = self.settings.RTA_API_KEY
         # Timeout policy: 10s total, 2s connect
         self.timeout = httpx.Timeout(10.0, connect=2.0)
