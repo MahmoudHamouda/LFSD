@@ -18,6 +18,7 @@ class Settings:
     
     # Integration Tokens
     UBER_SERVER_TOKEN = os.getenv('UBER_SERVER_TOKEN')
+    RTA_API_KEY = os.getenv('RTA_API_KEY')
     
     # CORS Configuration
     ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'https://dev.example.com,https://staging.example.com')
