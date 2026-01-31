@@ -68,7 +68,7 @@ def compute_treats(user_id: str, db: Session, user_tz: timezone = timezone.utc) 
                 "category": "FINANCIAL",
                 "title": "Smart Splurge!",
                 "body": f"Your financial stability is excellent. You've earned a small reward—consider allocating up to ${splurge_val} (5% of savings) for something special.",
-                "cta": {"label": "View Wishlist", "href": "/finance/wishlist"},
+                "cta": {"label": "View Finance", "href": "/finance"},
                 "icon": "gift"
             })
             categories_covered.add("FINANCIAL")
@@ -83,7 +83,7 @@ def compute_treats(user_id: str, db: Session, user_tz: timezone = timezone.utc) 
             "category": "HEALTH",
             "title": "Recovery Focus",
             "body": "Your health metrics are peak. A professional massage or spa session would optimize your recovery further.",
-            "cta": {"label": "Book Spa", "href": "/concierge/book?q=spa"},
+            "cta": {"label": "Health Dashboard", "href": "/health"},
             "icon": "sparkles"
         })
         categories_covered.add("HEALTH")
@@ -98,7 +98,7 @@ def compute_treats(user_id: str, db: Session, user_tz: timezone = timezone.utc) 
             "category": "TIME",
             "title": "Time Surplus",
             "body": "Your productivity is exceptionally high. You've created enough margin for a restful weekend getaway.",
-            "cta": {"label": "Explore Travel", "href": "/travel"},
+            "cta": {"label": "Explore Time", "href": "/time"},
             "icon": "map"
         })
         categories_covered.add("TIME")

@@ -234,6 +234,29 @@ async def get_user_profile(
             while current in dates:
                 check_in_streak += 1
                 current -= dt.timedelta(days=1)
+        
+        # If user is logging in today but 'today' is not in summary_dates yet,
+        # we count it as a check-in for the streak (visual feedback)
+        if today not in dates and check_in_streak == 0:
+             # Check if yesterday was a streak end
+             yesterday = today - dt.timedelta(days=1)
+             if yesterday in dates:
+                 # Continue streak from yesterday
+                 current = yesterday
+                 check_in_streak = 1 # Today counts
+                 while current in dates:
+                     check_in_streak += 1
+                     current -= dt.timedelta(days=1)
+             else:
+                 # Start new streak today
+                 check_in_streak = 1
+        elif today not in dates and check_in_streak > 0:
+             # Logic above handled "yesterday present" case but didn't add "today" to count
+             # If we started counting from yesterday, add 1 for today since user is active now
+             check_in_streak += 1
+    else:
+        # No history, but user is here today -> Streak 1
+        check_in_streak = 1
     
     # 2. Financial Review: Consecutive weeks with UserIndex
     index_count = db.query(VivIndex).filter(VivIndex.user_id == user_id).count()
