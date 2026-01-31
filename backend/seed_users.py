@@ -259,7 +259,28 @@ def safe_seed_users():
         seed_rich_health_data(user3.id)
         seed_minimal_finance_data(user3.id)
         seed_minimal_time_data(user3.id)
-        db.add(VivIndex(user_id=user3.id, financial_score=50, health_score=88, time_score=50))
+        
+        # Health User: Fitness focused, modest income, prioritizes wellness over wealth
+        health_onboarding = {
+            "monthly_income": 4500,  # Gym trainer/fitness coach income
+            "monthly_bills": 1400,
+            "discretionary_spend": 900,  # Meal prep, supplements
+            "monthly_savings": 600,  # Lower savings rate
+            "cash_balance": 8000,  # Smaller emergency fund
+            "investments_value": 12000,  # Minimal retirement
+            "monthly_debt_payments": 150  # Student loans
+        }
+        
+        fin3 = calculate_financial_health_score(user3.id, health_onboarding, db, is_manual_mode=False)
+        health3 = calculate_health_score(user3.id, {}, db)
+        time3 = calculate_time_score(db, user3.id, window_days=30)
+        
+        db.add(VivIndex(
+            user_id=user3.id,
+            financial_score=fin3.get("overall_score", 50),
+            health_score=health3.get("score", 88) if isinstance(health3, dict) else 88,
+            time_score=time3.overall_score if time3 else 50
+        ))
         db.commit()
 
         # 4. Time User
@@ -268,7 +289,28 @@ def safe_seed_users():
         seed_rich_time_data(user4.id)
         seed_minimal_finance_data(user4.id)
         seed_minimal_health_data(user4.id)
-        db.add(VivIndex(user_id=user4.id, financial_score=50, health_score=50, time_score=82))
+        
+        # Time User: High earner, workaholic, sacrifices health for productivity
+        time_onboarding = {
+            "monthly_income": 12000,  # Tech exec/consultant
+            "monthly_bills": 2500,  # Premium apartment, car lease
+            "discretionary_spend": 2000,  # Eats out, premium services
+            "monthly_savings": 2500,  # Good savings rate
+            "cash_balance": 25000,  # Strong emergency fund
+            "investments_value": 80000,  # Maxing 401k
+            "monthly_debt_payments": 0  # Debt-free
+        }
+        
+        fin4 = calculate_financial_health_score(user4.id, time_onboarding, db, is_manual_mode=False)
+        health4 = calculate_health_score(user4.id, {}, db)
+        time4 = calculate_time_score(db, user4.id, window_days=30)
+        
+        db.add(VivIndex(
+            user_id=user4.id,
+            financial_score=fin4.get("overall_score", 50),
+            health_score=health4.get("score", 50) if isinstance(health4, dict) else 50,
+            time_score=time4.overall_score if time4 else 82
+        ))
         db.commit()
 
         # 5. Super User
@@ -277,7 +319,28 @@ def safe_seed_users():
         seed_rich_finance_data(user5.id)
         seed_rich_health_data(user5.id)
         seed_rich_time_data(user5.id)
-        db.add(VivIndex(user_id=user5.id, financial_score=92, health_score=95, time_score=89))
+        
+        # Super User: Balanced excellence across all pillars
+        super_onboarding = {
+            "monthly_income": 15000,  # Senior exec/entrepreneur
+            "monthly_bills": 2000,  # Reasonable housing
+            "discretionary_spend": 1500,  # Controlled spending
+            "monthly_savings": 4000,  # 26% savings rate
+            "cash_balance": 50000,  # 6+ months emergency fund
+            "investments_value": 250000,  # Diversified portfolio
+            "monthly_debt_payments": 0  # Debt-free
+        }
+        
+        fin5 = calculate_financial_health_score(user5.id, super_onboarding, db, is_manual_mode=False)
+        health5 = calculate_health_score(user5.id, {}, db)
+        time5 = calculate_time_score(db, user5.id, window_days=30)
+        
+        db.add(VivIndex(
+            user_id=user5.id,
+            financial_score=fin5.get("overall_score", 92),
+            health_score=health5.get("score", 95) if isinstance(health5, dict) else 95,
+            time_score=time5.overall_score if time5 else 89
+        ))
         db.commit()
 
         print("\n✅ SEEDING COMPLETE!")

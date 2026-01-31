@@ -173,15 +173,12 @@ export const useUserEngagement = () => {
     const { data: user, isLoading, error } = useCurrentUser();
 
     return {
-        // Mock engagement data for now as it's not in User type
-        lastActive: new Date().toISOString(),
-        streaks: {
-            current: 5,
-            longest: 12,
-            dailyCheckIn: 5,
-            financialReview: 2
+        lastActive: user?.engagement?.lastActive || new Date().toISOString(),
+        streaks: user?.engagement?.streaks || {
+            dailyCheckIn: 0,
+            financialReview: 0
         },
-        mostUsedJourneys: [],
+        mostUsedJourneys: user?.engagement?.mostUsedJourneys || [],
         isLoading,
         error
     };
