@@ -19,6 +19,11 @@ class Settings:
     # Integration Tokens
     UBER_SERVER_TOKEN = os.getenv('UBER_SERVER_TOKEN')
     RTA_API_KEY = os.getenv('RTA_API_KEY')
+    GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+    GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+
+    # Base URL for Callbacks
+    APP_BASE_URL = os.getenv('APP_BASE_URL', 'https://lfsd-backend-692544481281.us-central1.run.app')
     
     # CORS Configuration
     ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'https://dev.example.com,https://staging.example.com')
