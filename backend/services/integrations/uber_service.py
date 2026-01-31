@@ -19,7 +19,7 @@ class UberService:
     
     BASE_URL = "https://api.uber.com/v1.2"
     
-    def __init__(self, db: Session):
+    def __init__(self, db: Optional[Session] = None):
         self.settings = core.config.get_settings()
         self.db = db
         # Fallback for general estimates if no user context, though deprecated
