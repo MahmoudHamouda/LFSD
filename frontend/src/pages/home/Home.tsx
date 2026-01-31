@@ -99,14 +99,14 @@ const Home: React.FC = () => {
     // Finance
     const financeOverall: PillarData = {
         value: overallScores?.financial_score || 0,
-        trend: overallScores?.financial_trend || 5.2,
+        trend: overallScores?.financial_trend ?? null,
         metricLabel: 'Overall Financial Score',
         subtext: 'Monthly View'
     };
 
     const financeWeek: PillarData = {
         value: weekScores?.breakdown?.financial?.sr !== undefined ? `${Math.round(weekScores.breakdown.financial.sr * 100)}%` : '0%',
-        trend: weekScores?.financial_trend || 2.1,
+        trend: weekScores?.financial_trend ?? null,
         metricLabel: 'Savings Rate (WTD)',
         subtext: 'vs last week'
     };
@@ -118,14 +118,14 @@ const Home: React.FC = () => {
     // Time
     const timeOverall: PillarData = {
         value: overallScores?.productivity_score || 0,
-        trend: overallScores?.productivity_trend || -1.4,
+        trend: overallScores?.productivity_trend ?? null,
         metricLabel: 'Productivity Score',
         subtext: 'Monthly Average'
     };
 
     const timeWeek: PillarData = {
         value: weekScores?.productivity_score || 0,
-        trend: weekScores?.productivity_trend || 0.5,
+        trend: weekScores?.productivity_trend ?? null,
         metricLabel: 'Productivity (WTD)',
         subtext: 'vs last week'
     };

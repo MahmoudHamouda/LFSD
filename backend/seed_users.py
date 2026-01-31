@@ -226,8 +226,19 @@ def safe_seed_users():
         from services.health_scoring import calculate_health_score
         from services.time_service import calculate_time_score
         
-        # Financial score
-        fin_result = calculate_financial_health_score(user2.id, {}, db, is_manual_mode=False)
+        # Create realistic onboarding data for Finance User
+        finance_onboarding = {
+            "monthly_income": 7500,
+            "monthly_bills": 1800,  # Rent, utilities, insurance
+            "discretionary_spend": 1200,  # Dining, entertainment, shopping
+            "monthly_savings": 1500,  # 20% savings rate
+            "cash_balance": 15000,  # Emergency fund
+            "investments_value": 45000,  # 401k + brokerage
+            "monthly_debt_payments": 300  # Car loan
+        }
+        
+        # Financial score with realistic data
+        fin_result = calculate_financial_health_score(user2.id, finance_onboarding, db, is_manual_mode=False)
         financial_score = fin_result.get("overall_score", 50)
         
         # Health score - needs onboarding data structure
