@@ -18,7 +18,7 @@ import TimeDashboard from './pages/time/TimeDashboard';
 import FinanceDashboard from './pages/financials/FinanceDashboard';
 import Onboarding from './pages/onboarding/Onboarding';
 import Login from './pages/login/LoginNative';
-// import LoginAuth0 from './pages/login/LoginAuth0';
+// import Login from './pages/login/LoginAuth0';
 import { CallbackPage } from './pages/CallbackPage';
 import ForgotPassword from './pages/login/ForgotPassword';
 import ResetPassword from './pages/login/ResetPassword';

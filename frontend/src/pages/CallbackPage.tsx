@@ -55,8 +55,13 @@ export const CallbackPage: React.FC = () => {
                 localStorage.setItem('user', JSON.stringify(userData));
                 localStorage.setItem('auth0_token', token);
 
-                // Redirect to home page
-                navigate('/');
+                // Redirect based on onboarding status
+                if (userData.onboarding_status === 'NOT_STARTED' || userData.onboarding_status === 'IN_PROGRESS') {
+                    console.log('User needs onboarding, redirecting...');
+                    navigate('/onboarding');
+                } else {
+                    navigate('/');
+                }
             } catch (err) {
                 console.error('Callback error:', err);
                 setError(err instanceof Error ? err.message : 'Authentication failed');

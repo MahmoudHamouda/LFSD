@@ -69,3 +69,8 @@ coverage/
 # Specific LFSD exclusions (Temporary)
 backend/test_*.txt
 backend/output.txt
+
+env_vars.yaml
+
+
+.env.cloudrun.yaml

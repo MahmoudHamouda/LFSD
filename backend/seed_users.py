@@ -63,7 +63,7 @@ def create_base_user(user_id, email, name, persona_type, bio, auth0_id=None):
              db.commit()
         # Update profile to ensure consistency
         existing.profile_json = {"name": name, "type": persona_type, "bio": bio}
-        existing.onboarding_status = "COMPLETED"
+        existing.onboarding_status = "COMPLETE"
         db.commit()
         return existing
 
@@ -74,7 +74,7 @@ def create_base_user(user_id, email, name, persona_type, bio, auth0_id=None):
         hashed_password=PASSWORD_HASH,
         profile_json={"name": name, "type": persona_type, "bio": bio},
         viv_preferences={"risk_tolerance": "medium"},
-        onboarding_status="COMPLETED",
+        onboarding_status="COMPLETE",
         auth0_id=auth0_id
     )
     db.add(user)

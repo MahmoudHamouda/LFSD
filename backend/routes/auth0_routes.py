@@ -197,7 +197,7 @@ async def get_current_user(
             "id": user.id,
             "email": user.email,
             "name": user.profile_json.get("name", "") if user.profile_json else "",
-            "onboarding_status": "COMPLETE", # Force complete for everyone in demo
+            "onboarding_status": user.onboarding_status or "NOT_STARTED",
             "auth0_id": user.auth0_id
         }
 
