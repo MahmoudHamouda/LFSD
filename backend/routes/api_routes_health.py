@@ -270,7 +270,7 @@ async def google_auth_callback(
 
 @router.post("/apple/auth-url")
 async def get_apple_auth_url(db: Session = Depends(get_db)):
-    from services.apple_health_service import AppleHealthService
+    from services.integrations.apple_health_service import AppleHealthService
     import secrets
     service = AppleHealthService(db)
     state = secrets.token_urlsafe(16)
@@ -287,7 +287,7 @@ async def apple_auth_callback(
     if not code:
         raise HTTPException(status_code=400, detail="Missing code")
         
-    from services.apple_health_service import AppleHealthService
+    from services.integrations.apple_health_service import AppleHealthService
     service = AppleHealthService(db)
     try:
         connection = service.exchange_code(code, current_user.id)

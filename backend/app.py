@@ -180,52 +180,32 @@ def create_app() -> FastAPI:
         )
 
     # Register routers
-    # Register routers
-    try:
-        print("DEBUG: Importing api_routes_time")
-        from routes import api_routes_time
-        print("DEBUG: Importing api_routes_health")
-        from routes import api_routes_health
-        print("DEBUG: Importing api_routes_finance")
-        from routes import api_routes_finance
-        print("DEBUG: Importing api_routes_lifestyle")
-        from routes import api_routes_lifestyle
-        print("DEBUG: Importing history_routes")
-        from routes import history_routes
-        print("DEBUG: Importing user_routes")
-        from routes import user_routes
-        print("DEBUG: Importing calendar_routes")
-        from routes import calendar_routes
-        print("DEBUG: Importing api_routes_onboarding")
-        from routes import api_routes_onboarding
-        print("DEBUG: Importing api_routes_scores")
-        from routes import api_routes_scores
-        print("DEBUG: Importing mobility_routes")
-        from routes import mobility_routes
-        print("DEBUG: Importing auth0_routes")
-        from routes import auth0_routes
-        print("DEBUG: Importing test_routes")
-        from routes import test_routes
-        print("DEBUG: Importing growth_routes")
-        from routes import growth_routes
-        print("DEBUG: Importing admin_routes")
-        from routes import admin_routes
-        print("DEBUG: Importing api_routes_chat")
-        from routes import api_routes_chat
-        print("DEBUG: Imports DONE")
-    except Exception as e:
-        import traceback
-        print(f"CRITICAL IMPORT ERROR (BLOCK 1): {e}")
-        traceback.print_exc()
-        raise e
-    
-    # Ensure mappers are configured
-    # from sqlalchemy.orm import configure_mappers
-    # configure_mappers()
-    
+    from routes import (
+        api_routes_time,
+        api_routes_health,
+        api_routes_finance,
+        api_routes_lifestyle,
+        history_routes,
+        user_routes,
+        calendar_routes,
+        api_routes_onboarding,
+        api_routes_scores,
+        mobility_routes,
+        auth0_routes,
+        test_routes,
+        growth_routes,
+        admin_routes,
+        api_routes_chat,
+        api_routes_goals,
+        recommendation_routes,
+        partner_routes,
+        api_routes,
+        api_routes_session
+    )
+
     app.include_router(mobility_routes.router, prefix="/api")
     app.include_router(api_routes_time.router, prefix="/api")
-    app.include_router(api_routes_health.router) # Prefix is already in router definition
+    app.include_router(api_routes_health.router) 
     app.include_router(api_routes_finance.router, prefix="/api")
     app.include_router(api_routes_lifestyle.router, prefix="/api")
     app.include_router(history_routes.router)
@@ -233,58 +213,21 @@ def create_app() -> FastAPI:
     app.include_router(calendar_routes.router)
     app.include_router(api_routes_onboarding.router, prefix="/api")
     app.include_router(api_routes_scores.router, prefix="/api/scores")
-
-    app.include_router(auth0_routes.router, prefix="/api")  # Auth0 authentication for frontend
-    app.include_router(test_routes.router, prefix="/api")  # Simple test endpoints
-    app.include_router(test_routes.router, prefix="/api")  # Simple test endpoints
+    app.include_router(auth0_routes.router, prefix="/api")
+    app.include_router(test_routes.router, prefix="/api")
     app.include_router(growth_routes.router, prefix="/api")
     app.include_router(admin_routes.router, prefix="/api")
     app.include_router(api_routes_chat.router, prefix="/api")
+    app.include_router(api_routes_goals.router, prefix="/api")
     
-    try:
-        from routes import api_routes_goals
-        app.include_router(api_routes_goals.router, prefix="/api")
-    except Exception as e:
-        import traceback
-        print(f"CRITICAL IMPORT ERROR (GOALS): {e}")
-        traceback.print_exc()
-        raise e
-    
-    # Native auth removed - using Auth0 only
-    
-    from routes import recommendation_routes, partner_routes, api_routes
-    app.include_router(partner_routes.router, prefix="/api")
-    app.include_router(api_routes.router) # Exposes /.auth/me and others at root
-    
-    # Init DB on startup if needed
-    from models.database import init_db
-    print("Initializing Database...")
-    init_db()
-    print("Database Initialized.")
-
-    
-    # Auto-seed on startup (Persistent fix for Cloud Run SQLite)
-    try:
-        from seed_users import safe_seed_users
-        print("Running startup seeds (SYNC)...")
-        safe_seed_users()
-        print("Startup seeds completed (SYNC).")
-    except Exception as e:
-        print(f"Startup seed failed: {e}")
-        # traceback.print_exc()
-
-    try:
-        from routes import api_routes_session
-        app.include_router(api_routes_session.router, prefix="/api")
-        app.include_router(api_routes_session.user_router, prefix="/api")
-    except Exception as e:
-        import traceback
-        print(f"CRITICAL IMPORT ERROR (SESSION): {e}")
-        traceback.print_exc()
-        raise e
-
-    from routes import recommendation_routes
+    # Recommendation & Partners
     app.include_router(recommendation_routes.router, prefix="/api/home")
+    app.include_router(partner_routes.router, prefix="/api")
+    
+    # Root API & Session
+    app.include_router(api_routes.router)
+    app.include_router(api_routes_session.router, prefix="/api")
+    app.include_router(api_routes_session.user_router, prefix="/api")
 
     # --- DEBUG ENDPOINT FOR DB PATCH ---
     if settings.DEBUG:

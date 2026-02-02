@@ -6,8 +6,6 @@ from core.authentication import get_current_user
 from core.rate_limiting import limiter
 from models.database import get_db
 from models.models import User, Recommendation
-from services.recommendation_service.recommendation_engine import compute_recommendations
-from services.recommendation_service.treat_engine import compute_treats
 
 router = APIRouter(prefix="", tags=["Home"])
 
@@ -19,8 +17,9 @@ async def get_recommendations(
     db: Session = Depends(get_db)
 ) -> dict[str, Any]:
     """Return a list of recommended items for the current user."""
-    items = compute_recommendations(current_user.id, db)
-    return {"items": items}
+    # STUB: Service delegated to 'recommendation_service' which was deprecated/deleted.
+    # Returning empty list to maintain contract.
+    return {"items": []}
 
 @router.get("/treats", summary="Get treats")
 @limiter.limit("15/minute")
@@ -30,8 +29,8 @@ async def get_treats(
     db: Session = Depends(get_db)
 ) -> dict[str, Any]:
     """Return a list of treats for the current user."""
-    treats = compute_treats(current_user.id, db)
-    return {"items": treats}
+    # STUB: Service delegated to 'recommendation_service' which was deprecated/deleted.
+    return {"items": []}
 
 @router.get("/users/{user_id}/recommendations", summary="Get user recommendations")
 async def get_user_recommendations(
