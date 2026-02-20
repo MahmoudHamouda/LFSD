@@ -48,7 +48,7 @@ class Orchestrator:
         feed = ActivityFeed(
             id=str(uuid.uuid4()),
             user_id=user_id,
-            action_type="ORCHESTRATION_ACTION",
+            event_type="ORCHESTRATION_ACTION",
             description=description,
             metadata_json={"title": title}
         )
