@@ -203,6 +203,18 @@ def create_app() -> FastAPI:
         api_routes_session
     )
 
+    # Initialize Integration Registry (Domain Executors)
+    # The decorators will auto-register these tools into the Action Orchestrator
+    try:
+        from health import executor as _he
+        from wealth import executor as _we
+        from productivity import executor as _pe
+        from lifestyle import executor as _le
+        from mobility import executor as _me
+    except Exception as e:
+        logger.warning(f"Failed to load some domain executors: {e}")
+
+
     app.include_router(mobility_routes.router, prefix="/api")
     app.include_router(api_routes_time.router, prefix="/api")
     app.include_router(api_routes_health.router) 
