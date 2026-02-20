@@ -60,7 +60,7 @@ class User(Base):
     financial_scores = relationship("FinancialScore", back_populates="user", cascade="all, delete-orphan")
     time_scores = relationship("TimeScore", back_populates="user", cascade="all, delete-orphan")
     health_data_samples = relationship("HealthDataSample", back_populates="user", cascade="all, delete-orphan")
-    health_scores = relationship("HealthScore", back_populates="user", cascade="all, delete-orphan")
+    # health_scores = relationship("HealthScore", back_populates="user", cascade="all, delete-orphan")
     subscription = relationship("Subscription", uselist=False, back_populates="user", cascade="all, delete-orphan")
     conversations = relationship("DBConversation", back_populates="user", cascade="all, delete-orphan")
     # nutrition_logs = relationship("NutritionLog", back_populates="user", cascade="all, delete-orphan")
@@ -73,16 +73,16 @@ class User(Base):
     recurring_bills = relationship("RecurringBill", back_populates="user", cascade="all, delete-orphan")
     recommendations = relationship("Recommendation", back_populates="user", cascade="all, delete-orphan")
     activity_feed = relationship("ActivityFeed", back_populates="user", cascade="all, delete-orphan")
-    investment_portfolios = relationship("InvestmentPortfolio", back_populates="user", cascade="all, delete-orphan")
-    lifestyle_events = relationship("LifestyleEvent", back_populates="user", cascade="all, delete-orphan")
+    # investment_portfolios = relationship("InvestmentPortfolio", back_populates="user", cascade="all, delete-orphan")
+    # lifestyle_events = relationship("LifestyleEvent", back_populates="user", cascade="all, delete-orphan")
     
     # Health & Scores Links
-    health_connections = relationship("DBHealthConnection", back_populates="user", cascade="all, delete-orphan")
-    health_metrics = relationship("DBHealthMetric", back_populates="user", cascade="all, delete-orphan")
-    health_indexes = relationship("DBUserIndex", back_populates="user", cascade="all, delete-orphan")
-    health_insights = relationship("DBHealthInsight", back_populates="user", cascade="all, delete-orphan")
-    health_settings = relationship("DBHealthSettings", back_populates="user", cascade="all, delete-orphan")
-    scores = relationship("DBUserScore", back_populates="user", cascade="all, delete-orphan")
+    # health_connections = relationship("DBHealthConnection", back_populates="user", cascade="all, delete-orphan")
+    # health_metrics = relationship("DBHealthMetric", back_populates="user", cascade="all, delete-orphan")
+    # health_indexes = relationship("DBUserIndex", back_populates="user", cascade="all, delete-orphan")
+    # health_insights = relationship("DBHealthInsight", back_populates="user", cascade="all, delete-orphan")
+    # health_settings = relationship("DBHealthSettings", back_populates="user", cascade="all, delete-orphan")
+    # scores = relationship("DBUserScore", back_populates="user", cascade="all, delete-orphan")
 
 
 class Connection(Base):
