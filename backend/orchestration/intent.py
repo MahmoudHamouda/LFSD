@@ -52,8 +52,12 @@ class IntentClassifier:
         text_lower = text.lower()
         
         # 1. Mobility Check
-        mobility_keywords = ['go', 'ride', 'airport', 'hotel', 'taxi', 'uber', 'careem', 'drive', 'commute']
-        if any(keyword in text_lower for keyword in mobility_keywords) and ('to ' in text_lower or 'from ' in text_lower):
+        mobility_keywords = ['go', 'ride', 'airport', 'hotel', 'taxi', 'uber', 'careem', 'drive', 'commute', 'book']
+        is_mobility = any(keyword in text_lower for keyword in mobility_keywords)
+        has_direction = ('to ' in text_lower or 'from ' in text_lower)
+        is_explicit_booking = ('book ' in text_lower or 'uber' in text_lower or 'careem' in text_lower)
+        
+        if is_mobility and (has_direction or is_explicit_booking):
             entities = self._extract_mobility_entities(text)
             has_req = all(req in entities for req in self.INTENTS["MOBILITY"]["required"])
             
@@ -61,6 +65,18 @@ class IntentClassifier:
             if "airport" in text_lower and "destination" not in entities:
                  entities["destination"] = "airport"
                  has_req = True
+                 
+            # Additional heuristic: if booking is explicitly mentioned without a destination,
+            # we capture the intent but flag it as missing required entities so the Orchestrator
+            # can prompt the user normally instead of dropping to the LLM.
+            if ("book" in text_lower or "uber" in text_lower) and not has_req:
+                 # It's definitely a mobility intent, but we need more info.
+                 return Intent(
+                     name="MOBILITY",
+                     confidence=0.8,
+                     entities=entities,
+                     required_entities_present=False
+                 )
                  
             return Intent(
                 name="MOBILITY",
