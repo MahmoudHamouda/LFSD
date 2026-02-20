@@ -3,6 +3,8 @@ import random
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 from services.productivity.google_maps_service import GoogleMapsService
+from backend.orchestration.base_executor import BaseExecutor
+from backend.orchestration.registry import IntegrationRegistry
 
 logger = logging.getLogger("mobility.executor")
 
@@ -15,13 +17,15 @@ class CommuteOption(BaseModel):
     provider: Optional[str] = None
     action_available: bool = False
 
-class MobilityExecutor:
+@IntegrationRegistry.register("MOBILITY")
+class MobilityExecutor(BaseExecutor):
     """
     Deterministic mobility service. Fetches route options, costs, and ETAs.
     Recommends best commute using scoring function.
     """
     def __init__(self):
-        self.maps_service = GoogleMapsService()
+        super().__init__()
+        self.maps_service = None
         self.base_cost_per_km = {
             "ride_hailing": 2.5,  # AED per km
             "taxi": 2.0,
@@ -34,6 +38,20 @@ class MobilityExecutor:
             "public_transit": 25.0,
             "drive": 40.0
         }
+
+    async def setup(self) -> bool:
+        """Lazy init connection to map service."""
+        try:
+            self.maps_service = GoogleMapsService()
+            if not getattr(self.maps_service, "api_key", None):
+                 raise ValueError("GOOGLE_MAPS_API_KEY is missing or invalid.")
+            self.is_healthy = True
+            return True
+        except Exception as e:
+            logger.error(f"Mobility integration failed to initialize: {e}")
+            self.is_healthy = False
+            self.error_msg = str(e)
+            return False
 
     async def _resolve_location(self, place_name: str) -> Optional[tuple]:
         """Geocodes a place name if possible, otherwise returns a mock coord."""
@@ -68,7 +86,7 @@ class MobilityExecutor:
         score = (option.eta_minutes * time_weight) + (option.estimated_cost * cost_weight)
         return score
 
-    async def execute(self, entities: Dict[str, Any], user_id: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_safe(self, entities: Dict[str, Any], user_id: str, context: Dict[str, Any]) -> Dict[str, Any]:
         """
         Fetch ETAs, compute costs, return structured commute options + recommendation.
         """

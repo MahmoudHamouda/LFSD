@@ -2,8 +2,8 @@ import logging
 import asyncio
 from typing import Dict, Any, List
 from .intent import Intent, IntentClassifier
-from mobility.executor import MobilityExecutor
 from .policy import ExecutionPolicy
+from .registry import IntegrationRegistry
 
 logger = logging.getLogger("orchestration.router")
 
@@ -14,19 +14,14 @@ class ToolRouter:
     """
     def __init__(self, db_session=None):
         self.db_session = db_session
-        self.executors = {
-            "MOBILITY": MobilityExecutor(),
-            # "FINANCE": FinanceExecutor(),
-            # "HEALTH": HealthExecutor()
-        }
 
     async def execute_intent(self, intent: Intent, user_id: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """Runs the executor for the given intent and returns structured data."""
         if context is None:
             context = {}
             
-        # 1. Check if intent is recognized and has an executor
-        executor = self.executors.get(intent.name)
+        # 1. Check if intent is recognized and has an executor in the registry
+        executor = IntegrationRegistry.get_executor(intent.name)
         if not executor:
             return {"executor_found": False, "data": None, "message": "No specific tool mapped for this intent."}
 
@@ -45,18 +40,26 @@ class ToolRouter:
         timeout_sec = ExecutionPolicy.get_timeout(intent.name) / 1000.0
         retries = ExecutionPolicy.get_retries(intent.name)
 
-        # 3. Call Executor with Timeout & Retries
+        # 3. Initialize the Executor lazily
         logger.info(f"Routing to {intent.name} executor with entities {intent.entities}")
+        setup_success = await executor.setup()
+        if not setup_success or not getattr(executor, 'is_healthy', True):
+            # Graceful degradation if API down
+            logger.warning(f"Executor {intent.name} is currently offline or failed setup.")
+            return {"executor_found": True, "data": None, "status": "offline", "message": getattr(executor, 'error_msg', "Service is currently offline.")}
+
+        # 4. Call Executor with Timeout & Retries
         for attempt in range(retries + 1):
             try:
                 # Wrap the executor call in a timeout
                 result = await asyncio.wait_for(
-                    executor.execute(intent.entities, user_id, context),
+                    executor.execute_safe(intent.entities, user_id, context),
                     timeout=timeout_sec
                 )
                 return {
                     "executor_found": True,
                     "data": result,
+                    "status": "success",
                     "message": "Structured data retrieved successfully."
                 }
             except asyncio.TimeoutError:

@@ -81,8 +81,10 @@ class Orchestrator:
                 error=result.get("message") if not result.get("data") else None
             )
             
-            # Only if executor supplied data, compose response
-            if result.get("data"):
+            # 3. Handle Executor Response
+            status = result.get("status", "error")
+            
+            if status == "success" and result.get("data"):
                 human_answer = await self.composer.compose(intent.name, result["data"], context)
                 
                 # Report user-friendly activity log
@@ -96,6 +98,9 @@ class Orchestrator:
                     "intent": intent.name,
                     "options": result["data"]
                 }
+            elif status == "offline":
+                # Handle API downtime gracefully without LLM fallback
+                return result.get("message", f"The {intent.name} service is currently offline."), {"is_orchestrator": True, "status": "offline"}
             else:
                 # Ask clarifying question if tool required entities
                 return result.get("message", "I need more information to complete that action."), {"is_orchestrator": True, "clarifying": True}
