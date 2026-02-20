@@ -13,6 +13,8 @@ class Settings:
     # Security Secrets
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
     GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')  # Updated to 2.5 Flash (2.0 deprecated March 2026)
+    GEMINI_MODEL_LIGHT = os.getenv('GEMINI_MODEL_LIGHT', 'gemini-2.5-flash')  # Tier 1-2: lightweight
+    GEMINI_MODEL_HEAVY = os.getenv('GEMINI_MODEL_HEAVY', 'gemini-2.5-pro')    # Tier 3: heavy reasoning
     ADMIN_SECRET = os.getenv('ADMIN_SECRET')
     CREDENTIALS_ENCRYPTION_KEY = os.getenv('CREDENTIALS_ENCRYPTION_KEY')
     

@@ -1173,26 +1173,90 @@ class GeminiService:
 
     async def generate_response(self, history: List[Dict[str, str]], context: Dict[str, Any]) -> str:
         """
-        Step 4: The Synthesizer (The Master Prompt)
-        Generate response using the Viv Architecture (Vitals vs Targets).
-        """
-        # Configure logging
-        if not logger.handlers:
-            import sys
-            sh = logging.StreamHandler(sys.stdout)
-            sh.setLevel(logging.INFO)
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-            sh.setFormatter(formatter)
-            logger.addHandler(sh)
-            logger.setLevel(logging.INFO)
-            
-        logger.info("generate_response called (HELM Architecture V2)")
-        import sys
-        print("DEBUG: generate_response CALLED.")
-        sys.stdout.flush()
+        Generate response using the HELM Intelligence Pipeline.
 
-        # Mock block disabled. Logic continues to normal flow.
-        # Mock block disabled. Logic continues to normal flow.
+        Primary path: IntelligencePipeline (7-stage deterministic-probabilistic).
+        Fallback path: Legacy monolithic code (preserved for safety).
+
+        Set USE_LEGACY_PIPELINE=true in env to force legacy path.
+        """
+        import os
+
+        logger.info("generate_response called (HELM Intelligence Pipeline)")
+
+        # --- Pipeline Path (Primary) ---
+        use_legacy = os.getenv("USE_LEGACY_PIPELINE", "false").lower() == "true"
+        if not use_legacy:
+            try:
+                from services.intelligence.pipeline import IntelligencePipeline
+
+                # Extract user info
+                user_id = context.get("user_id", "user-123")
+                last_message = ""
+                if history:
+                    last_message = (
+                        history[-1].get("content", "")
+                        if isinstance(history[-1], dict)
+                        else str(history[-1])
+                    )
+                else:
+                    last_message = "Hello"
+
+                # Build session metadata
+                session_metadata = {
+                    "session_id": context.get("session_id"),
+                    "conversation_history": history,
+                    "device_type": context.get("device_type"),
+                    "locale": context.get("locale", "en"),
+                }
+
+                # Instantiate pipeline with current models
+                pipeline = IntelligencePipeline(
+                    db=self.db,
+                    llm_model=self.model,
+                    heavy_llm_model=self.model,  # Same model for now; Phase 2 splits
+                    llm_api_key=settings.GEMINI_API_KEY,
+                )
+
+                # Process through 7-stage pipeline
+                result = await pipeline.process(
+                    raw_input=last_message,
+                    user_id=user_id,
+                    session_metadata=session_metadata,
+                )
+
+                # Format response for existing chat route compatibility
+                response_data = {
+                    "type": result.response.response_type,
+                    "text": result.response.text,
+                    "data": result.response.data,
+                    "usage": {
+                        "input_tokens": result.trace.total_input_tokens,
+                        "output_tokens": result.trace.total_output_tokens,
+                    },
+                    "pipeline": {
+                        "tier": result.tier,
+                        "execution_id": result.trace.execution_id,
+                    },
+                }
+
+                logger.info(
+                    "Pipeline response: tier=%d, execution_id=%s",
+                    result.tier,
+                    result.trace.execution_id,
+                )
+                return json.dumps(response_data)
+
+            except Exception as e:
+                logger.error(
+                    "Intelligence Pipeline failed — falling back to legacy: %s",
+                    e,
+                    exc_info=True,
+                )
+                # Fall through to legacy path
+
+        # --- Legacy Path (Fallback) ---
+        logger.info("Using legacy generate_response path")
 
         if not settings.GEMINI_API_KEY:
             return json.dumps({
