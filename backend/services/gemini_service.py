@@ -1183,24 +1183,45 @@ class GeminiService:
         import os
 
         logger.info("generate_response called (HELM Intelligence Pipeline)")
+        
+        # Extract user info
+        user_id = context.get("user_id", "user-123")
+        last_message = ""
+        if history:
+            last_message = (
+                history[-1].get("content", "")
+                if isinstance(history[-1], dict)
+                else str(history[-1])
+            )
+        else:
+            last_message = "Hello"
+
+        # --- ORCHESTRATOR LAYER INJECTION (Tool-first, LLM-last) ---
+        from orchestration.master import Orchestrator
+        try:
+            orchestrator = Orchestrator(db=self.db, llm=self.model)
+            human_answer, metadata = await orchestrator.process_message(last_message, user_id, context)
+            
+            # If the Orchestrator successfully matched an Action Intent and returned an answer, short-circuit
+            if metadata.get("is_orchestrator") and human_answer:
+                logger.info(f"Orchestrator cleanly handled the {metadata.get('intent')} intent.")
+                response_data = {
+                    "type": "orchestrated_response",
+                    "text": human_answer,
+                    "data": metadata.get("options", {}),
+                    "usage": {"input_tokens": 0, "output_tokens": 0},
+                    "pipeline": {"tier": 0, "execution_id": "orchestrator-" + str(uuid.uuid4())}
+                }
+                return json.dumps(response_data)
+        except Exception as e:
+            logger.error(f"Orchestrator Layer encountered an issue: {e}", exc_info=True)
+            # fallback to standard AI pipeline
 
         # --- Pipeline Path (Primary) ---
         use_legacy = os.getenv("USE_LEGACY_PIPELINE", "false").lower() == "true"
         if not use_legacy:
             try:
                 from services.intelligence.pipeline import IntelligencePipeline
-
-                # Extract user info
-                user_id = context.get("user_id", "user-123")
-                last_message = ""
-                if history:
-                    last_message = (
-                        history[-1].get("content", "")
-                        if isinstance(history[-1], dict)
-                        else str(history[-1])
-                    )
-                else:
-                    last_message = "Hello"
 
                 # Build session metadata
                 session_metadata = {
