@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any
-from backend.orchestration.base_executor import BaseExecutor
-from backend.orchestration.registry import IntegrationRegistry
+from orchestration.base_executor import BaseExecutor
+from orchestration.registry import IntegrationRegistry
 
 logger = logging.getLogger("lifestyle.executor")
 

@@ -3,8 +3,8 @@ import random
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 from services.productivity.google_maps_service import GoogleMapsService
-from backend.orchestration.base_executor import BaseExecutor
-from backend.orchestration.registry import IntegrationRegistry
+from orchestration.base_executor import BaseExecutor
+from orchestration.registry import IntegrationRegistry
 
 logger = logging.getLogger("mobility.executor")
 
