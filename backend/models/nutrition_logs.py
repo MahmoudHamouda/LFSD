@@ -63,4 +63,4 @@ class NutritionLog(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), 
                        onupdate=func.now(), nullable=False)
     # Relationship
-    # user = relationship("User", back_populates="nutrition_logs", foreign_keys=[user_id])
+    user = relationship("User", back_populates="nutrition_logs", foreign_keys=[user_id])
