@@ -23,6 +23,7 @@ class Settings:
     RTA_API_KEY = os.getenv('RTA_API_KEY')
     GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+    GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
 
     # Base URL for Callbacks
     APP_BASE_URL = os.getenv('APP_BASE_URL', 'https://lfsd-backend-692544481281.us-central1.run.app')
