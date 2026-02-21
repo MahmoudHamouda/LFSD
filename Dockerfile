@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+RUN rm -f .env .env.* backend/.env backend/.env.* 2>/dev/null || true
 
 EXPOSE 8080
 
