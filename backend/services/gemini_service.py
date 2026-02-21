@@ -1613,14 +1613,15 @@ Your goal is to *actively* optimize the user's life by balancing **Current Metri
             return json.dumps(final_response)
 
         except Exception as e:
-            logger.error(f"Gemini API Error: {type(e).__name__}: {str(e)}")
+            import uuid
+            error_id = str(uuid.uuid4())[:12]
+            logger.error(f"Gemini API Error [{error_id}]: {type(e).__name__}: {str(e)}")
             import traceback
             logger.error(traceback.format_exc())
-            print(f"ERROR IN GENERATE_RESPONSE: {type(e).__name__}: {str(e)}")
-            print(traceback.format_exc())
+            print(f"ERROR IN GENERATE_RESPONSE [{error_id}]: {type(e).__name__}: {str(e)}")
             return json.dumps({
                 "type": "error",
-                "text": "I'm having trouble connecting to my brain right now. Please try again later.",
+                "text": f"I'm having trouble connecting to my brain right now. Please try again later or contact support with Error ID: {error_id}",
                 "debug_error": f"{type(e).__name__}: {str(e)}" if settings.DEBUG else None
             })
     async def parse_bank_statement(self, file_content: bytes, mime_type: str = "application/pdf") -> Dict[str, Any]:
