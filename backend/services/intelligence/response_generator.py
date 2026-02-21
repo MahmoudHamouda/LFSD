@@ -351,6 +351,32 @@ class ResponseGenerator:
                 direction = "⏰" if scores.time.delta > 0 else "⏳"
                 parts.append(f"- Time {direction} {scores.time.reasoning}")
 
+            wealth_score = context.helm_scores.wealth
+            time_score = context.helm_scores.time
+            health_score = context.helm_scores.health
+            
+            advice = []
+            if scores.wealth.delta < 0 and scores.time.delta > 0:
+                if wealth_score < 40:
+                    advice.append("💡 **HELM Advice:** Since your Wealth index is currently low, you should prioritize less expensive options even if they take more time.")
+                elif time_score < 40:
+                    advice.append("💡 **HELM Advice:** Since you are currently very short on time, this financial trade-off is recommended to protect your schedule.")
+                else:
+                    advice.append("💡 **HELM Advice:** Both your Wealth and Time indices are healthy, making this a balanced personal choice.")
+            elif scores.time.delta < 0 and scores.wealth.delta > 0:
+                if time_score < 40:
+                    advice.append("💡 **HELM Advice:** Since your Time index is currently low, you should avoid options that consume excessive time, even if they save money.")
+                elif wealth_score < 40:
+                    advice.append("💡 **HELM Advice:** Since your Wealth index is currently low, taking extra time to save money is a highly recommended trade-off.")
+                else:
+                    advice.append("💡 **HELM Advice:** Both your Wealth and Time indices are healthy, making this a balanced personal choice.")
+            elif scores.health.delta > 0 and (scores.wealth.delta < 0 or scores.time.delta < 0):
+                if health_score < 40:
+                    advice.append("💡 **HELM Advice:** Your Health index needs attention. Investing time or money into this health benefit is strongly recommended.")
+            
+            if advice:
+                parts.append("\n" + "\n".join(advice))
+
         if scores.goal_impacts:
             parts.append("\n**Impact on goals:**")
             for impact in scores.goal_impacts:
