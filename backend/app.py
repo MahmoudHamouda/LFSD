@@ -149,9 +149,16 @@ def create_app() -> FastAPI:
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
         """Return errors in a consistent JSON shape."""
+        detail = exc.detail
+        if exc.status_code >= 500:
+            import uuid
+            error_id = str(uuid.uuid4())[:12]
+            logger.error(f"HTTP {exc.status_code} ERROR [{error_id}]: {exc.detail}")
+            detail = f"An internal system error occurred. Please contact support with Error ID: {error_id}"
+            
         return JSONResponse(
             status_code=exc.status_code,
-            content={"detail": exc.detail},
+            content={"detail": detail},
         )
 
     @app.exception_handler(RateLimitExceeded)
@@ -164,15 +171,13 @@ def create_app() -> FastAPI:
     @app.exception_handler(Exception)
     async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
         import traceback
+        import uuid
+        error_id = str(uuid.uuid4())[:12]
         error_details = f"Internal Server Error: {str(exc)}"
-        # logger.exception("Unhandled exception") # Already logged via middleware usually
-        # But if it reaches here, middleware might have missed it or re-raised
-        logger.error(f"CRITICAL ERROR: {error_details}")
+        logger.error(f"CRITICAL ERROR [{error_id}]: {error_details}")
         logger.error(traceback.format_exc())
         
-        content = {"detail": "Internal Server Error"}
-        if settings.DEBUG:
-            content["detail"] = error_details
+        content = {"detail": f"An unexpected system error occurred. Please contact support with Error ID: {error_id}"}
             
         return JSONResponse(
             status_code=500,

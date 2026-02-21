@@ -45,8 +45,16 @@ class ToolRouter:
         setup_success = await executor.setup()
         if not setup_success or not getattr(executor, 'is_healthy', True):
             # Graceful degradation if API down
-            logger.warning(f"Executor {intent.name} is currently offline or failed setup.")
-            return {"executor_found": True, "data": None, "status": "offline", "message": getattr(executor, 'error_msg', "Service is currently offline.")}
+            import uuid
+            error_id = str(uuid.uuid4())[:12]
+            raw_error = getattr(executor, 'error_msg', "Service is currently offline.")
+            logger.error(f"Executor {intent.name} setup failed [{error_id}]: {raw_error}")
+            return {
+                "executor_found": True, 
+                "data": None, 
+                "status": "offline", 
+                "message": f"This service is currently unavailable. Please contact support with Error ID: {error_id}"
+            }
 
         # 4. Call Executor with Timeout & Retries
         for attempt in range(retries + 1):
@@ -67,6 +75,12 @@ class ToolRouter:
                 if attempt == retries:
                     return {"executor_found": True, "data": None, "message": "Service timed out."}
             except Exception as e:
-                logger.error(f"Executor {intent.name} failed: {e}", exc_info=True)
+                import uuid
+                error_id = str(uuid.uuid4())[:12]
+                logger.error(f"Executor {intent.name} failed [{error_id}]: {e}", exc_info=True)
                 if attempt == retries:
-                    return {"executor_found": True, "data": None, "message": f"Execution failed: {str(e)}"}
+                    return {
+                        "executor_found": True, 
+                        "data": None, 
+                        "message": f"Execution failed. Please contact support with Error ID: {error_id}"
+                    }
