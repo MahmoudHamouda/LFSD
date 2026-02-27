@@ -1209,12 +1209,13 @@ class GeminiService:
             # If the Orchestrator successfully matched an Action Intent and returned an answer, short-circuit
             if metadata.get("is_orchestrator") and human_answer:
                 logger.info(f"Orchestrator cleanly handled the {metadata.get('intent')} intent.")
+                import uuid as _uuid
                 response_data = {
                     "type": "orchestrated_response",
                     "text": human_answer,
                     "data": metadata.get("options", {}),
                     "usage": {"input_tokens": 0, "output_tokens": 0},
-                    "pipeline": {"tier": 0, "execution_id": "orchestrator-" + str(uuid.uuid4())}
+                    "pipeline": {"tier": 0, "execution_id": "orchestrator-" + str(_uuid.uuid4())}
                 }
                 return json.dumps(response_data)
             else:
