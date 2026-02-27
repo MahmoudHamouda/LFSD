@@ -2,6 +2,6 @@ from .registry import IntegrationRegistry
 
 # Discover deployed executors
 try:
-    import backend.mobility.executor
+    import mobility.executor
 except ImportError:
     pass

@@ -1,6 +1,6 @@
 import logging
 from typing import Dict, Any, Type, Optional
-from backend.orchestration.base_executor import BaseExecutor
+from orchestration.base_executor import BaseExecutor
 
 logger = logging.getLogger("orchestration.registry")
 
