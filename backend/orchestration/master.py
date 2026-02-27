@@ -27,33 +27,41 @@ class Orchestrator:
 
     async def _log_audit(self, user_id: str, intent_name: str, executor_called: str, success: bool, latency_ms: float, error: str = None):
         """Write to structured Audit Log."""
-        audit = AuditLog(
-            id=str(uuid.uuid4()),
-            actor_id=user_id,
-            action="EXECUTOR_CALL",
-            entity_type="ToolResult",
-            entity_id=executor_called,
-            changes_json={
-                "intent": intent_name,
-                "latency_ms": latency_ms,
-                "success": success,
-                "error": error
-            }
-        )
-        self.db.add(audit)
-        self.db.commit()
+        try:
+            audit = AuditLog(
+                id=str(uuid.uuid4()),
+                actor_id=user_id,
+                action="EXECUTOR_CALL",
+                entity_type="ToolResult",
+                entity_id=executor_called,
+                changes_json={
+                    "intent": intent_name,
+                    "latency_ms": latency_ms,
+                    "success": success,
+                    "error": error
+                }
+            )
+            self.db.add(audit)
+            self.db.commit()
+        except Exception as e:
+            logger.warning(f"Failed to log audit (ignored): {e}")
+            self.db.rollback()
 
     async def _log_activity(self, user_id: str, title: str, description: str):
         """Write to Activity Feed (user-facing)."""
-        feed = ActivityFeed(
-            id=str(uuid.uuid4()),
-            user_id=user_id,
-            event_type="ORCHESTRATION_ACTION",
-            description=description,
-            metadata_json={"title": title}
-        )
-        self.db.add(feed)
-        self.db.commit()
+        try:
+            feed = ActivityFeed(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                event_type="ORCHESTRATION_ACTION",
+                description=description,
+                metadata_json={"title": title}
+            )
+            self.db.add(feed)
+            self.db.commit()
+        except Exception as e:
+            logger.warning(f"Failed to log activity (ignored): {e}")
+            self.db.rollback()
 
     async def process_message(self, text: str, user_id: str, context: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
         """
