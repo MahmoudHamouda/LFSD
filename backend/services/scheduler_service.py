@@ -27,8 +27,14 @@ class SchedulerService:
 
     def stop(self):
         """Stop the scheduler."""
-        self.scheduler.shutdown()
-        logger.info("Scheduler stopped.")
+        try:
+            if getattr(self.scheduler, "running", False):
+                self.scheduler.shutdown()
+                logger.info("Scheduler stopped.")
+            else:
+                logger.debug("Scheduler was not running.")
+        except Exception as e:
+            logger.warning(f"Scheduler shutdown error ignored: {e}")
 
     async def sync_health_data(self):
         """Job to sync health data for all connected users."""
