@@ -3,6 +3,8 @@ import random
 from typing import Dict, Any, List, Optional
 from pydantic import BaseModel
 from services.productivity.google_maps_service import GoogleMapsService
+from services.integrations.uber_service import UberService
+from services.mobility.rta_service import RTAService
 from orchestration.base_executor import BaseExecutor
 from orchestration.registry import IntegrationRegistry
 
@@ -26,6 +28,8 @@ class MobilityExecutor(BaseExecutor):
     def __init__(self):
         super().__init__()
         self.maps_service = None
+        self.uber_service = None
+        self.rta_service = None
         self.base_cost_per_km = {
             "ride_hailing": 2.5,  # AED per km
             "taxi": 2.0,
@@ -43,6 +47,8 @@ class MobilityExecutor(BaseExecutor):
         """Lazy init connection to map service."""
         try:
             self.maps_service = GoogleMapsService()
+            self.uber_service = UberService()
+            self.rta_service = RTAService()
             if not getattr(self.maps_service, "api_key", None):
                  raise ValueError("GOOGLE_MAPS_API_KEY is missing or invalid.")
             self.is_healthy = True
@@ -98,10 +104,6 @@ class MobilityExecutor(BaseExecutor):
         end_coords = await self._resolve_location(destination)
         
         # Calculate rough distance/time using Haversine or Google distance matrix.
-        # Since this is a deterministic interface, if maps service has a get_distance method we use it,
-        # else we mock
-        
-        # Stubbing distance for now if maps distance matrix missing
         import math
         def haversine(lat1, lon1, lat2, lon2):
             R = 6371  # km
@@ -114,40 +116,80 @@ class MobilityExecutor(BaseExecutor):
             
         distance_km = 15.0 # fallback
         if start_coords and end_coords:
-             distance_km = haversine(start_coords[0], start_coords[1], end_coords[0], end_coords[1])
-             distance_km = max(distance_km, 2.0) # Assume at least 2km to avoid zero
-             
-        # Generate Options
-        options = []
-        for mode in ["ride_hailing", "taxi", "public_transit", "drive"]:
-            # Baseline speed
-            speed = self.base_speed_kmh[mode]
-            eta_hours = distance_km / speed
-            
-            # Penalties/Variation
-            if mode == "public_transit":
-                 eta_hours += (15.0 / 60.0) # 15 min wait time
-            elif mode in ["ride_hailing", "taxi"]:
-                 eta_hours += (5.0 / 60.0) # 5 min wait time
-                 
-            eta_minutes = int(eta_hours * 60)
-            cost = round(distance_km * self.base_cost_per_km[mode] + (random.uniform(2.0, 5.0) if mode != "public_transit" else 0.0), 2)
-            
-            # Special case for transit cost
-            if mode == "public_transit":
-                cost = 5.0 if distance_km < 10 else 7.5
-                
-            opt = CommuteOption(
-                mode=mode,
-                eta_minutes=eta_minutes,
-                distance_km=round(distance_km, 1),
-                estimated_cost=cost,
-                confidence=0.9,
-                provider="RTA" if mode in ["taxi", "public_transit"] else "Uber/Careem",
-                action_available=(mode == "ride_hailing") # Explicitly define if we can book!
-            )
-            options.append(opt)
+            distance_km = haversine(start_coords[0], start_coords[1], end_coords[0], end_coords[1])
+            try:
+                # Try getting real road distance
+                api_dist = await self.maps_service.get_distance(origin, destination)
+                if api_dist is not None:
+                    distance_km = api_dist
+            except Exception as e:
+                logger.error(f"Failed to get exact distance matrix: {e}")
+            distance_km = max(distance_km, 2.0) # Assume at least 2km to avoid zero
 
+        options = []
+        
+        # 1. LIVE RIDE HAILING (Uber API)
+        if start_coords and end_coords:
+            try:
+                uber_est = await self.uber_service.get_price_estimates(
+                    start_lat=start_coords[0], start_lng=start_coords[1],
+                    end_lat=end_coords[0], end_lng=end_coords[1],
+                    user_id=user_id
+                )
+                if uber_est and uber_est.get("success") and uber_est.get("prices"):
+                    # Use the first reasonable product (e.g., standard UberX)
+                    price = uber_est["prices"][0]
+                    # Uber duration is in seconds
+                    duration_mins = int(price.get("duration", 0) / 60) + 5 # 5 mins wait
+                    cost = price.get("high_estimate", distance_km * self.base_cost_per_km["ride_hailing"])
+                    if cost is not None:
+                        options.append(CommuteOption(
+                            mode="ride_hailing",
+                            eta_minutes=max(duration_mins, 10),
+                            distance_km=round(price.get("distance", distance_km), 1),
+                            estimated_cost=float(cost),
+                            confidence=0.95,
+                            provider="Uber",
+                            action_available=True
+                        ))
+            except Exception as e:
+                logger.error(f"Uber Service failed: {e}")
+
+        # 2. LIVE PUBLIC TRANSIT (RTA API)
+        if start_coords and end_coords:
+            try:
+                rta_est = await self.rta_service.get_price_estimates(
+                    start_lat=start_coords[0], start_lng=start_coords[1],
+                    end_lat=end_coords[0], end_lng=end_coords[1],
+                    user_id=user_id
+                )
+                if rta_est and rta_est.get("success") and rta_est.get("prices"):
+                    price = rta_est["prices"][0]
+                    duration_mins = int(price.get("duration", 1200) / 60)
+                    cost = price.get("high_estimate", 5.0)
+                    if cost is not None:
+                        options.append(CommuteOption(
+                            mode="public_transit",
+                            eta_minutes=max(duration_mins, 15),
+                            distance_km=round(price.get("distance", distance_km), 1),
+                            estimated_cost=float(cost),
+                            confidence=0.95,
+                            provider="RTA",
+                            action_available=False
+                        ))
+            except Exception as e:
+                logger.error(f"RTA Service failed: {e}")
+
+        # 3. VERIFY SUCCESS & ERROR REPORTING
+        if not options:
+            return {
+                "error": True,
+                "message": (
+                    "I am currently unable to fetch live mobility data. The connection to Uber, RTA, or Google Maps "
+                    "might be unavailable, or your API quota may have been exceeded. "
+                    "Please check your API dashboard and upgrade your plan, or try again later."
+                )
+            }
         # Compute recommended option
         best_score = float('inf')
         recommended = None

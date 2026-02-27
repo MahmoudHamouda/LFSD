@@ -22,7 +22,9 @@ class ResponseComposer:
         return "I have received your request, but do not have a composer configuration for it."
 
     def _format_mobility_response(self, data: Dict[str, Any], context: Dict[str, Any]) -> str:
-        
+        if data.get("error"):
+            return data.get("message", "An unknown error occurred while communicating with mobility providers.")
+            
         origin = data.get("origin", "your location")
         destination = data.get("destination", "your destination")
         rec = data.get("recommended_option")
