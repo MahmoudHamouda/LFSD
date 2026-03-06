@@ -492,6 +492,11 @@ def create_app() -> FastAPI:
             try:
                 queries = [
                     "ALTER TABLE time_scores_v2 ADD COLUMN IF NOT EXISTS confidence FLOAT DEFAULT 0.0",
+                    "ALTER TABLE time_scores_v2 ADD COLUMN IF NOT EXISTS structure_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE time_scores_v2 ADD COLUMN IF NOT EXISTS load_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE time_scores_v2 ADD COLUMN IF NOT EXISTS focus_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE time_scores_v2 ADD COLUMN IF NOT EXISTS friction_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE time_scores_v2 ADD COLUMN IF NOT EXISTS stress_score FLOAT DEFAULT 0.0",
                     "ALTER TABLE viv_indexes ADD COLUMN IF NOT EXISTS confidence FLOAT DEFAULT 1.0",
                     "ALTER TABLE viv_indexes ADD COLUMN IF NOT EXISTS snapshot_reason TEXT",
                     "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS cashflow_stability_score FLOAT DEFAULT 0.0",
