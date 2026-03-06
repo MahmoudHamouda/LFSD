@@ -439,11 +439,22 @@ def create_app() -> FastAPI:
     
     
     @app.on_event("startup")
-    @app.on_event("startup")
     async def startup_event():
         print("Startup event fired.")
-        # NOTE: Schema migrations should be handled via Alembic, not here.
-        pass 
+        # One-time FK migration: fix chat tables pointing to old 'users' table
+        try:
+            from models.database import engine
+            from sqlalchemy import text
+            with engine.begin() as conn:
+                for tbl in ["chat_sessions", "chat_history", "feedback"]:
+                    conn.execute(text(f"ALTER TABLE {tbl} DROP CONSTRAINT IF EXISTS {tbl}_user_id_fkey"))
+                    try:
+                        conn.execute(text(f"ALTER TABLE {tbl} ADD CONSTRAINT {tbl}_user_id_fkey FOREIGN KEY (user_id) REFERENCES users_v2(id)"))
+                    except Exception:
+                        pass  # FK already correct or table doesn't exist
+            logger.info("FK migration completed: chat tables -> users_v2")
+        except Exception as e:
+            logger.warning(f"FK migration skipped: {e}")
         
     @app.on_event("shutdown")
     async def shutdown_event():
