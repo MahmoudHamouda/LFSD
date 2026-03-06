@@ -64,11 +64,12 @@ class IntentClassifier:
                     recent_mobility_context = True
                     break
         
-        if (is_mobility and (has_direction or is_explicit_booking)) or (recent_mobility_context and is_explicit_booking):
+        if (is_mobility and (has_direction or is_explicit_booking)) or recent_mobility_context:
             entities = self._extract_mobility_entities(text)
             
             # Determine if this is an explicit execution command
-            if is_explicit_booking or "reserve" in text_lower or "order" in text_lower:
+            is_action_verb = any(v in text_lower for v in ["book ", "reserve", "order", "book it"])
+            if is_action_verb:
                 entities["action"] = "book"
             
             # Context-aware entity filling (look back for missing origin/destination)

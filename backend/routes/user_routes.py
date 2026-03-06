@@ -137,14 +137,60 @@ async def login_for_access_token(
 
 @router.get("/me", summary="Get current user profile")
 @limiter.limit("60/minute")
-async def read_users_me(request: Request, current_user=Depends(get_current_user)) -> dict[str, Any]:
+async def read_users_me(request: Request, current_user=Depends(get_current_user), db: Session = Depends(get_db)) -> dict[str, Any]:
     """Return the profile of the authenticated user."""
+    
+    # Calculate Streaks
+    user_id = current_user.id
+    from models.models import HealthDailySummary
+    summary_dates = db.query(HealthDailySummary.date).filter(
+        HealthDailySummary.user_id == user_id
+    ).order_by(HealthDailySummary.date.desc()).limit(30).all()
+    
+    check_in_streak = 0
+    if summary_dates:
+        import datetime as dt
+        today = dt.date.today()
+        dates = [d[0] for d in summary_dates]
+        if today in dates or (today - dt.timedelta(days=1)) in dates:
+            current = today
+            if today not in dates:
+                current = today - dt.timedelta(days=1)
+            while current in dates:
+                check_in_streak += 1
+                current -= dt.timedelta(days=1)
+        if today not in dates and check_in_streak == 0:
+             yesterday = today - dt.timedelta(days=1)
+             if yesterday in dates:
+                 current = yesterday
+                 check_in_streak = 1
+                 while current in dates:
+                     check_in_streak += 1
+                     current -= dt.timedelta(days=1)
+             else:
+                 check_in_streak = 1
+        elif today not in dates and check_in_streak > 0:
+             check_in_streak += 1
+    else:
+        check_in_streak = 1
+    
+    index_count = db.query(VivIndex).filter(VivIndex.user_id == user_id).count()
+    financial_streak = min(index_count, 52)
+
     return {
         "user": {
             "id": current_user.id,
             "email": current_user.email,
             "username": current_user.email,
             "privacy": current_user.viv_preferences,
+            "engagement": {
+                "lastActive": datetime.utcnow().isoformat(),
+                "streaks": {
+                    "dailyCheckIn": check_in_streak,
+                    "financialReview": financial_streak
+                },
+                "mostUsedJourneys": []
+            },
             "identity": {
                 "id": current_user.id,
                 "email": current_user.email,
