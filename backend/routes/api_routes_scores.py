@@ -258,6 +258,7 @@ async def get_scores(
                     }
         except Exception as e:
             print(f"WARNING: FinancialScore query failed: {e}")
+            db.rollback()
             breakdown["debug_financial_error"] = str(e)
             import traceback
             breakdown["debug_financial_trace"] = traceback.format_exc()
@@ -285,6 +286,7 @@ async def get_scores(
                 }
         except Exception as e:
             print(f"WARNING: TimeScore query failed: {e}")
+            db.rollback()
             breakdown["debug_time_error"] = str(e)
             import traceback
             breakdown["debug_time_trace"] = traceback.format_exc()
