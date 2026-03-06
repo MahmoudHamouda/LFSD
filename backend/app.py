@@ -441,20 +441,61 @@ def create_app() -> FastAPI:
     @app.on_event("startup")
     async def startup_event():
         print("Startup event fired.")
-        # One-time FK migration: fix chat tables pointing to old 'users' table
+        # ----------------------------------------------------------------
+        # COMPREHENSIVE FK MIGRATION
+        # Root cause: When 'users' was renamed to 'users_v2', none of the
+        # FK constraints on child tables were updated. Every INSERT with a
+        # user_id in users_v2 fails because the DB FK still references
+        # the old 'users' table. Fix ALL of them here.
+        # ----------------------------------------------------------------
+        ALL_TABLES_WITH_USER_FK = [
+            # models.py
+            "connections", "health_data_samples", "viv_indexes",
+            "life_goals_v2", "financial_accounts_v2", "statements",
+            "transactions_v2", "recurring_bills", "health_daily_summaries",
+            "sleep_sessions", "workouts", "calendar_events",
+            "mobility_trips", "viv_logs", "recommendations",
+            "conversations", "messages", "orders",
+            "onboarding_sessions", "financial_scores", "time_scores_v2",
+            "feature_interests", "health_profiles", "time_profiles",
+            "time_events",
+            # chat_models.py
+            "chat_sessions", "chat_history", "feedback",
+            # logging_models.py
+            "system_logs", "bug_reports", "activity_feed", "notifications",
+            # growth_models.py
+            "subscriptions", "user_limit_overrides",
+            # other model files
+            "nutrition_logs", "user_scores",
+            "health_connections", "health_metrics", "user_health_indexes",
+            "health_insights", "health_settings",
+            "lifestyle_events", "background_jobs", "investment_portfolios",
+            "health_scores",
+        ]
         try:
             from models.database import engine
             from sqlalchemy import text
+            fixed = 0
+            skipped = 0
             with engine.begin() as conn:
-                for tbl in ["chat_sessions", "chat_history", "feedback"]:
-                    conn.execute(text(f"ALTER TABLE {tbl} DROP CONSTRAINT IF EXISTS {tbl}_user_id_fkey"))
+                for tbl in ALL_TABLES_WITH_USER_FK:
                     try:
+                        conn.execute(text(f"ALTER TABLE {tbl} DROP CONSTRAINT IF EXISTS {tbl}_user_id_fkey"))
                         conn.execute(text(f"ALTER TABLE {tbl} ADD CONSTRAINT {tbl}_user_id_fkey FOREIGN KEY (user_id) REFERENCES users_v2(id)"))
+                        fixed += 1
                     except Exception:
-                        pass  # FK already correct or table doesn't exist
-            logger.info("FK migration completed: chat tables -> users_v2")
+                        skipped += 1
+                        # Table may not exist yet or FK already correct
+
+                # Fix missing columns
+                try:
+                    conn.execute(text("ALTER TABLE time_scores_v2 ADD COLUMN IF NOT EXISTS confidence FLOAT DEFAULT 0.0"))
+                except Exception:
+                    pass
+
+            logger.info(f"FK migration completed: {fixed} tables fixed, {skipped} skipped")
         except Exception as e:
-            logger.warning(f"FK migration skipped: {e}")
+            logger.warning(f"FK migration failed: {e}")
         
     @app.on_event("shutdown")
     async def shutdown_event():
