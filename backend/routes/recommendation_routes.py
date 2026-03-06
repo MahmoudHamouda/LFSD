@@ -23,18 +23,18 @@ async def get_recommendations(
     recs = []
     if latest_index:
         if latest_index.financial_score and latest_index.financial_score < 40:
-            recs.append({"title": "Review your spending", "description": "Your financial score is low. Let's look at where you can cut back.", "action": "Review Finances", "icon": "trending-down"})
+            recs.append({"id": "rec-1", "type": "finance", "title": "Review your spending", "body": "Your financial score is low. Let's look at where you can cut back.", "cta": {"label": "Review Finances", "href": "/finance"}, "icon": "trending-down"})
         elif latest_index.financial_score and latest_index.financial_score >= 80:
-             recs.append({"title": "Invest surplus cash", "description": "You have strong cash flow! Consider moving savings into investments.", "action": "View Options", "icon": "trending-up"})
+             recs.append({"id": "rec-2", "type": "finance", "title": "Invest surplus cash", "body": "You have strong cash flow! Consider moving savings into investments.", "cta": {"label": "View Options", "href": "/finance"}, "icon": "trending-up"})
              
         if latest_index.health_score and latest_index.health_score < 40:
-             recs.append({"title": "Schedule a workout", "description": "Your health metrics dropped slightly this week.", "action": "Book Gym", "icon": "activity"})
+             recs.append({"id": "rec-3", "type": "health", "title": "Schedule a workout", "body": "Your health metrics dropped slightly this week.", "cta": {"label": "Book Gym", "href": "/health"}, "icon": "activity"})
              
         if latest_index.time_score and latest_index.time_score < 40:
-             recs.append({"title": "Block focus time", "description": "Your schedule is very fragmented today.", "action": "Optimize Calendar", "icon": "clock"})
+             recs.append({"id": "rec-4", "type": "time", "title": "Block focus time", "body": "Your schedule is very fragmented today.", "cta": {"label": "Optimize Calendar", "href": "/time"}, "icon": "clock"})
 
     if not recs:
-        recs.append({"title": "All caught up!", "description": "No new recommendations at this time. Keep up the good work.", "action": None, "icon": "check-circle"})
+        recs.append({"id": "rec-ok", "type": "general", "title": "All caught up!", "body": "No new recommendations at this time. Keep up the good work.", "cta": {"label": "Dashboard", "href": "/"}, "icon": "check-circle"})
 
     return {"items": recs}
 
@@ -51,9 +51,9 @@ async def get_treats(
     
     treats = []
     if latest_index and latest_index.financial_score and latest_index.financial_score > 60:
-         treats.append({"title": "Treat yourself to a nice dinner", "description": "You've stayed under budget this week!", "cost": 150, "icon": "coffee"})
+         treats.append({"id": "treat-1", "category": "Dining", "title": "Treat yourself to a nice dinner", "body": "You've stayed under budget this week!", "cost": 150, "icon": "coffee", "cta": {"label": "View Treats", "href": "/"}})
     if latest_index and latest_index.time_score and latest_index.time_score > 70:
-         treats.append({"title": "Take a half day off", "description": "You've been incredibly productive. You've earned a break.", "cost": 0, "icon": "sun"})
+         treats.append({"id": "treat-2", "category": "Relaxation", "title": "Take a half day off", "body": "You've been incredibly productive. You've earned a break.", "cost": 0, "icon": "sun", "cta": {"label": "View Treats", "href": "/"}})
          
     return {"items": treats}
 
