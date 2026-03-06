@@ -294,6 +294,14 @@ async def get_scores(
         # Construct Categories for Frontend Compatibility (flattened subscores)
         categories = {}
         
+        # Ensure base structures exist to prevent frontend React undefined crashes
+        if "financial" not in breakdown or not breakdown["financial"]:
+            breakdown["financial"] = {"overall_score": 0.0, "subscores": {}}
+        if "health" not in breakdown or not breakdown["health"]:
+            breakdown["health"] = {"overall_score": 0.0, "subscores": {}}
+        if "productivity" not in breakdown or not breakdown["productivity"]:
+            breakdown["productivity"] = {"overall_score": 0.0, "subscores": {}}
+        
         # Populate categories with subscores and coverage data based on available data
         # Financial subscores
         if breakdown.get("financial") and breakdown["financial"].get("subscores"):
