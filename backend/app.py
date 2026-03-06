@@ -477,21 +477,24 @@ def create_app() -> FastAPI:
             from sqlalchemy import text
             fixed = 0
             skipped = 0
-            with engine.begin() as conn:
-                for tbl in ALL_TABLES_WITH_USER_FK:
-                    try:
+            for tbl in ALL_TABLES_WITH_USER_FK:
+                try:
+                    with engine.connect() as conn:
                         conn.execute(text(f"ALTER TABLE {tbl} DROP CONSTRAINT IF EXISTS {tbl}_user_id_fkey"))
                         conn.execute(text(f"ALTER TABLE {tbl} ADD CONSTRAINT {tbl}_user_id_fkey FOREIGN KEY (user_id) REFERENCES users_v2(id)"))
+                        conn.commit()
                         fixed += 1
-                    except Exception:
-                        skipped += 1
-                        # Table may not exist yet or FK already correct
+                except Exception as e:
+                    skipped += 1
+                    logger.debug(f"FK fix skipped for {tbl}: {e}")
 
-                # Fix missing columns
-                try:
+            # Fix missing columns
+            try:
+                with engine.connect() as conn:
                     conn.execute(text("ALTER TABLE time_scores_v2 ADD COLUMN IF NOT EXISTS confidence FLOAT DEFAULT 0.0"))
-                except Exception:
-                    pass
+                    conn.commit()
+            except Exception:
+                pass
 
             logger.info(f"FK migration completed: {fixed} tables fixed, {skipped} skipped")
         except Exception as e:
