@@ -22,6 +22,19 @@ class ResponseComposer:
     def _format_mobility_response(self, data: Dict[str, Any], context: Dict[str, Any]) -> str:
         if data.get("error"):
             return data.get("message", "An unknown error occurred while communicating with mobility providers.")
+            
+        if data.get("status") == "booked":
+            details = data.get("booking_details", {})
+            origin = data.get("origin", "your location")
+            destination = data.get("destination", "your destination")
+            rec = data.get("recommended_option", {})
+            return (
+                f"✅ **Ride Booked!**\n\n"
+                f"Your {rec.get('label', 'ride')} is on the way to take you from **{origin.title()}** to **{destination.title()}**.\n\n"
+                f"🚘 **Driver:** {details.get('driver_name', 'System')} ({details.get('car_model', 'Sedan')} - {details.get('license_plate', 'XXX')})\n"
+                f"⏱ **Arriving in:** {details.get('pickup_eta_mins', 5)} minutes\n"
+                f"💰 **Estimated Fare:** AED {rec.get('estimated_cost', 0):.0f}"
+            )
 
         origin = data.get("origin", "your location")
         destination = data.get("destination", "your destination")
