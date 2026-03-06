@@ -462,43 +462,77 @@ async def debug_trigger_calc(
         except Exception:
             pass
         
-        # 1. Time/Productivity Score
-        from models.models import TimeScore
-        # Calculate and implicitly save TimeScore (assuming service does this or we do it here)
-        # Re-using the logic seen in previous endpoint version
-        ts = calculate_time_score(db, user_id, window_days=30)
-        if ts:
-            # Check/Delete existing for cleanliness (optional but good for 're-calc')
-            existing_ts = db.query(TimeScore).filter(TimeScore.user_id == user_id).first()
-            if existing_ts:
-                db.delete(existing_ts)
-                db.flush()
-            db.add(ts)
-            db.commit()
-            
-        # 2. Financial Score
-        # calculate_financial_health_score saves `FinancialScore` to DB
         onboarding = current_user.profile_json if current_user.profile_json else {}
-        fin_data = calculate_financial_health_score(user_id, onboarding, db)
-        
-        # 3. Health Score (lightweight calculation)
-        hs_data = calculate_health_score(user_id, onboarding, db)
-        
-        # 4. Create/Update VivIndex (The Dashboard View)
-        # Fetch latest component scores to ensure consistency
-        
-        # Fin Score
-        latest_fs = db.query(FinancialScore).filter(FinancialScore.user_id == user_id).order_by(FinancialScore.timestamp.desc()).first()
-        fin_val = latest_fs.overall_score if latest_fs else (fin_data.get("overall_score") if fin_data else 50.0)
+        fin_val = 50.0
+        health_val = 50.0
+        time_val = 50.0
+        ts = None
 
-        # Time Score
-        latest_ts = db.query(TimeScore).filter(TimeScore.user_id == user_id).order_by(TimeScore.timestamp.desc()).first()
-        time_val = latest_ts.overall_score if latest_ts else (ts.overall_score if ts else 50.0)
-        
-        # Health Score
-        health_val = hs_data.get("score", 50.0)
+        # 1. Time/Productivity Score — isolated
+        try:
+            from models.models import TimeScore
+            ts = calculate_time_score(db, user_id, window_days=30)
+            if ts:
+                time_val = ts.overall_score
+        except Exception as e:
+            logger.warning(f"Time score calculation failed (continuing): {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
 
-        # Check existing VivIndex for today? No, just create new snapshot.
+        # 2. Financial Score — isolated
+        try:
+            fin_data = calculate_financial_health_score(user_id, onboarding, db)
+            if fin_data:
+                fin_val = fin_data.get("overall_score", 50.0)
+        except Exception as e:
+            logger.warning(f"Financial score calculation failed (continuing): {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
+
+        # 3. Health Score — isolated
+        try:
+            hs_data = calculate_health_score(user_id, onboarding, db)
+            if hs_data:
+                health_val = hs_data.get("score", 50.0)
+        except Exception as e:
+            logger.warning(f"Health score calculation failed (continuing): {e}")
+            try:
+                db.rollback()
+            except Exception:
+                pass
+
+        # 4. Try to fetch persisted scores (may be better than computed)
+        try:
+            latest_fs = db.query(FinancialScore).filter(FinancialScore.user_id == user_id).order_by(FinancialScore.timestamp.desc()).first()
+            if latest_fs:
+                fin_val = latest_fs.overall_score
+        except Exception:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+
+        try:
+            from models.models import TimeScore
+            latest_ts = db.query(TimeScore).filter(TimeScore.user_id == user_id).order_by(TimeScore.timestamp.desc()).first()
+            if latest_ts:
+                time_val = latest_ts.overall_score
+        except Exception:
+            try:
+                db.rollback()
+            except Exception:
+                pass
+
+        # 5. Always create a VivIndex snapshot
+        try:
+            db.rollback()  # ensure clean transaction
+        except Exception:
+            pass
+
         viv_index = VivIndex(
             id=str(uuid.uuid4()),
             user_id=user_id,
@@ -524,6 +558,10 @@ async def debug_trigger_calc(
     except Exception as e:
         import traceback
         traceback.print_exc()
+        try:
+            db.rollback()
+        except Exception:
+            pass
         return {"status": "error", "message": f"Calculation failed: {str(e)}"}
 
 @router.get("/users/{user_id}/financial-score")
