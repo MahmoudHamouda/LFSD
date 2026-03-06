@@ -506,7 +506,9 @@ def create_app() -> FastAPI:
                     "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS total_monthly_expenses FLOAT DEFAULT 0.0",
                     "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS total_monthly_bills FLOAT DEFAULT 0.0",
                     "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS total_monthly_savings FLOAT DEFAULT 0.0",
-                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS total_assets_value FLOAT DEFAULT 0.0"
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS total_assets_value FLOAT DEFAULT 0.0",
+                    "ALTER TABLE recurring_bills ADD COLUMN IF NOT EXISTS status VARCHAR DEFAULT 'active'",
+                    "ALTER TABLE recurring_bills ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE"
                 ]
                 for q in queries:
                     try:
