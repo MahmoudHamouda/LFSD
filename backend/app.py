@@ -490,13 +490,35 @@ def create_app() -> FastAPI:
 
             # Fix missing columns
             try:
-                with engine.connect() as conn:
-                    conn.execute(text("ALTER TABLE time_scores_v2 ADD COLUMN IF NOT EXISTS confidence FLOAT DEFAULT 0.0"))
-                    conn.commit()
+                queries = [
+                    "ALTER TABLE time_scores_v2 ADD COLUMN IF NOT EXISTS confidence FLOAT DEFAULT 0.0",
+                    "ALTER TABLE viv_indexes ADD COLUMN IF NOT EXISTS confidence FLOAT DEFAULT 1.0",
+                    "ALTER TABLE viv_indexes ADD COLUMN IF NOT EXISTS snapshot_reason TEXT",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS cashflow_stability_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS bills_coverage_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS discretionary_control_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS savings_rate_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS emergency_buffer_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS debt_load_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS networth_momentum_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS investment_health_score FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS total_monthly_income FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS total_monthly_expenses FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS total_monthly_bills FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS total_monthly_savings FLOAT DEFAULT 0.0",
+                    "ALTER TABLE financial_scores ADD COLUMN IF NOT EXISTS total_assets_value FLOAT DEFAULT 0.0"
+                ]
+                for q in queries:
+                    try:
+                        with engine.connect() as conn:
+                            conn.execute(text(q))
+                            conn.commit()
+                    except Exception as sqle:
+                        logger.debug(f"Column add skipped: {sqle}")
             except Exception:
                 pass
 
-            logger.info(f"FK migration completed: {fixed} tables fixed, {skipped} skipped")
+            logger.info(f"FK migration & schema sync completed: {fixed} tables fixed, {skipped} skipped")
         except Exception as e:
             logger.warning(f"FK migration failed: {e}")
         
