@@ -1203,7 +1203,7 @@ class GeminiService:
             logger.info(f"[ORCH] Import OK. Building Orchestrator instance...")
             orchestrator = Orchestrator(db=self.db, llm=self.model)
             logger.info(f"[ORCH] Instance OK. Calling process_message with: '{last_message[:80]}'")
-            human_answer, metadata = await orchestrator.process_message(last_message, user_id, context)
+            human_answer, metadata = await orchestrator.process_message(last_message, user_id, context, history=history)
             logger.info(f"[ORCH] process_message returned: is_orchestrator={metadata.get('is_orchestrator')}, intent={metadata.get('intent')}, answer_len={len(human_answer) if human_answer else 0}")
             
             # If the Orchestrator successfully matched an Action Intent and returned an answer, short-circuit

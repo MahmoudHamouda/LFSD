@@ -29,25 +29,22 @@ class IntentClassifier:
         text_lower = text.lower()
         entities = {}
         
-        # Try to extract "from X to Y" or "to Y from X"
-        from_to_match = re.search(r'from\s+(.+?)\s+to\s+(.+)', text_lower)
-        to_from_match = re.search(r'to\s+(.+?)\s+from\s+(.+)', text_lower)
-        
-        if from_to_match:
-            entities["origin"] = from_to_match.group(1).strip()
-            entities["destination"] = from_to_match.group(2).strip()
-        elif to_from_match:
-            entities["destination"] = to_from_match.group(1).strip()
-            entities["origin"] = to_from_match.group(2).strip()
-        else:
-            # Try just "to Y"
-            to_match = re.search(r'to\s+([^, .?!]+(?:\s+[^, .?!]+)*)', text_lower)
-            if to_match and any(word in text_lower for word in ['go', 'ride', 'airport', 'hotel', 'drive', 'book']):
-                entities["destination"] = to_match.group(1).strip()
+        # Origin extraction: 'from <place>'
+        org_match = re.search(r'\bfrom\s+([a-zA-Z0-9\s]+?)(?=\bto\b|\band\b|,|\.|\?|!|$|\bi\b|\bwe\b|\bhe\b|\bshe\b|\bit\b|\bthey\b)', text_lower)
+        if org_match:
+            entities["origin"] = org_match.group(1).strip()
+            
+        # Destination extraction: 'to <place>'
+        dest_match = re.search(r'\bto\s+([a-zA-Z0-9\s]+?)(?=\bfrom\b|\band\b|,|\.|\?|!|$|\bi\b|\bwe\b|\bhe\b|\bshe\b|\bit\b|\bthey\b|\bleave\b|\bgo\b|\bdepart\b|\barrive\b)', text_lower)
+        if dest_match:
+            dest = dest_match.group(1).strip()
+            # Ignore common verbs that follow 'to'
+            if dest and dest not in ["leave", "go", "depart", "arrive", "book", "get"]:
+                entities["destination"] = dest
                 
         return entities
 
-    def classify(self, text: str) -> Intent:
+    def classify(self, text: str, history: List[Dict[str, Any]] = None) -> Intent:
         """Determines the intent from text with confidence."""
         text_lower = text.lower()
         
@@ -57,8 +54,29 @@ class IntentClassifier:
         has_direction = ('to ' in text_lower or 'from ' in text_lower)
         is_explicit_booking = ('book ' in text_lower or 'uber' in text_lower or 'careem' in text_lower)
         
-        if is_mobility and (has_direction or is_explicit_booking):
+        # Check history to see if we were just discussing mobility
+        recent_mobility_context = False
+        if history and not is_mobility:
+            # If the user says "yes" or similar, check if the assistant just asked a mobility question
+            for msg in reversed(history[-3:]):
+                content = msg.get("content", "") if isinstance(msg, dict) else str(msg)
+                if any(keyword in content.lower() for keyword in ['ride', 'uber', 'careem', 'destination', 'going?']):
+                    recent_mobility_context = True
+                    break
+        
+        if (is_mobility and (has_direction or is_explicit_booking)) or (recent_mobility_context and is_explicit_booking):
             entities = self._extract_mobility_entities(text)
+            
+            # Context-aware entity filling (look back for missing origin/destination)
+            if history:
+                for msg in reversed(history[-10:]):
+                    if isinstance(msg, dict) and msg.get("role") == "user":
+                        past_entities = self._extract_mobility_entities(msg.get("content", ""))
+                        if "destination" not in entities and "destination" in past_entities:
+                            entities["destination"] = past_entities["destination"]
+                        if "origin" not in entities and "origin" in past_entities:
+                            entities["origin"] = past_entities["origin"]
+
             has_req = all(req in entities for req in self.INTENTS["MOBILITY"]["required"])
             
             # Additional heuristic: If "airport" is requested, make sure we got a destination

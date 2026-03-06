@@ -20,3 +20,8 @@ The HELM Orchestration Layer is a deterministic, tool-first wrapper that evaluat
 6. **Audit & Activity Logging**:
    - Every tool call generates immutable `AuditLog` records.
    - Successful actions drop trace records into the user's `ActivityFeed`.
+
+## Key Architectural Rules & Governance
+1. **Contextual Memory (Intent Layer)**: The `IntentClassifier` must accept and parse `history` to retain context. When a user provides missing entities in subsequent messages (e.g. "yes book it"), the classifier must traverse recent chat history to retrieve previously declared entities (e.g. origin/destination) to prevent amnesia loops.
+2. **Database Integrity (`users_v2`)**: All tables containing a `user_id` foreign key MUST explicitly reference `users_v2(id)`. **Do not** reference the deprecated `users` table. If seeding or inserting data fails silently, always check if the FK constraint was updated during the v1->v2 migration.
+3. **Transaction Safety**: Do not allow cascading transaction aborts across distinct analytical domains. Score recalculations (e.g. Time vs Finance vs Health) must be isolated with individual `db.rollback()` blocks to prevent a failure in one isolated module from crashing the entire batch process.

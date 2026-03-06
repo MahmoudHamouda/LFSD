@@ -63,7 +63,7 @@ class Orchestrator:
             logger.warning(f"Failed to log activity (ignored): {e}")
             self.db.rollback()
 
-    async def process_message(self, text: str, user_id: str, context: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
+    async def process_message(self, text: str, user_id: str, context: Dict[str, Any], history: list = None) -> Tuple[str, Dict[str, Any]]:
         """
         Main entry point for tool-first orchestration.
         Returns (human_response, metrics_and_state)
@@ -71,7 +71,7 @@ class Orchestrator:
         start_time = time.time()
         
         # 1. Classify Intent
-        intent = self.classifier.classify(text)
+        intent = self.classifier.classify(text, history=history)
         
         # 2. Route to Executors (only if we have a matching deterministic tool)
         if intent.name in ["MOBILITY"]:
