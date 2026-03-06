@@ -106,12 +106,26 @@ class Orchestrator:
                     "intent": intent.name,
                     "options": result["data"]
                 }
-            elif status == "offline":
-                # Handle API downtime gracefully without LLM fallback
-                return result.get("message", f"The {intent.name} service is currently offline."), {"is_orchestrator": True, "status": "offline"}
+            elif status == "clarify":
+                # Conversational follow-up question for missing entities
+                return result.get("message", "Could you give me more details?"), {
+                    "is_orchestrator": True,
+                    "intent": intent.name,
+                    "clarifying": True
+                }
+            elif status in ("offline", "timeout"):
+                return result.get("message", f"The {intent.name} service is currently unavailable."), {
+                    "is_orchestrator": True,
+                    "intent": intent.name,
+                    "status": status
+                }
             else:
-                # Ask clarifying question if tool required entities
-                return result.get("message", "I need more information to complete that action."), {"is_orchestrator": True, "clarifying": True}
+                # Error or unexpected status
+                return result.get("message", "Something went wrong. Please try again."), {
+                    "is_orchestrator": True,
+                    "intent": intent.name,
+                    "status": "error"
+                }
         
         # 3. Fallback to normal LLM conversation
         return None, {"is_orchestrator": False, "intent": "GENERAL"}

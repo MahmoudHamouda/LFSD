@@ -456,6 +456,11 @@ async def debug_trigger_calc(
     """
     try:
         user_id = current_user.id
+        # Clear any stale transaction (Cloud SQL pooled connections)
+        try:
+            db.rollback()
+        except Exception:
+            pass
         
         # 1. Time/Productivity Score
         from models.models import TimeScore
