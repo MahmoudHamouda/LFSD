@@ -3,7 +3,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 from app import create_app
-from models.database import get_db, Base, engine
+from models.database import get_db, Base, engine, SessionLocal
 from models.models import User
 from core.authentication import get_password_hash
 

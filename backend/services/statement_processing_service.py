@@ -57,7 +57,32 @@ class ParsedStatement(BaseModel):
     metadata: StatementMetadata
     transactions: List[TransactionModel]
 
-# ... (PDFProcessor omitted for brevity) ...
+class PDFProcessor:
+    """PDF text extraction service with OCR fallback."""
+    
+    @staticmethod
+    def extract_text(pdf_bytes: bytes) -> str:
+        """Extract text from PDF bytes using PyMuPDF, falling back to OCR if scanned/image-only."""
+        text = ""
+        try:
+            # 1. Try extracting text using PyMuPDF
+            doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+            for page in doc:
+                text += page.get_text()
+            
+            # 2. Fallback to OCR using pytesseract if text is empty or too short
+            if len(text.strip()) < 100:
+                logger.info("Extracted PDF text is too short. Running OCR fallback...")
+                images = convert_from_bytes(pdf_bytes)
+                ocr_text = []
+                for img in images:
+                    ocr_text.append(pytesseract.image_to_string(img))
+                text = "\n".join(ocr_text)
+                
+            return text
+        except Exception as e:
+            logger.error(f"Error extracting text from PDF: {e}")
+            raise e
 
 # ============================================================================
 # 3. Gemini LLM Parsing
@@ -281,10 +306,22 @@ class StatementService:
     def __init__(self, db: Session):
         self.db = db
         self.pdf_processor = PDFProcessor()
-        self.gemini_service = GeminiService()
+        self.gemini_service = GeminiService(db)
+        self.gemini_parser = GeminiParser()
         self.settings = core.config.get_settings()
-        
-    async def process_pdf(self, file_content: bytes, user_id: str, db: Session) -> Dict[str, Any]:
+    async def process_statement(
+        self, 
+        user_id: Optional[str], 
+        file_content: bytes, 
+        filename: str, 
+        persist: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Frontend and test entrypoint to process a statement.
+        """
+        return await self.process_pdf(file_content, user_id, persist=persist)
+
+    async def process_pdf(self, file_content: bytes, user_id: Optional[str], persist: bool = True) -> Dict[str, Any]:
         """
         Full pipeline: PDF -> Text -> Gemini -> JSON -> DB
         """

@@ -365,3 +365,6 @@ class GoogleCalendarService(BaseCalendarService):
              if e.busy_status == BusyStatus.BUSY and e.status != EventStatus.CANCELLED:
                   return BusyStatus.BUSY
         return BusyStatus.FREE
+
+def get_google_calendar_service(db: Optional[Session] = None, access_token: Optional[str] = None) -> GoogleCalendarService:
+    return GoogleCalendarService(db=db, access_token=access_token)

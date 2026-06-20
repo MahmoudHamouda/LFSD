@@ -21,6 +21,8 @@ class Settings:
     # Integration Tokens
     UBER_SERVER_TOKEN = os.getenv('UBER_SERVER_TOKEN')
     RTA_API_KEY = os.getenv('RTA_API_KEY')
+    RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
+    SKYSCANNER_API_KEY = os.getenv('SKYSCANNER_API_KEY')
     GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
     GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')

@@ -205,3 +205,6 @@ class UberService(BaseMobilityService):
             })
             
         return prices
+
+def get_uber_service(db: Optional[Session] = None) -> UberService:
+    return UberService(db=db)

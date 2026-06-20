@@ -6,7 +6,7 @@ import sys
 sys.path.append('.')
 
 async def test():
-    from services.uber_service import get_uber_service
+    from services.mobility.uber_service import get_uber_service
     
     print("Testing Uber API...")
     uber = get_uber_service()
@@ -14,10 +14,10 @@ async def test():
     print(f"Token: {uber.server_token[:20]}..." if uber.server_token else "No token")
     
     result = await uber.get_price_estimates(
-        start_latitude=25.2048,
-        start_longitude=55.2708,
-        end_latitude=25.1972,
-        end_longitude=55.2744
+        start_lat=25.2048,
+        start_lng=55.2708,
+        end_lat=25.1972,
+        end_lng=55.2744
     )
     
     print("\nResult:")

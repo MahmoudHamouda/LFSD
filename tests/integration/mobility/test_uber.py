@@ -6,7 +6,7 @@ import sys
 sys.path.append('.')
 sys.path.append('services')
 
-from services.uber_service import get_uber_service
+from services.mobility.uber_service import get_uber_service
 
 async def test_uber_api():
     print("Testing Uber API Integration...")
@@ -17,10 +17,10 @@ async def test_uber_api():
     # Test with Dubai coordinates
     print("\n📍 Testing price estimates for Dubai...")
     result = await uber_service.get_price_estimates(
-        start_latitude=25.2048,
-        start_longitude=55.2708,
-        end_latitude=25.1972,
-        end_longitude=55.2744
+        start_lat=25.2048,
+        start_lng=55.2708,
+        end_lat=25.1972,
+        end_lng=55.2744
     )
     
     print("\nAPI Response:")

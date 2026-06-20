@@ -74,3 +74,10 @@ env_vars.yaml
 
 
 .env.cloudrun.yaml
+
+# Secrets and Credentials Exclusions
+*.key
+*.pem
+*.cert
+secrets.json
+credentials.json

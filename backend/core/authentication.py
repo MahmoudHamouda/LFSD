@@ -19,6 +19,44 @@ import uuid
 # OAuth2 scheme for FastAPI. Clients will send tokens in Authorization header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
+from passlib.context import CryptContext
+from jose import jwt
+from datetime import datetime, timedelta
+from typing import Dict, Any
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logger.error(f"Bcrypt verification error: {e}")
+        return False
+
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
+
+def get_user(db: Session, username: str) -> Optional[DBUser]:
+    return db.query(DBUser).filter(DBUser.email == username).first()
+
+def authenticate_user(db: Session, username: str, password: str) -> Optional[DBUser]:
+    user = get_user(db, username)
+    if not user or not user.hashed_password:
+        return None
+    if not verify_password(password, user.hashed_password):
+        return None
+    return user
+
+def create_access_token(data: Dict[str, Any], expires_minutes: Optional[float] = None) -> str:
+    settings = core.config.get_settings()
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(
+        minutes=expires_minutes or settings.ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.JWT_ALG)
+    return encoded_jwt
+
 
 class Token(BaseModel):
     access_token: str
@@ -139,4 +177,4 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
         raise credentials_exception
 
 
-__all__ = ["Token", "UserSchema", "get_current_user", "oauth2_scheme"]
+__all__ = ["Token", "UserSchema", "get_current_user", "oauth2_scheme", "get_password_hash", "verify_password", "authenticate_user", "create_access_token"]

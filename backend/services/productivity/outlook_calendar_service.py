@@ -7,10 +7,10 @@ Hardened for enterprise usage with normalized schemas and robust error handling.
 
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta, timezone
+from sqlalchemy.orm import Session
 import logging
 import uuid
 import httpx
-
 import core.config
 from .base_calendar_service import (
     BaseCalendarService, NormalizedEvent, EventStatus, BusyStatus, 
@@ -27,10 +27,12 @@ class OutlookCalendarService(BaseCalendarService):
     
     BASE_URL = "https://graph.microsoft.com/v1.0"
     
-    def __init__(self, db: Session = None):
+    def __init__(self, db: Optional[Session] = None, access_token: Optional[str] = None):
         self.db = db
+        self.access_token = access_token
         self.settings = core.config.get_settings()
         self.timeout = httpx.Timeout(30.0, connect=10.0)
+        self.client_id = None
         
     @property
     def provider_name(self) -> str:

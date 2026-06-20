@@ -12,7 +12,7 @@ import pytest
 from unittest.mock import patch, AsyncMock
 from datetime import date
 from services.statement_processing_service import StatementService, ParsedStatement, StatementMetadata, TransactionModel
-from models.models import Statement, Transaction
+from models.models import Statement
 
 @pytest.fixture
 def mock_db():

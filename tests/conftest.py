@@ -1,6 +1,7 @@
 import pytest
 import sys
 import os
+os.environ["CREDENTIALS_ENCRYPTION_KEY"] = "rVi0toIfQ1QE55m6qGgzRxEd1b3cFEcw4jXKqQ84xGA="
 from fastapi.testclient import TestClient
 
 # Add backend to sys.path
