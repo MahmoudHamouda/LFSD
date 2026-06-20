@@ -4,8 +4,8 @@ import json
 import uuid
 
 BACKEND_URL = "https://lfsd-backend-wpvii577oq-uc.a.run.app"
-LOGIN_URL = f"{BACKEND_URL}/auth/login"
-SIGNUP_URL = f"{BACKEND_URL}/auth/signup"
+LOGIN_URL = f"{BACKEND_URL}/api/auth/login"
+SIGNUP_URL = f"{BACKEND_URL}/api/auth/register"
 
 USERS_TO_TEST = [
     {"email": "finance@helm.com", "password": "P@ssword"},
@@ -17,7 +17,7 @@ USERS_TO_TEST = [
 def test_login(email, password):
     print(f"Testing Login for: {email}")
     try:
-        payload = {"username": email, "password": password}
+        payload = {"email": email, "password": password}
         response = requests.post(LOGIN_URL, json=payload, timeout=10)
         
         if response.status_code == 200:
