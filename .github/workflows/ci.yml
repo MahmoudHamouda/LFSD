@@ -15,13 +15,13 @@ jobs:
     steps:
       # Step 1: Checkout code
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Step 2: Set up Node.js
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
 
       # Step 3: Install Frontend Dependencies
       - name: Install Frontend Dependencies
@@ -32,7 +32,7 @@ jobs:
 
       # Step 4: Cache Node Modules
       - name: Cache Node Modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.npm
           key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}

@@ -19,22 +19,22 @@ import uuid
 # OAuth2 scheme for FastAPI. Clients will send tokens in Authorization header
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login", auto_error=False)
 
-from passlib.context import CryptContext
-from jose import jwt
+import bcrypt
+import jwt
 from datetime import datetime, timedelta
 from typing import Dict, Any
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
-        return pwd_context.verify(plain_password, hashed_password)
+        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
     except Exception as e:
         logger.error(f"Bcrypt verification error: {e}")
         return False
 
 def get_password_hash(password: str) -> str:
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
 def get_user(db: Session, username: str) -> Optional[DBUser]:
     return db.query(DBUser).filter(DBUser.email == username).first()

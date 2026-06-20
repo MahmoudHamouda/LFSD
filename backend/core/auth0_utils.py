@@ -3,7 +3,9 @@ Auth0 Token Verification Utilities
 """
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import jwt, JWTError
+import jwt
+from jwt.exceptions import PyJWTError as JWTError
+from jwt.algorithms import RSAAlgorithm
 from typing import Optional
 import httpx
 from functools import lru_cache
@@ -75,10 +77,13 @@ def verify_auth0_token(credentials: HTTPAuthorizationCredentials = Depends(secur
                 detail="Unable to find appropriate key"
             )
         
+        # Convert JWK to public key object for PyJWT
+        public_key = RSAAlgorithm.from_jwk(rsa_key)
+        
         # Verify and decode
         payload = jwt.decode(
             token,
-            rsa_key,
+            public_key,
             algorithms=settings.AUTH0_ALGORITHMS,
             audience=settings.AUTH0_AUDIENCE,
             issuer=f"https://{settings.AUTH0_DOMAIN}/"
@@ -124,9 +129,12 @@ def verify_auth0_jwt(token: str) -> dict:
         if not rsa_key:
             raise Exception("Key not found")
         
+        # Convert JWK to public key object for PyJWT
+        public_key = RSAAlgorithm.from_jwk(rsa_key)
+        
         payload = jwt.decode(
             token,
-            rsa_key,
+            public_key,
             algorithms=settings.AUTH0_ALGORITHMS,
             audience=settings.AUTH0_AUDIENCE,
             issuer=f"https://{settings.AUTH0_DOMAIN}/"
