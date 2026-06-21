@@ -8,20 +8,20 @@ import uuid
 # Add parent dir to sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-BASE_URL = "https://lfsd-backend-692544481281.us-central1.run.app"
+BASE_URL = "https://app.helmory.com"
 
 # User Data
 USERS = {
     "standard": [
-        {"email": "steward@helm.com", "password": "P@ssword123", "role": "user"}
+        {"email": "steward@helm.com", "password": "P@ssword", "role": "user"}
     ],
     "personas": [],  # No seeded personas, using synthetic agents instead
     "synthetic_agents": [
-        {"email": "empty@helm.com", "password": "P@ssword123", "role": "user"},
-        {"email": "finance@helm.com", "password": "P@ssword123", "role": "user"},
-        {"email": "health@helm.com", "password": "P@ssword123", "role": "user"},
-        {"email": "time@helm.com", "password": "P@ssword123", "role": "user"},
-        {"email": "super@helm.com", "password": "P@ssword123", "role": "user"},
+        {"email": "empty@helm.com", "password": "P@ssword", "role": "user"},
+        {"email": "finance@helm.com", "password": "P@ssword", "role": "user"},
+        {"email": "health@helm.com", "password": "P@ssword", "role": "user"},
+        {"email": "time@helm.com", "password": "P@ssword", "role": "user"},
+        {"email": "super@helm.com", "password": "P@ssword", "role": "user"},
     ]
 }
 

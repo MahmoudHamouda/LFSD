@@ -9,6 +9,10 @@ async def test_gemini_json_mobility_recommendation():
     db = MagicMock()
     service = GeminiService(db)
     
+    # Force legacy pipeline via environment variable so we test the legacy code path
+    import os
+    os.environ["USE_LEGACY_PIPELINE"] = "true"
+    
     # Mock MobilityAggregator
     service.mobility_aggregator = MagicMock()
     service.mobility_aggregator.compare_prices = AsyncMock(return_value={

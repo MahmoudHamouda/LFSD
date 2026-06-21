@@ -1506,6 +1506,9 @@ class GeminiService:
 
         # --- ORCHESTRATOR LAYER INJECTION (Tool-first, LLM-last) ---
         try:
+            use_legacy = os.getenv("USE_LEGACY_PIPELINE", "false").lower() == "true"
+            if use_legacy:
+                raise ImportError("USE_LEGACY_PIPELINE is set to true")
             logger.info(f"[ORCH] Attempting import of Orchestrator...")
             from orchestration.master import Orchestrator
 

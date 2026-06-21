@@ -552,6 +552,9 @@ MOBILITY_INTENTS = [
             "check ride",
             "taxi price",
         ),
+        regex_patterns=(
+            r"(?:how\s+much|price|cost|fare|estimate|rate).*(?:ride|taxi|uber|careem)",
+        ),
         required_entities=("destination", "start_location"),
         scoring_policy="mobility_price_check",
         description="Check ride prices from providers.",
@@ -807,7 +810,7 @@ def match_deterministic(text: str) -> Optional[tuple]:
     # Pass 1: Regex pattern matching (prioritized for complex actions)
     for compiled_pattern, intent_name in _COMPILED_PATTERNS:
         if compiled_pattern.search(text_lower):
-            return (intent_name, 0.90, "regex")
+            return (intent_name, 0.85, "regex")
 
     # Pass 2: Keyword matching with word boundaries
     # Process longer keywords first to prevent partial shadowing
@@ -816,6 +819,6 @@ def match_deterministic(text: str) -> Optional[tuple]:
             # Enforce word boundaries to prevent substring matches (e.g., "this" -> "hi")
             pattern = re.compile(rf"\b{re.escape(keyword)}\b", re.IGNORECASE)
             if pattern.search(text_lower):
-                return (entry.name, 0.85, "keyword")
+                return (entry.name, 0.95, "keyword")
 
     return None

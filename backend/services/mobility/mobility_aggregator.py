@@ -283,7 +283,40 @@ class MobilityAggregator:
             "successful_provider_count": queried_count,
         }
 
+    async def book_cheapest_ride(
+        self,
+        user_id: str,
+        start_location: Dict[str, Any],
+        end_location: Dict[str, Any],
+        db: Session,
+        **kwargs,
+    ) -> Dict[str, Any]:
+        """
+        Compare prices and book the cheapest option.
+        """
+        comparison = await self.compare_prices(
+            user_id=user_id,
+            start_lat=start_location["lat"],
+            start_lng=start_location["lng"],
+            end_lat=end_location["lat"],
+            end_lng=end_location["lng"]
+        )
+        cheapest = comparison.get("cheapest")
+        if not cheapest:
+            return {"success": False, "error": "No ride options found"}
+
+        return await self.book_ride(
+            user_id=user_id,
+            provider=cheapest["provider"],
+            ride_type=cheapest["ride_type"],
+            start_location=start_location,
+            end_location=end_location,
+            db=db,
+            **kwargs
+        )
+
 
 # Internal factory instead of singleton to avoid stale state in long-running procs
 def get_mobility_aggregator() -> MobilityAggregator:
     return MobilityAggregator()
+

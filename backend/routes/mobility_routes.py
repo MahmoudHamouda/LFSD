@@ -11,6 +11,8 @@ from pydantic import BaseModel
 from core.authentication import get_current_user
 from core.rate_limiting import limiter
 from services.mobility.mobility_aggregator import get_mobility_aggregator
+from models.database import get_db
+from sqlalchemy.orm import Session
 
 
 router = APIRouter(prefix="/mobility", tags=["Mobility"])
@@ -57,7 +59,7 @@ async def compare_prices(
 
     try:
         results = await aggregator.compare_prices(
-            current_user["id"], start_lat, start_lng, end_lat, end_lng, provider_list
+            current_user.id, start_lat, start_lng, end_lat, end_lng, provider_list
         )
 
         return {"success": True, "data": results}
@@ -87,7 +89,7 @@ async def get_cheapest(
 
     try:
         cheapest = await aggregator.get_cheapest_option(
-            current_user["id"], start_lat, start_lng, end_lat, end_lng, provider_list
+            current_user.id, start_lat, start_lng, end_lat, end_lng, provider_list
         )
 
         if not cheapest:
@@ -101,7 +103,10 @@ async def get_cheapest(
 @router.post("/book-ride", summary="Book a ride")
 @limiter.limit("10/minute")
 async def book_ride(
-    request: BookRideRequest, req: Request, current_user=Depends(get_current_user)
+    request: BookRideRequest,
+    req: Request,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Book a ride with a specific provider.
@@ -110,11 +115,12 @@ async def book_ride(
 
     try:
         result = await aggregator.book_ride(
-            current_user["id"],
+            current_user.id,
             request.provider,
             request.ride_type,
             request.start_location.dict(),
             request.end_location.dict(),
+            db,
             **(request.options or {})
         )
 
@@ -130,6 +136,7 @@ async def book_cheapest(
     end_location: LocationModel,
     request: Request,
     current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Automatically compare prices and book the cheapest option.
@@ -138,7 +145,7 @@ async def book_cheapest(
 
     try:
         result = await aggregator.book_cheapest_ride(
-            current_user["id"], start_location.dict(), end_location.dict()
+            current_user.id, start_location.dict(), end_location.dict(), db
         )
 
         return {"success": result.get("success", False), "data": result}
@@ -160,11 +167,12 @@ async def get_ride_status(
     aggregator = get_mobility_aggregator()
 
     try:
-        status = await aggregator.get_ride_status(current_user["id"], provider, ride_id)
+        status = await aggregator.get_ride_status(current_user.id, provider, ride_id)
 
         return {"success": status.get("success", False), "data": status}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 
 @router.get("/providers", summary="List available providers")

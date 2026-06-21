@@ -8,18 +8,28 @@ This script tests the complete mobility system:
 4. Booking flow
 """
 
+import sys
+import os
 import asyncio
 import httpx
 import json
 
-BASE_URL = "http://localhost:8003"
+# Add parent dir to sys.path to allow importing from tests
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+
+from tests.test_utils import get_test_base_url, get_auth_headers
+
+BASE_URL = f"{get_test_base_url().rstrip('/')}/api"
+
 
 async def test_endpoints():
     print("🧪 End-to-End Mobility Integration Test\n")
     print("=" * 60)
     
+    headers = get_auth_headers("health@helm.com")
+    
     async with httpx.AsyncClient() as client:
-        # Test 1: List Providers
+        # Test 1: List Providers (Public)
         print("\n1. Testing /mobility/providers")
         try:
             response = await client.get(f"{BASE_URL}/mobility/providers")
@@ -34,7 +44,7 @@ async def test_endpoints():
         except Exception as e:
             print(f"   ❌ Error: {e}")
         
-        # Test 2: Compare Prices
+        # Test 2: Compare Prices (Authenticated)
         print("\n2. Testing /mobility/compare-prices")
         try:
             params = {
@@ -43,7 +53,7 @@ async def test_endpoints():
                 "end_lat": 25.1972,
                 "end_lng": 55.2744
             }
-            response = await client.get(f"{BASE_URL}/mobility/compare-prices", params=params)
+            response = await client.get(f"{BASE_URL}/mobility/compare-prices", params=params, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 print(f"   ✅ Success!")
@@ -63,7 +73,7 @@ async def test_endpoints():
         except Exception as e:
             print(f"   ❌ Error: {e}")
         
-        # Test 3: Get Cheapest Option
+        # Test 3: Get Cheapest Option (Authenticated)
         print("\n3. Testing /mobility/cheapest")
         try:
             params = {
@@ -72,7 +82,7 @@ async def test_endpoints():
                 "end_lat": 25.1972,
                 "end_lng": 55.2744
             }
-            response = await client.get(f"{BASE_URL}/mobility/cheapest", params=params)
+            response = await client.get(f"{BASE_URL}/mobility/cheapest", params=params, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 print(f"   ✅ Success!")
@@ -86,7 +96,7 @@ async def test_endpoints():
         except Exception as e:
             print(f"   ❌ Error: {e}")
         
-        # Test 4: Book a Ride (Mock)
+        # Test 4: Book a Ride (Authenticated, Mock)
         print("\n4. Testing /mobility/book-ride")
         try:
             payload = {
@@ -103,7 +113,7 @@ async def test_endpoints():
                     "address": "Dubai Marina"
                 }
             }
-            response = await client.post(f"{BASE_URL}/mobility/book-ride", json=payload)
+            response = await client.post(f"{BASE_URL}/mobility/book-ride", json=payload, headers=headers)
             if response.status_code == 200:
                 data = response.json()
                 print(f"   ✅ Success!")
