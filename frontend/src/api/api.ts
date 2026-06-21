@@ -340,10 +340,11 @@ export const frontendSettings = async (): Promise<Response | null> => {
 };
 
 export const connectPartner = async (partnerId: string): Promise<Response> => {
-  const response = await fetch(`/partners/${partnerId}/connect`, {
+  const response = await fetch(`/api/partners/${partnerId}/connect`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`,
     },
   })
     .then((res) => res)
@@ -355,10 +356,11 @@ export const connectPartner = async (partnerId: string): Promise<Response> => {
 };
 
 export const disconnectPartner = async (partnerId: string): Promise<Response> => {
-  const response = await fetch(`/partners/${partnerId}/disconnect`, {
+  const response = await fetch(`/api/partners/${partnerId}/disconnect`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`,
     },
   })
     .then((res) => res)
@@ -370,11 +372,12 @@ export const disconnectPartner = async (partnerId: string): Promise<Response> =>
 };
 
 export const updatePartnerPermissions = async (partnerId: string, permissions: any): Promise<Response> => {
-  const response = await fetch(`/partners/${partnerId}/permissions`, {
+  const response = await fetch(`/api/partners/${partnerId}/permissions`, {
     method: 'PUT',
     body: JSON.stringify(permissions),
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`,
     },
   })
     .then((res) => res)

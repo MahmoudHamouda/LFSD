@@ -301,6 +301,9 @@ async def get_scores(
             breakdown["health"] = {"overall_score": 0.0, "subscores": {}}
         if "productivity" not in breakdown or not breakdown["productivity"]:
             breakdown["productivity"] = {"overall_score": 0.0, "subscores": {}}
+        elif "overall_score" not in breakdown["productivity"] and "score" in breakdown["productivity"]:
+            # Preserve onboarding scores: onboarding saves under "score" key
+            breakdown["productivity"]["overall_score"] = breakdown["productivity"]["score"]
         
         # Populate categories with subscores and coverage data based on available data
         # Financial subscores
@@ -380,10 +383,16 @@ async def get_scores(
 
         # Use productivity score from breakdown if available (from TimeScore), otherwise fallback to VivIndex
         productivity_score = latest_index.time_score
-        if breakdown.get("productivity") and "overall_score" in breakdown["productivity"]:
-            productivity_score = breakdown["productivity"]["overall_score"]
-        elif breakdown.get("time") and "overall_score" in breakdown["time"]:
-            productivity_score = breakdown["time"]["overall_score"]
+        if breakdown.get("productivity"):
+            if breakdown["productivity"].get("overall_score"):
+                productivity_score = breakdown["productivity"]["overall_score"]
+            elif breakdown["productivity"].get("score"):
+                productivity_score = breakdown["productivity"]["score"]
+        elif breakdown.get("time"):
+            if breakdown["time"].get("overall_score"):
+                productivity_score = breakdown["time"]["overall_score"]
+            elif breakdown["time"].get("score"):
+                productivity_score = breakdown["time"]["score"]
 
         return ScoreResponse(
             financial_score=latest_index.financial_score,

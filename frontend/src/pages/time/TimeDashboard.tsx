@@ -154,6 +154,30 @@ const TimeDashboard: React.FC = () => {
 
     const rightColumn = (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Connection redirect banner */}
+            {pillars.every(p => p.score === 0) && (
+                <div style={{
+                    padding: '20px',
+                    backgroundColor: 'var(--bg-surface)',
+                    borderRadius: '12px',
+                    border: '1px solid var(--color-accent-blue, #3b82f6)',
+                    textAlign: 'center'
+                }}>
+                    <span style={{ display: 'block', marginBottom: '4px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        No calendar data yet
+                    </span>
+                    <span style={{ display: 'block', marginBottom: '12px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+                        Connect Google Calendar to unlock real-time time &amp; focus insights.
+                    </span>
+                    <DashboardCTA
+                        label="Connect Google Calendar"
+                        targetTab="time"
+                        targetAnchor="connections-time"
+                        variant="primary"
+                        fullWidth
+                    />
+                </div>
+            )}
 
 
             <div style={{

@@ -4,6 +4,7 @@ import { getHealthDailySummaries, getRecentSleepSessions, getRecoveryScore } fro
 import { HealthDailySummary, SleepSession } from '../../types/health';
 import HealthPillarCard from '../../components/health/HealthPillarCard';
 import TrendPanel from '../../components/common/TrendPanel';
+import DashboardCTA from '../../components/common/DashboardCTA';
 import { Heart } from 'lucide-react';
 
 import HealthHighlightsWidget from '../../components/health/HealthHighlightsWidget';
@@ -153,7 +154,25 @@ const HealthDashboard: React.FC = () => {
 
     const rightColumn = (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0 }}>
-
+            {/* Connection redirect banner */}
+            <div style={{
+                padding: '20px',
+                backgroundColor: 'var(--bg-surface)',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                textAlign: 'center'
+            }}>
+                <span style={{ display: 'block', marginBottom: '12px', color: 'var(--text-secondary)' }}>
+                    Connect a health provider for live data
+                </span>
+                <DashboardCTA
+                    label="Connect Health Provider"
+                    targetTab="health"
+                    targetAnchor="connections-health"
+                    variant="secondary"
+                    fullWidth
+                />
+            </div>
 
             <div style={{
                 display: 'grid',

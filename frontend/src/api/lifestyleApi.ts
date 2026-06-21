@@ -16,9 +16,16 @@ export interface LifeGoal {
     progress: number;
 }
 
+function authHeaders(): HeadersInit {
+    const token = localStorage.getItem('token');
+    return {
+        'Authorization': `Bearer ${token}`,
+    };
+}
+
 export async function getLifestyleRecommendations(): Promise<LifestyleRecommendation[]> {
     try {
-        const response = await fetch('/api/lifestyle/recommendations');
+        const response = await fetch('/api/lifestyle/recommendations', { headers: authHeaders() });
         if (!response.ok) return [];
         const payload = await response.json();
         return payload.data || [];
@@ -30,7 +37,7 @@ export async function getLifestyleRecommendations(): Promise<LifestyleRecommenda
 
 export async function getLifeGoals(): Promise<LifeGoal[]> {
     try {
-        const response = await fetch('/api/lifestyle/goals');
+        const response = await fetch('/api/lifestyle/goals', { headers: authHeaders() });
         if (!response.ok) return [];
         const payload = await response.json();
         return payload.data || [];
@@ -42,9 +49,13 @@ export async function getLifeGoals(): Promise<LifeGoal[]> {
 
 export async function createLifeGoal(goal: Omit<LifeGoal, 'id' | 'progress'>): Promise<boolean> {
     try {
+        const token = localStorage.getItem('token');
         const response = await fetch('/api/lifestyle/goals', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
             body: JSON.stringify(goal)
         });
         return response.ok;

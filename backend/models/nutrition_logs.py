@@ -38,6 +38,7 @@ class NutritionLog(Base):
         # One log per user per day
         UniqueConstraint("user_id", "date", name="uq_nutrition_user_date"),
         Index("ix_nutrition_user_date", "user_id", "date"),
+        {'extend_existing': True}
     )
 
     id = Column(Integer, primary_key=True, index=True)

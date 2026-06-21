@@ -1,5 +1,20 @@
 import { HealthDailySummary, SleepSession, Workout } from '../types/health';
 
+function authHeaders(): HeadersInit {
+    const token = localStorage.getItem('token');
+    return {
+        'Authorization': `Bearer ${token}`,
+    };
+}
+
+function authHeadersWithJson(): HeadersInit {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+    };
+}
+
 export async function getHealthDailySummaries(startDate?: string, endDate?: string): Promise<HealthDailySummary[]> {
     try {
         let url = '/api/health/summaries';
@@ -11,7 +26,7 @@ export async function getHealthDailySummaries(startDate?: string, endDate?: stri
             url += `?${params.toString()}`;
         }
 
-        const response = await fetch(url);
+        const response = await fetch(url, { headers: authHeaders() });
         if (!response.ok) {
             return [];
         }
@@ -25,7 +40,7 @@ export async function getHealthDailySummaries(startDate?: string, endDate?: stri
 
 export async function getRecentSleepSessions(): Promise<SleepSession[]> {
     try {
-        const response = await fetch('/api/health/sleep/recent');
+        const response = await fetch('/api/health/sleep/recent', { headers: authHeaders() });
         if (!response.ok) {
             return [];
         }
@@ -39,7 +54,7 @@ export async function getRecentSleepSessions(): Promise<SleepSession[]> {
 
 export async function getRecoveryScore(): Promise<any> {
     try {
-        const response = await fetch('/api/health/recovery-score');
+        const response = await fetch('/api/health/recovery-score', { headers: authHeaders() });
         if (!response.ok) return { score: 0 };
         return await response.json();
     } catch (error) {
@@ -52,7 +67,7 @@ export async function logWorkout(data: any): Promise<boolean> {
     try {
         const response = await fetch('/api/health/workouts', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeadersWithJson(),
             body: JSON.stringify(data)
         });
         return response.ok;
@@ -66,7 +81,7 @@ export async function logNutrition(data: any): Promise<boolean> {
     try {
         const response = await fetch('/api/health/nutrition', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeadersWithJson(),
             body: JSON.stringify(data)
         });
         return response.ok;

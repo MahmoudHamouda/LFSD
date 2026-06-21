@@ -5,7 +5,7 @@ from models.growth_schemas import PlanId, EntitlementResponse
 from models.models import User, LifeGoal, DBMessage, Recommendation
 from models.logging_models import AuditLog
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func, and_, or_
 import uuid
 import copy
 from loguru import logger
@@ -99,7 +99,10 @@ class GrowthService:
         # 3. Apply User-Specific Overrides (Validated)
         override = db.query(UserLimitOverride).filter(
             UserLimitOverride.user_id == user_id,
-            UserLimitOverride.expiration_date >= datetime.utcnow() # Check expiry
+            or_(
+                UserLimitOverride.expiration_date.is_(None),
+                UserLimitOverride.expiration_date >= datetime.utcnow()
+            )
         ).first()
         
         if override and "limits" in base_config:
