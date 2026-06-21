@@ -28,7 +28,7 @@ async def test_endpoints():
     
     headers = get_auth_headers("health@helm.com")
     
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(trust_env=False) as client:
         # Test 1: List Providers (Public)
         print("\n1. Testing /mobility/providers")
         try:
@@ -42,7 +42,9 @@ async def test_endpoints():
                 print(f"   ❌ Failed: {response.status_code}")
                 print(f"   Response: {response.text}")
         except Exception as e:
-            print(f"   ❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
+            print(f"   ❌ Error: {type(e).__name__}: {e}")
         
         # Test 2: Compare Prices (Authenticated)
         print("\n2. Testing /mobility/compare-prices")
@@ -71,7 +73,9 @@ async def test_endpoints():
                 print(f"   ❌ Failed: {response.status_code}")
                 print(f"   Response: {response.text}")
         except Exception as e:
-            print(f"   ❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
+            print(f"   ❌ Error: {type(e).__name__}: {e}")
         
         # Test 3: Get Cheapest Option (Authenticated)
         print("\n3. Testing /mobility/cheapest")
@@ -94,7 +98,9 @@ async def test_endpoints():
             else:
                 print(f"   ❌ Failed: {response.status_code}")
         except Exception as e:
-            print(f"   ❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
+            print(f"   ❌ Error: {type(e).__name__}: {e}")
         
         # Test 4: Book a Ride (Authenticated, Mock)
         print("\n4. Testing /mobility/book-ride")
@@ -127,7 +133,9 @@ async def test_endpoints():
             else:
                 print(f"   ❌ Failed: {response.status_code}")
         except Exception as e:
-            print(f"   ❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
+            print(f"   ❌ Error: {type(e).__name__}: {e}")
     
     print("\n" + "=" * 60)
     print("✅ End-to-End Test Complete!\n")
