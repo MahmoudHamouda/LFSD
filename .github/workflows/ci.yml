@@ -35,7 +35,7 @@ jobs:
       # Step 4: Install Frontend Dependencies
       - name: Install Frontend Dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: npm install
 
       # Step 5: Build Frontend
       - name: Build Frontend
