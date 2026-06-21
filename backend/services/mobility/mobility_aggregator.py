@@ -1,7 +1,7 @@
 """
 Mobility Aggregator - Unified interface for all mobility providers.
 
-Provides concurrent price comparison, idempotent booking, and 
+Provides concurrent price comparison, idempotent booking, and
 lifecycle management for Uber and RTA.
 """
 

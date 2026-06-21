@@ -1,7 +1,7 @@
 """initial_schema_unified
 
 Revision ID: fa3544f15155
-Revises: 
+Revises:
 Create Date: 2026-01-25 07:26:37.468519
 
 """

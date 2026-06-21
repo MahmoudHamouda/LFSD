@@ -1,8 +1,8 @@
 """
 Productivity Services Package
 
-This package manages services related to time management (Calendars) and 
-geographic intelligence (Maps). 
+This package manages services related to time management (Calendars) and
+geographic intelligence (Maps).
 
 The package is partitioned into:
 1. Calendar Services: Unified interface for scheduling (Google, Outlook).

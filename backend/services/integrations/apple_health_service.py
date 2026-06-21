@@ -2,7 +2,7 @@
 Apple Integration Service - Hardened for Production.
 
 Handles "Sign in with Apple" (OIDC) and ingestion of HealthKit data.
-Implements secure JWT generation, token lifecycle management, and 
+Implements secure JWT generation, token lifecycle management, and
 controlled data simulation for development.
 """
 

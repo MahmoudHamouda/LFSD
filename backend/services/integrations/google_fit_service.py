@@ -2,7 +2,7 @@
 Google Fit API Service - Hardened for Production.
 
 Handles OAuth 2.0 flow, token lifecycle management, and daily biometric data retrieval.
-Uses httpx for asynchronous networking, Fernet for credential encryption, 
+Uses httpx for asynchronous networking, Fernet for credential encryption,
 and normalized data ingestion.
 """
 

@@ -1,7 +1,7 @@
 """
 RTA (Roads and Transport Authority) API Service
 
-Provides integration with RTA's API for public transit routes, schedules, 
+Provides integration with RTA's API for public transit routes, schedules,
 and Price Estimates (Trip Cost).
 Hardened with httpx, validation, and professional response models.
 """
