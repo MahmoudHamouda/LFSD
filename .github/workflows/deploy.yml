@@ -1,53 +1,58 @@
-name: Deploy to Staging and Production
+name: Deploy to Cloud Run
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "staging"
+        type: choice
+        options:
+          - staging
+          - production
 
 jobs:
   deploy:
-    name: Deploy to Staging and Production
+    name: Deploy to Cloud Run (${{ inputs.environment }})
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Authenticate with Google Cloud
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
 
-      # Set up gcloud CLI
-      - name: Set Up gcloud CLI
+      - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: newprojectlfsd
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      # Add Google Cloud SDK repository and update
-      - name: Add Google Cloud SDK Repository
+      - name: Get latest image tag
+        id: latest
         run: |
-          echo "deb [signed-by=/usr/share/keyrings/cloud.google.gpg] https://packages.cloud.google.com/apt cloud-sdk main" | sudo tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
-          sudo apt-get install -y apt-transport-https ca-certificates gnupg
-          curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key --keyring /usr/share/keyrings/cloud.google.gpg add -
-          sudo apt-get update
+          echo "sha8=$(echo ${GITHUB_SHA} | cut -c1-8)" >> $GITHUB_OUTPUT
 
-      # Install gke-gcloud-auth-plugin
-      - name: Install gke-gcloud-auth-plugin
-        run: |
-          sudo apt-get install -y google-cloud-sdk-gke-gcloud-auth-plugin
+      - name: Deploy Backend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: lfsd-backend
+          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:${{ steps.latest.outputs.sha8 }}
+          region: us-central1
 
-      # Configure kubectl
-      - name: Configure kubectl
-        if: ${{ false }}   # ← add this line
-        run: |
-          gcloud container clusters get-credentials my-cluster-lfsd --region us-central1-a --project newprojectlfsd
-        env:
-          USE_GKE_GCLOUD_AUTH_PLUGIN: "True"
+      - name: Deploy Frontend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: lfsd-frontend
+          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:${{ steps.latest.outputs.sha8 }}
+          region: us-central1
+          flags: "--port=5000"
 
-      # Deploy to Staging and Production
-      - name: Deploy to Staging and Production
-        if: ${{ false }}   # ← add this line
+      - name: Deployment Summary
+        if: success()
         run: |
-          kubectl apply -f k8s/deployment.yaml
+          echo "✅ Deployed to ${{ inputs.environment }}!"
+          echo "Backend:  https://lfsd-backend-692544481281.us-central1.run.app"
+          echo "Frontend: https://lfsd-frontend-692544481281.us-central1.run.app"

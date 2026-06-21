@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  lint-build-push:
-    name: Lint, Test, Build, Push, and Deploy
+  build-push-deploy:
+    name: Build, Push, and Deploy to Cloud Run
     runs-on: ubuntu-latest
     steps:
       # Step 1: Checkout code
@@ -23,12 +23,7 @@ jobs:
         with:
           node-version: "20"
 
-      # Step 3: Install Frontend Dependencies
-      - name: Install Frontend Dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      # Step 4: Cache Node Modules
+      # Step 3: Cache npm
       - name: Cache Node Modules
         uses: actions/cache@v4
         with:
@@ -36,6 +31,11 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node-
+
+      # Step 4: Install Frontend Dependencies
+      - name: Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
 
       # Step 5: Build Frontend
       - name: Build Frontend
@@ -47,47 +47,28 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-      - name: Configure Docker to use gcloud as a credential helper
-        run: gcloud auth configure-docker --quiet
 
       - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
-      - name: Install GKE Auth Plugina
-        run: |
-          gcloud components install gke-gcloud-auth-plugin
 
-      - name: Get credentials for the cluster (disabled)
-        if: ${{ false }} # ← paste this line under the name (same indentation)
-        run: |
-          gcloud container clusters get-credentials my-cluster-lfsd --zone us-central1-a --project ${{ env.PROJECT_ID }}
-          export USE_GKE_GCLOUD_AUTH_PLUGIN=True
-          kubectl config set-credentials "${{ env.PROJECT_ID }}" --exec-command="$(gcloud info --format='value(basic.python_location)')/bin/gke-gcloud-auth-plugin"
-          kubectl config current-context
+      - name: Configure Docker for GCR
+        run: gcloud auth configure-docker --quiet
 
-      # Step 7: Deploy Kubernetes Resources
-      - name: Deploy Kubernetes Resources
-        if: ${{ false }}
-        run: |
-          kubectl apply -f k8s/secrets.yaml  --validate=false
-          kubectl apply -f k8s/volumes.yaml  --validate=false
-          kubectl apply -f k8s/databases.yaml  --validate=false
-          kubectl apply -f k8s/deployment.yaml  --validate=false
-
-      # Step 8: Log in to Docker Hub
+      # Step 7: Log in to Docker Hub
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 9: Make Short SHA available
+      # Step 8: Generate image tag
       - name: Get Short SHA
         id: slug
         run: echo "sha8=$(echo ${GITHUB_SHA} | cut -c1-8)" >> $GITHUB_OUTPUT
 
-      # Step 10: Build and Push Docker Images
+      # Step 9: Build and Push Docker Images
       - name: Build and Push Docker Images
         run: |
           export IMAGE_TAG=${{ steps.slug.outputs.sha8 }}
@@ -104,16 +85,27 @@ jobs:
           docker tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG hamoum/lfsd:latest
           docker push hamoum/lfsd:latest
 
-      # Step 11: Deploy Backend to Cloud Run
+      # Step 10: Deploy Backend to Cloud Run
       - name: Deploy Backend to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
         with:
           service: lfsd-backend
           image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:${{ steps.slug.outputs.sha8 }}
           region: us-central1
-          flags: "--no-traffic"
 
-      # Optional: Notify Success
-      - name: Notify Success
+      # Step 11: Deploy Frontend to Cloud Run
+      - name: Deploy Frontend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: lfsd-frontend
+          image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:${{ steps.slug.outputs.sha8 }}
+          region: us-central1
+          flags: "--port=5000"
+
+      # Step 12: Print deployment URLs
+      - name: Deployment Summary
         if: success()
-        run: echo "Pipeline completed successfully!"
+        run: |
+          echo "✅ Deployment complete!"
+          echo "Backend:  https://lfsd-backend-692544481281.us-central1.run.app"
+          echo "Frontend: https://lfsd-frontend-692544481281.us-central1.run.app"
