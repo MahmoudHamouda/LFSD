@@ -12,9 +12,10 @@ class DatabaseSink:
     """
     Loguru sink that writes logs to the SystemLog table.
     """
+
     def write(self, message):
         record = message.record
-        
+
         # Avoid recursion if logging from within DB operations
         if record["name"].startswith("sqlalchemy"):
             return
@@ -28,7 +29,7 @@ class DatabaseSink:
                 function_name=record["function"],
                 line_number=record["line"],
                 timestamp=record["time"],
-                extra_data=record["extra"]
+                extra_data=record["extra"],
             )
             session.add(log_entry)
             session.commit()
@@ -40,11 +41,13 @@ class DatabaseSink:
         finally:
             session.close()
 
+
 class InterceptHandler(logging.Handler):
     """
     Default handler from examples in loguru documentation.
     Intercepts standard logging messages and routes them to Loguru.
     """
+
     def emit(self, record):
         # Get corresponding Loguru level if it exists
         try:
@@ -58,12 +61,15 @@ class InterceptHandler(logging.Handler):
             frame = frame.f_back
             depth += 1
 
-        logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
+        logger.opt(depth=depth, exception=record.exc_info).log(
+            level, record.getMessage()
+        )
+
 
 def setup_logging():
     """Configure logging for the application."""
     settings = core.config.get_settings()
-    
+
     # Remove all existing handlers
     logging.root.handlers = []
 
@@ -79,9 +85,9 @@ def setup_logging():
     logger.configure(
         handlers=[
             {
-                "sink": sys.stdout, 
+                "sink": sys.stdout,
                 "level": "DEBUG" if settings.DEBUG else "INFO",
-                "serialize": False, # Set to True for JSON logs in Cloud Run
+                "serialize": False,  # Set to True for JSON logs in Cloud Run
             },
             # {
             #     "sink": DatabaseSink(),

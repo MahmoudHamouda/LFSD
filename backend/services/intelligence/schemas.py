@@ -24,8 +24,10 @@ from pydantic import BaseModel, Field
 # Enums
 # ============================================================================
 
+
 class RequestTier(int, Enum):
     """Cost tier classification for LLM routing."""
+
     TIER_0 = 0  # Fully deterministic — no LLM calls
     TIER_1 = 1  # Single lightweight LLM call (intent OR response)
     TIER_2 = 2  # Dual lightweight LLM calls (intent AND response)
@@ -34,6 +36,7 @@ class RequestTier(int, Enum):
 
 class Dimension(str, Enum):
     """The three pillars of HELM scoring."""
+
     WEALTH = "wealth"
     HEALTH = "health"
     TIME = "time"
@@ -41,25 +44,28 @@ class Dimension(str, Enum):
 
 class ActionType(str, Enum):
     """Types of actions the pipeline can dispatch."""
-    RESPOND_ONLY = "respond_only"           # Just reply, no side-effects
+
+    RESPOND_ONLY = "respond_only"  # Just reply, no side-effects
     EXECUTE_FINANCIAL = "execute_financial"  # Dispatch to financial service
-    EXECUTE_CALENDAR = "execute_calendar"    # Dispatch to calendar service
-    EXECUTE_MOBILITY = "execute_mobility"    # Dispatch to mobility service
-    EXECUTE_HEALTH = "execute_health"        # Dispatch to health service
-    EXECUTE_PARTNER = "execute_partner"      # Dispatch to partner integration
-    FLAG_FOR_REVIEW = "flag_for_review"      # Human review needed
-    QUEUE_DEFERRED = "queue_deferred"        # Queue for later execution
+    EXECUTE_CALENDAR = "execute_calendar"  # Dispatch to calendar service
+    EXECUTE_MOBILITY = "execute_mobility"  # Dispatch to mobility service
+    EXECUTE_HEALTH = "execute_health"  # Dispatch to health service
+    EXECUTE_PARTNER = "execute_partner"  # Dispatch to partner integration
+    FLAG_FOR_REVIEW = "flag_for_review"  # Human review needed
+    QUEUE_DEFERRED = "queue_deferred"  # Queue for later execution
 
 
 # ============================================================================
 # Stage 1 Output: InputEnvelope
 # ============================================================================
 
+
 class InputEnvelope(BaseModel):
     """
     Normalized, sanitized user input with session metadata.
     Produced by Stage 1 (Input Processing). No LLM involved.
     """
+
     # Identity
     request_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
@@ -84,8 +90,10 @@ class InputEnvelope(BaseModel):
 # Stage 2 Output: ContextFrame
 # ============================================================================
 
+
 class HelmScores(BaseModel):
     """Current HELM tri-dimensional scores."""
+
     wealth: float = 50.0
     health: float = 50.0
     time: float = 50.0
@@ -93,6 +101,7 @@ class HelmScores(BaseModel):
 
 class FinancialSnapshot(BaseModel):
     """Compressed financial context (~50 tokens)."""
+
     total_balance: float = 0.0
     monthly_income: float = 0.0
     monthly_expenses: float = 0.0
@@ -104,6 +113,7 @@ class FinancialSnapshot(BaseModel):
 
 class HealthBaseline(BaseModel):
     """Compressed health context (~40 tokens)."""
+
     sleep_hours_avg: float = 7.0
     sleep_quality: float = 50.0
     activity_level: float = 50.0
@@ -114,6 +124,7 @@ class HealthBaseline(BaseModel):
 
 class TimeBaseline(BaseModel):
     """Compressed time/productivity context (~30 tokens)."""
+
     focus_hours_daily: float = 4.0
     meeting_hours_daily: float = 2.0
     commute_minutes: int = 30
@@ -129,6 +140,7 @@ class ContextFrame(BaseModel):
     Target: ~200 tokens when serialized for LLM consumption.
     Versioned for backward compatibility.
     """
+
     schema_version: str = "1.0"
 
     # User Profile
@@ -168,15 +180,19 @@ class ContextFrame(BaseModel):
 # Stage 3 Output: IntentResult
 # ============================================================================
 
+
 class IntentResult(BaseModel):
     """
     Classified intent with confidence and extracted entities.
     Produced by Stage 3 (Intent Classification).
     Deterministic-first, LLM fallback for ambiguous inputs.
     """
+
     intent: str  # From IntentTaxonomy (e.g., "balance_check", "career_change")
     confidence: float = 1.0  # 0.0 – 1.0
-    dimensions: List[str] = Field(default_factory=list)  # e.g., ["wealth"], ["health", "time"]
+    dimensions: List[str] = Field(
+        default_factory=list
+    )  # e.g., ["wealth"], ["health", "time"]
     tier: RequestTier = RequestTier.TIER_0
 
     # Extracted entities
@@ -195,8 +211,10 @@ class IntentResult(BaseModel):
 # Stage 4 Output: ScoreDeltas
 # ============================================================================
 
+
 class DimensionDelta(BaseModel):
     """Score impact for a single dimension."""
+
     dimension: str  # "wealth", "health", or "time"
     delta: float = 0.0  # [-100, +100]
     direction: str = "neutral"  # "up", "down", "neutral"
@@ -212,6 +230,7 @@ class ScoreDeltas(BaseModel):
 
     Every delta traces back to a specific policy rule and input.
     """
+
     wealth: DimensionDelta = Field(
         default_factory=lambda: DimensionDelta(dimension="wealth")
     )
@@ -241,8 +260,10 @@ class ScoreDeltas(BaseModel):
 # Stage 5 Output: ActionPlan
 # ============================================================================
 
+
 class ActionStep(BaseModel):
     """A single action to execute."""
+
     action_type: ActionType = ActionType.RESPOND_ONLY
     target_service: Optional[str] = None  # e.g., "finance_service", "calendar_service"
     parameters: Dict[str, Any] = Field(default_factory=dict)
@@ -258,6 +279,7 @@ class ActionPlan(BaseModel):
     For most requests, this is a template lookup.
     For novel scenarios, heavy LLM produces it.
     """
+
     plan_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
     # Actions to execute
@@ -280,11 +302,13 @@ class ActionPlan(BaseModel):
 # Stage 6 Output: ResponseEnvelope
 # ============================================================================
 
+
 class ResponseEnvelope(BaseModel):
     """
     Final user-facing response.
     Produced by Stage 6 (Response Generation).
     """
+
     text: str = ""
     response_type: str = "text"  # "text", "financial_report", "mobility_options", etc.
     data: Dict[str, Any] = Field(default_factory=dict)
@@ -302,8 +326,10 @@ class ResponseEnvelope(BaseModel):
 # Stage 7 Output: PipelineTrace
 # ============================================================================
 
+
 class CostSummary(BaseModel):
     """Per-request cost tracking."""
+
     tier: int = 0
     total_input_tokens: int = 0
     total_output_tokens: int = 0
@@ -315,6 +341,7 @@ class CostSummary(BaseModel):
 
 class StageTimings(BaseModel):
     """Latency measurements for each pipeline stage."""
+
     input_processing_ms: float = 0.0
     context_assembly_ms: float = 0.0
     intent_classification_ms: float = 0.0
@@ -334,6 +361,7 @@ class PipelineTrace(BaseModel):
 
     This is the source of truth for compliance, debugging, and the learning loop.
     """
+
     # Identity
     execution_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     request_id: str = ""
@@ -374,8 +402,10 @@ class PipelineTrace(BaseModel):
 # Pipeline Result (returned to caller)
 # ============================================================================
 
+
 class PipelineResult(BaseModel):
     """Top-level result from IntelligencePipeline.process()."""
+
     response: ResponseEnvelope
     trace: PipelineTrace
     tier: int = 0

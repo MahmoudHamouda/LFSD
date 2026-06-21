@@ -1,4 +1,3 @@
-
 try:
     with open("compile_errors.txt", "r", encoding="utf-16") as f:
         for line in f:

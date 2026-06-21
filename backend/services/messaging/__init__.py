@@ -23,22 +23,25 @@ __all__ = [
     "get_messaging_provider",
     "BaseMessagingService",
     "MessageResponse",
-    "MESSAGING_PROVIDERS"
+    "MESSAGING_PROVIDERS",
 ]
 
 # Singleton cache for long-running processes
 _service_cache: Dict[str, BaseMessagingService] = {}
 
-def get_messaging_provider(provider_key: str, use_cache: bool = True) -> BaseMessagingService:
+
+def get_messaging_provider(
+    provider_key: str, use_cache: bool = True
+) -> BaseMessagingService:
     """
     Factory to resolve and instantiate messaging providers.
-    
+
     Args:
         provider_key: Identifier (e.g. 'whatsapp')
         use_cache: If True, returns a singleton instance.
     """
     key = provider_key.lower()
-    
+
     if use_cache and key in _service_cache:
         return _service_cache[key]
 
@@ -53,10 +56,10 @@ def get_messaging_provider(provider_key: str, use_cache: bool = True) -> BaseMes
         module = importlib.import_module(f".{module_name}", package=__name__)
         service_class = getattr(module, class_name)
         instance = service_class()
-        
+
         if use_cache:
             _service_cache[key] = instance
-            
+
         return instance
     except (ImportError, AttributeError) as e:
         raise RuntimeError(f"Failed to load messaging provider {provider_key}: {e}")

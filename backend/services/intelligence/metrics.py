@@ -29,9 +29,11 @@ logger = logging.getLogger("intelligence.metrics")
 # Metric Result Types
 # ============================================================================
 
+
 @dataclass
 class EscalationMetric:
     """Escalation rate overall and by intent."""
+
     total_requests: int = 0
     escalated_requests: int = 0
     escalation_rate: float = 0.0
@@ -41,6 +43,7 @@ class EscalationMetric:
 @dataclass
 class ClarifyMetric:
     """Clarify success rate — did 1 question resolve?"""
+
     total_clarify_requests: int = 0
     resolved_after_clarify: int = 0
     success_rate: float = 0.0
@@ -49,6 +52,7 @@ class ClarifyMetric:
 @dataclass
 class SafeMinimalMetric:
     """SAFE_MINIMAL frequency and trend."""
+
     total_requests: int = 0
     safe_minimal_count: int = 0
     frequency: float = 0.0
@@ -58,6 +62,7 @@ class SafeMinimalMetric:
 @dataclass
 class CostMetric:
     """Cost per resolved request."""
+
     total_cost_usd: float = 0.0
     total_resolved: int = 0
     cost_per_resolved_usd: float = 0.0
@@ -67,6 +72,7 @@ class CostMetric:
 @dataclass
 class CompletionMetric:
     """Action completion rate."""
+
     total_actions: int = 0
     completed_actions: int = 0
     completion_rate: float = 0.0
@@ -81,6 +87,7 @@ class MetricsReport:
 
     Generated from DecisionRecord + OutcomeRecord data.
     """
+
     period: str = "all_time"
     escalation: EscalationMetric = field(default_factory=EscalationMetric)
     clarify: ClarifyMetric = field(default_factory=ClarifyMetric)
@@ -124,6 +131,7 @@ class MetricsReport:
 # ============================================================================
 # Metrics Engine
 # ============================================================================
+
 
 class MetricsEngine:
     """
@@ -212,9 +220,9 @@ class MetricsEngine:
         # execution_success=True and user_satisfaction >= 0
         clarify_exec_ids = {d.get("execution_id") for d in clarify_decisions}
         resolved = sum(
-            1 for o in outcomes
-            if o.get("execution_id") in clarify_exec_ids
-            and o.get("completed", False)
+            1
+            for o in outcomes
+            if o.get("execution_id") in clarify_exec_ids and o.get("completed", False)
         )
 
         return ClarifyMetric(
@@ -248,7 +256,9 @@ class MetricsEngine:
             total_requests=total,
             safe_minimal_count=count,
             frequency=(count / total) * 100,
-            repeat_rate=(repeat_users / total_sm_users) * 100 if total_sm_users > 0 else 0,
+            repeat_rate=(
+                (repeat_users / total_sm_users) * 100 if total_sm_users > 0 else 0
+            ),
         )
 
     @staticmethod
@@ -289,14 +299,21 @@ class MetricsEngine:
             return CompletionMetric()
 
         completed = sum(1 for o in outcomes if o.get("completed", False))
-        times = [o.get("time_to_complete_ms", 0) for o in outcomes if o.get("completed", False)]
+        times = [
+            o.get("time_to_complete_ms", 0)
+            for o in outcomes
+            if o.get("completed", False)
+        ]
         avg_time = sum(times) / len(times) if times else 0
 
         satisfactions = [
-            o.get("user_satisfaction", 0) for o in outcomes
+            o.get("user_satisfaction", 0)
+            for o in outcomes
             if o.get("user_satisfaction", 0) != 0
         ]
-        avg_satisfaction = sum(satisfactions) / len(satisfactions) if satisfactions else 0
+        avg_satisfaction = (
+            sum(satisfactions) / len(satisfactions) if satisfactions else 0
+        )
 
         return CompletionMetric(
             total_actions=total,

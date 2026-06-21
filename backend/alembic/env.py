@@ -21,6 +21,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
 from models.database import Base
+
 # Import ALL models to ensure they are registered in Base.metadata
 from models.models import *
 from models.logging_models import *
@@ -32,12 +33,14 @@ from models.job import *
 from models.lifestyle_events import *
 from models.investment_portfolios import *
 from models.growth_models import *
+
 # Add any other model files here
 
 target_metadata = Base.metadata
 
 # Override alembic.ini url with our config
 import core.config
+
 config.set_main_option("sqlalchemy.url", core.config.get_settings().DATABASE_URL)
 
 # other values from the config, defined by the needs of env.py,
@@ -78,12 +81,11 @@ def run_migrations_online() -> None:
 
     """
     from models.database import engine
+
     connectable = engine
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

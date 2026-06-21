@@ -11,8 +11,15 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    Column, String, Float, DateTime, ForeignKey, JSON,
-    UniqueConstraint, CheckConstraint, Index
+    Column,
+    String,
+    Float,
+    DateTime,
+    ForeignKey,
+    JSON,
+    UniqueConstraint,
+    CheckConstraint,
+    Index,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -27,41 +34,49 @@ def generate_uuid() -> str:
 class DBUserScore(Base):
     """
     Consolidated user score across all pillars.
-    
+
     WARNING: This duplicates scoring logic in:
     - VivIndex (models.py)
     - FinancialScore (models.py)
     - HealthScore (health_models.py)
     - TimeScore (models.py)
-    
+
     TODO: Consolidate to single scoring system.
-    
+
     One current score per user (uniqueness enforced).
     """
+
     __tablename__ = "user_scores"
 
     __table_args__ = (
         # Enforce one current score per user
         UniqueConstraint("user_id", name="uq_user_scores_user_id"),
-        
         # Bounds on pillar scores (0-100)
-        CheckConstraint("financial_score >= 0 AND financial_score <= 100", 
-                       name="ck_user_scores_financial_0_100"),
-        CheckConstraint("health_score >= 0 AND health_score <= 100", 
-                       name="ck_user_scores_health_0_100"),
-        CheckConstraint("time_score >= 0 AND time_score <= 100", 
-                       name="ck_user_scores_time_0_100"),
-        CheckConstraint("balance_score >= 0 AND balance_score <= 100", 
-                       name="ck_user_scores_balance_0_100"),
-        CheckConstraint("overall_score >= 0 AND overall_score <= 100", 
-                       name="ck_user_scores_overall_0_100"),
-        
+        CheckConstraint(
+            "financial_score >= 0 AND financial_score <= 100",
+            name="ck_user_scores_financial_0_100",
+        ),
+        CheckConstraint(
+            "health_score >= 0 AND health_score <= 100",
+            name="ck_user_scores_health_0_100",
+        ),
+        CheckConstraint(
+            "time_score >= 0 AND time_score <= 100", name="ck_user_scores_time_0_100"
+        ),
+        CheckConstraint(
+            "balance_score >= 0 AND balance_score <= 100",
+            name="ck_user_scores_balance_0_100",
+        ),
+        CheckConstraint(
+            "overall_score >= 0 AND overall_score <= 100",
+            name="ck_user_scores_overall_0_100",
+        ),
         # Bounds on ratios (0-2 for flexibility, though typically 0-1)
-        CheckConstraint("savings_rate >= 0 AND savings_rate <= 2", 
-                       name="ck_user_scores_savings_rate"),
-        CheckConstraint("debt_to_income >= 0", 
-                       name="ck_user_scores_debt_to_income"),
-        
+        CheckConstraint(
+            "savings_rate >= 0 AND savings_rate <= 2",
+            name="ck_user_scores_savings_rate",
+        ),
+        CheckConstraint("debt_to_income >= 0", name="ck_user_scores_debt_to_income"),
         # Indexes for queries
         Index("ix_user_scores_updated", "updated_at"),
     )
@@ -98,9 +113,15 @@ class DBUserScore(Base):
     meta_json = Column(JSON, nullable=False, default=dict)
 
     # Timestamps (timezone-aware)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), 
-                       nullable=False, index=True)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), 
-                       onupdate=func.now(), nullable=False, index=True)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+        index=True,
+    )
 
     user = relationship("User", back_populates="scores")

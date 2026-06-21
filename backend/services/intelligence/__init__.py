@@ -19,8 +19,8 @@ The Seven Stages:
 def get_pipeline_class():
     """Lazy import to avoid pulling heavy dependencies at module level."""
     from .pipeline import IntelligencePipeline
+
     return IntelligencePipeline
 
 
 __all__ = ["get_pipeline_class"]
-

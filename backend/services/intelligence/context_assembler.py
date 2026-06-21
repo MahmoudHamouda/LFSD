@@ -122,7 +122,9 @@ class ContextAssembler:
                     "title": g.title,
                     "target_amount": g.target_amount,
                     "saved_amount": g.saved_amount,
-                    "deadline": g.deadline.isoformat() if getattr(g, "deadline", None) else None,
+                    "deadline": (
+                        g.deadline.isoformat() if getattr(g, "deadline", None) else None
+                    ),
                     "priority": g.priority,
                     "pillar": g.pillar if hasattr(g, "pillar") else "wealth",
                 }

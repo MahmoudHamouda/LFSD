@@ -23,6 +23,7 @@ logger = logging.getLogger("intelligence.tier_router")
 @dataclass(frozen=True)
 class TierConfig:
     """Configuration for a single tier."""
+
     tier: RequestTier
     model_name: str
     max_input_tokens: int
@@ -49,7 +50,7 @@ DEFAULT_TIER_CONFIGS: Dict[int, TierConfig] = {
         max_input_tokens=400,
         max_output_tokens=100,
         allow_llm=True,
-        estimated_cost_per_1k_input=0.00001,   # Flash pricing
+        estimated_cost_per_1k_input=0.00001,  # Flash pricing
         estimated_cost_per_1k_output=0.00004,
     ),
     2: TierConfig(
@@ -67,7 +68,7 @@ DEFAULT_TIER_CONFIGS: Dict[int, TierConfig] = {
         max_input_tokens=2000,
         max_output_tokens=1000,
         allow_llm=True,
-        estimated_cost_per_1k_input=0.0005,    # Pro pricing
+        estimated_cost_per_1k_input=0.0005,  # Pro pricing
         estimated_cost_per_1k_output=0.0015,
     ),
 }
@@ -122,7 +123,9 @@ class TierRouter:
         """Get tier configuration."""
         return self.tier_configs.get(tier, self.tier_configs[1])
 
-    def is_within_budget(self, tier: int, input_tokens: int, output_tokens: int) -> bool:
+    def is_within_budget(
+        self, tier: int, input_tokens: int, output_tokens: int
+    ) -> bool:
         """Check if token usage is within tier budget."""
         config = self.get_config(tier)
         return (
@@ -133,10 +136,9 @@ class TierRouter:
     def estimate_cost(self, tier: int, input_tokens: int, output_tokens: int) -> float:
         """Estimate cost in USD for given token usage at a tier."""
         config = self.get_config(tier)
-        cost = (
-            (input_tokens / 1000) * config.estimated_cost_per_1k_input
-            + (output_tokens / 1000) * config.estimated_cost_per_1k_output
-        )
+        cost = (input_tokens / 1000) * config.estimated_cost_per_1k_input + (
+            output_tokens / 1000
+        ) * config.estimated_cost_per_1k_output
         return round(cost, 6)
 
     @property

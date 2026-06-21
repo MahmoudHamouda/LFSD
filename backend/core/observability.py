@@ -5,10 +5,11 @@ from models.database import SessionLocal
 from models.logging_models import AuditLog, ActivityFeed, Notification
 from datetime import datetime
 import uuid
-import threading # For firing async tasks if needed, or just run sync for now
+import threading  # For firing async tasks if needed, or just run sync for now
 
 import functools
 import inspect
+
 
 class GA4Events:
     USER_LOGIN = "user_login"
@@ -16,48 +17,56 @@ class GA4Events:
     TRANSACTION_VIEWED = "transaction_viewed"
     ERROR_OCCURRED = "error_occurred"
 
+
 class Observability:
     """
     Central observability entry point.
     Handles Logging (via loguru), Audit, Activity Feed, Notifications, and Analytics.
     """
-    
+
     @staticmethod
     def audit_action(action: str, entity_type: str):
         """
         Decorator to automatically audit log a function call.
         Requires the function to have 'user_id' and return an object with 'id' available,
-        or explicitly pass entity_id in kwargs. 
+        or explicitly pass entity_id in kwargs.
         """
+
         def decorator(func):
             @functools.wraps(func)
             async def wrapper(*args, **kwargs):
                 # Execute
                 result = await func(*args, **kwargs)
-                
+
                 # Extract Info (Best Effort)
                 try:
                     user_id = kwargs.get("user_id")
                     # Try to find entity_id from result or kwargs
-                    entity_id = kwargs.get("entity_id") or getattr(result, "id", "unknown")
-                    
+                    entity_id = kwargs.get("entity_id") or getattr(
+                        result, "id", "unknown"
+                    )
+
                     if user_id:
                         Observability.track_action(
                             actor_id=str(user_id),
                             action=action,
                             entity_type=entity_type,
                             entity_id=str(entity_id),
-                            actor_type="user"
+                            actor_type="user",
                         )
                 except Exception as e:
                     logger.warning(f"Auto-audit failed: {e}")
-                
+
                 return result
+
             return wrapper
+
         return decorator
 
     @staticmethod
-    def track_ga_event(event_name: str, params: Dict[str, Any], user_id: Optional[str] = None):
+    def track_ga_event(
+        event_name: str, params: Dict[str, Any], user_id: Optional[str] = None
+    ):
         """
         Sends event to Google Analytics 4.
         """
@@ -70,30 +79,27 @@ class Observability:
         try:
             # Basic Fire-and-Forget implementation
             import httpx
-            
+
             measurement_id = "G-XXXXXXXXXX"  # TODO: Move to config
-            api_secret = "wu89723h...."     # TODO: Move to config
-            
+            api_secret = "wu89723h...."  # TODO: Move to config
+
             if "G-" not in measurement_id:
                 # If not configured, just log
                 logger.info(f"GA4 (Mock): {event_name} - {params}")
                 return
 
             payload = {
-                "client_id": user_id or str(uuid.uuid4()), # Fallback client_id
+                "client_id": user_id or str(uuid.uuid4()),  # Fallback client_id
                 "user_id": user_id,
-                "events": [{
-                    "name": event_name,
-                    "params": params
-                }]
+                "events": [{"name": event_name, "params": params}],
             }
-            
+
             # Fire sync for now to keep it simple, or use background task if within FastAPI context
             # For this static method, we'll swallow errors to avoid breaking app flow
             httpx.post(
                 f"https://www.google-analytics.com/mp/collect?measurement_id={measurement_id}&api_secret={api_secret}",
                 json=payload,
-                timeout=2.0
+                timeout=2.0,
             )
         except Exception as e:
             logger.warning(f"Failed to send GA4 event: {e}")
@@ -116,7 +122,7 @@ class Observability:
         entity_id: str,
         changes: Optional[Dict[str, Any]] = None,
         correlation_id: Optional[str] = None,
-        actor_type: str = "user"
+        actor_type: str = "user",
     ):
         """
         Records a business action.
@@ -135,8 +141,8 @@ class Observability:
                 "action": action,
                 "entity_type": entity_type,
                 "entity_id": entity_id,
-                "correlation_id": correlation_id
-            }
+                "correlation_id": correlation_id,
+            },
         )
 
         # 2. Persist to DB (AuditLog)
@@ -149,7 +155,7 @@ class Observability:
                 entity_id=entity_id,
                 changes_json=changes,
                 correlation_id=correlation_id,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
             )
             Observability._safe_commit(db, audit)
 
@@ -161,7 +167,7 @@ class Observability:
         event_type: str,
         icon: str = "default",
         action_link: Optional[str] = None,
-        correlation_id: Optional[str] = None
+        correlation_id: Optional[str] = None,
     ):
         """
         Adds an item to the user's Activity Feed.
@@ -172,8 +178,8 @@ class Observability:
                 "event_type": "activity_feed",
                 "user_id": user_id,
                 "title": title,
-                "correlation_id": correlation_id
-            }
+                "correlation_id": correlation_id,
+            },
         )
 
         with SessionLocal() as db:
@@ -185,7 +191,7 @@ class Observability:
                 icon=icon,
                 action_link=action_link,
                 correlation_id=correlation_id,
-                created_at=datetime.utcnow()
+                created_at=datetime.utcnow(),
             )
             Observability._safe_commit(db, activity)
 
@@ -196,7 +202,7 @@ class Observability:
         body: str,
         channel: str = "in_app",
         priority: str = "normal",
-        payload: Optional[Dict[str, Any]] = None
+        payload: Optional[Dict[str, Any]] = None,
     ):
         """
         Queues a notification.
@@ -206,8 +212,8 @@ class Observability:
             extra={
                 "event_type": "notification",
                 "user_id": user_id,
-                "channel": channel
-            }
+                "channel": channel,
+            },
         )
 
         with SessionLocal() as db:
@@ -219,7 +225,7 @@ class Observability:
                 subject=subject,
                 body=body,
                 payload_json=payload,
-                created_at=datetime.utcnow()
+                created_at=datetime.utcnow(),
             )
             Observability._safe_commit(db, note)
             # In a real system, we'd fire a celery task or similar here to process sends.

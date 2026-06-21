@@ -28,27 +28,31 @@ logger = logging.getLogger("intelligence.execution_policy")
 # Enums
 # ============================================================================
 
+
 class RiskClass(str, Enum):
     """Risk classification for actions."""
-    NONE = "none"           # Read-only, no side-effects
-    LOW = "low"             # Reversible, no money
-    MEDIUM = "medium"       # Reversible, small money or booking
-    HIGH = "high"           # Large money movement or irreversible change
-    CRITICAL = "critical"   # Legal, health, or large financial commitment
+
+    NONE = "none"  # Read-only, no side-effects
+    LOW = "low"  # Reversible, no money
+    MEDIUM = "medium"  # Reversible, small money or booking
+    HIGH = "high"  # Large money movement or irreversible change
+    CRITICAL = "critical"  # Legal, health, or large financial commitment
 
 
 class ActionGate(str, Enum):
     """Outcome of the execution policy check."""
-    ALLOW = "allow"         # Execute immediately
-    CONFIRM = "confirm"     # Requires user confirmation before execution
-    DENY = "deny"           # Blocked — do not execute
+
+    ALLOW = "allow"  # Execute immediately
+    CONFIRM = "confirm"  # Requires user confirmation before execution
+    DENY = "deny"  # Blocked — do not execute
     CONFIRM_2FA = "confirm_2fa"  # Requires two-factor confirmation
 
 
 class RetryStrategy(str, Enum):
     """Retry strategy for partner calls."""
+
     NONE = "none"
-    LINEAR = "linear"       # Fixed interval
+    LINEAR = "linear"  # Fixed interval
     EXPONENTIAL = "exponential"
 
 
@@ -75,7 +79,6 @@ _INTENT_RISK: Dict[str, RiskClass] = {
     "subscription_review": RiskClass.NONE,
     "expense_categorize": RiskClass.NONE,
     "budget_alert": RiskClass.NONE,
-
     # LOW (reversible, no money)
     "schedule_event": RiskClass.LOW,
     "focus_time_block": RiskClass.LOW,
@@ -88,7 +91,6 @@ _INTENT_RISK: Dict[str, RiskClass] = {
     "health_goal_set": RiskClass.LOW,
     "set_savings_goal": RiskClass.LOW,
     "goal_set": RiskClass.LOW,
-
     # MEDIUM (money or booking, but bounded)
     "bill_payment": RiskClass.MEDIUM,
     "mobility_booking": RiskClass.MEDIUM,
@@ -96,12 +98,10 @@ _INTENT_RISK: Dict[str, RiskClass] = {
     "investment_query": RiskClass.LOW,
     "loan_inquiry": RiskClass.LOW,
     "commute_planning": RiskClass.LOW,
-
     # HIGH (large money or irreversible)
     "car_purchase": RiskClass.HIGH,
     "financial_advisory": RiskClass.MEDIUM,
     "life_event_planning": RiskClass.HIGH,
-
     # CRITICAL (multi-domain, requires deep review)
     "career_change": RiskClass.CRITICAL,
     "relocation_analysis": RiskClass.CRITICAL,
@@ -113,9 +113,11 @@ _INTENT_RISK: Dict[str, RiskClass] = {
 # Execution Policy Result
 # ============================================================================
 
+
 @dataclass
 class ExecutionPolicyResult:
     """Output of the execution policy check."""
+
     gate: ActionGate
     risk_class: RiskClass
     reason: str = ""
@@ -130,6 +132,7 @@ class ExecutionPolicyResult:
 # ============================================================================
 # Idempotency Store (in-memory, swap for Redis in production)
 # ============================================================================
+
 
 class IdempotencyStore:
     """Simple deduplication store for execution_ids."""
@@ -155,6 +158,7 @@ class IdempotencyStore:
 # ============================================================================
 # Execution Policy Engine
 # ============================================================================
+
 
 class ExecutionPolicyEngine:
     """
@@ -270,7 +274,9 @@ class ExecutionPolicyEngine:
                 risk_class=risk,
                 reason="Medium-risk action — requires user confirmation.",
                 requires_confirmation=True,
-                confirmation_message=self._build_confirmation_message(intent_type, risk),
+                confirmation_message=self._build_confirmation_message(
+                    intent_type, risk
+                ),
                 idempotency_key=execution_id,
                 retry_strategy=RetryStrategy.EXPONENTIAL,
                 max_retries=3,
@@ -282,7 +288,9 @@ class ExecutionPolicyEngine:
                 risk_class=risk,
                 reason="High-risk action — requires explicit user confirmation.",
                 requires_confirmation=True,
-                confirmation_message=self._build_confirmation_message(intent_type, risk),
+                confirmation_message=self._build_confirmation_message(
+                    intent_type, risk
+                ),
                 idempotency_key=execution_id,
                 retry_strategy=RetryStrategy.EXPONENTIAL,
                 max_retries=2,
@@ -335,7 +343,7 @@ class ExecutionPolicyEngine:
 
         return messages.get(
             intent_type,
-            f"This is a {risk.value}-risk action. Would you like to proceed?"
+            f"This is a {risk.value}-risk action. Would you like to proceed?",
         )
 
     @staticmethod

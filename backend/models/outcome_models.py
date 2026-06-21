@@ -33,6 +33,7 @@ class OutcomeRecord(Base):
 
     This is the reinforcement signal — did the decision lead to a good outcome?
     """
+
     __tablename__ = "intelligence_outcomes"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

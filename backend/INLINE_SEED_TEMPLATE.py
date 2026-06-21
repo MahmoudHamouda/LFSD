@@ -61,10 +61,10 @@ except Exception as e:
 """
 
 print(INLINE_SEED_CODE)
-print("\n" + "="*60)
+print("\n" + "=" * 60)
 print("COPY THE CODE ABOVE AND:")
 print("1. Edit backend/app.py in Cloud Console")
 print("2. Replace the seed_users import section (lines 446-468)")
 print("3. Paste the inline code above")
 print("4. Deploy the revision")
-print("="*60)
+print("=" * 60)

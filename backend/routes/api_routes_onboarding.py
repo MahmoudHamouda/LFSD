@@ -17,15 +17,14 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/onboarding", tags=["onboarding"])
 
+
 class OnboardingUploadRequest(BaseModel):
     filename: str
     content_base64: str
 
+
 @router.post("/parse-statement", summary="Parse a bank statement PDF")
-async def parse_statement(
-    file: UploadFile = File(...),
-    db: Session = Depends(get_db)
-):
+async def parse_statement(file: UploadFile = File(...), db: Session = Depends(get_db)):
     """
     Parses a bank statement PDF and returns structured data.
     This is the microservice endpoint requested.
@@ -33,17 +32,15 @@ async def parse_statement(
     try:
         contents = await file.read()
         service = StatementService(db)
-        
+
         # We pass None as user_id for anonymous/onboarding uploads
         result = await service.process_statement(
-            user_id=None, 
-            file_content=contents, 
-            filename=file.filename
+            user_id=None, file_content=contents, filename=file.filename
         )
-        
+
         if result["status"] == "error":
             raise HTTPException(status_code=400, detail=result["error"])
-            
+
         return result
 
     except Exception as e:
@@ -70,32 +67,39 @@ async def upload_statement(request: Request, db: Session = Depends(get_db)):
         files_data = data.get("files", [])
         if not files_data:
             # Backward compatibility: single file
-            files_data = [{"filename": data.get("filename"), "content": data.get("content_base64")}]
-        
+            files_data = [
+                {
+                    "filename": data.get("filename"),
+                    "content": data.get("content_base64"),
+                }
+            ]
+
         results = []
         service = StatementService(db)
-        
+
         for file_data in files_data:
             filename = file_data.get("filename")
             file_content_b64 = file_data.get("content")
-            
+
             if not filename or not file_content_b64:
-                results.append({
-                    "filename": filename or "unknown",
-                    "status": "error",
-                    "error": "Missing filename or content"
-                })
+                results.append(
+                    {
+                        "filename": filename or "unknown",
+                        "status": "error",
+                        "error": "Missing filename or content",
+                    }
+                )
                 continue
-            
+
             try:
                 # Handle potential data URI header
                 content_str = file_content_b64
                 if "," in content_str:
                     content_str = content_str.split(",")[1]
-                
+
                 # Decode base64
                 contents = base64.b64decode(content_str)
-                
+
                 # Process with new service
                 # We pass "default_user" for anonymous uploads in onboarding context
                 # Governance Fix: Do NOT persist "default_user" data to core tables.
@@ -104,26 +108,32 @@ async def upload_statement(request: Request, db: Session = Depends(get_db)):
                     user_id="default_user",
                     file_content=contents,
                     filename=filename,
-                    persist=False 
+                    persist=False,
                 )
-                
+
                 if process_result["status"] == "error":
-                    results.append({
-                        "filename": filename,
-                        "status": "error",
-                        "error": process_result["error"]
-                    })
+                    results.append(
+                        {
+                            "filename": filename,
+                            "status": "error",
+                            "error": process_result["error"],
+                        }
+                    )
                     continue
-                
+
                 # Map to frontend expected format
                 parsed_data = process_result["data"]
                 metadata = parsed_data["metadata"]
                 transactions = parsed_data["transactions"]
-                
+
                 # Convert Pydantic models to dicts for JSON serialization
-                transactions_dict = [t.dict() if hasattr(t, 'dict') else t for t in transactions]
-                metadata_dict = metadata.dict() if hasattr(metadata, 'dict') else metadata
-                
+                transactions_dict = [
+                    t.dict() if hasattr(t, "dict") else t for t in transactions
+                ]
+                metadata_dict = (
+                    metadata.dict() if hasattr(metadata, "dict") else metadata
+                )
+
                 # Helper to serialize dates
                 def serialize_dates(obj):
                     if isinstance(obj, (date, datetime)):
@@ -133,59 +143,63 @@ async def upload_statement(request: Request, db: Session = Depends(get_db)):
                 # Serialize dates in metadata
                 for k, v in metadata_dict.items():
                     metadata_dict[k] = serialize_dates(v)
-                    
+
                 # Serialize dates in transactions
                 for tx in transactions_dict:
                     for k, v in tx.items():
                         tx[k] = serialize_dates(v)
-                
+
                 # Add filename to metadata as expected by frontend
                 metadata_dict["filename"] = filename
-                
+
                 # Create session for backward compatibility
                 session_data = {
                     "transactions": transactions_dict,
                     "filename": filename,
                     "metadata": metadata_dict,
-                    "statement_id": process_result["statement_id"]
+                    "statement_id": process_result["statement_id"],
                 }
-                
+
                 new_session = OnboardingSession(data_json=session_data)
                 db.add(new_session)
                 db.commit()
                 db.refresh(new_session)
-                
-                results.append({
-                    "filename": filename,
-                    "status": "success",
-                    "session_id": str(new_session.id),
-                    "statement_id": process_result["statement_id"],
-                    "transaction_count": len(transactions),
-                    "preview": transactions_dict[:5],
-                    "metadata": metadata_dict
-                })
-                
+
+                results.append(
+                    {
+                        "filename": filename,
+                        "status": "success",
+                        "session_id": str(new_session.id),
+                        "statement_id": process_result["statement_id"],
+                        "transaction_count": len(transactions),
+                        "preview": transactions_dict[:5],
+                        "metadata": metadata_dict,
+                    }
+                )
+
             except Exception as e:
                 logger.error(f"DEBUG: Error processing {filename}: {e}")
-                results.append({
-                    "filename": filename,
-                    "status": "error",
-                    "error": str(e)
-                })
-        
+                results.append(
+                    {"filename": filename, "status": "error", "error": str(e)}
+                )
+
         # Return results for all files
         return {
             "files": results,
             "total_files": len(results),
             "successful": len([r for r in results if r["status"] == "success"]),
-            "failed": len([r for r in results if r["status"] == "error"])
+            "failed": len([r for r in results if r["status"] == "error"]),
         }
 
     except Exception as e:
         error_msg = f"CRITICAL UPLOAD ERROR: {str(e)}\n{traceback.format_exc()}"
         logger.error(f"DEBUG: Unexpected error: {e}")
         logger.error(error_msg)
-        raise HTTPException(status_code=500, detail=f"Server processing failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Server processing failed: {str(e)}"
+        )
+
+
 @router.post("/upload-whoop")
 async def upload_whoop(request: Request, db: Session = Depends(get_db)):
     """
@@ -194,24 +208,26 @@ async def upload_whoop(request: Request, db: Session = Depends(get_db)):
     try:
         data = await request.json()
         files_data = data.get("files", [])
-        
+
         results = []
         for file_data in files_data:
             filename = file_data.get("filename")
             # Mock processing
-            results.append({
-                "filename": filename,
-                "status": "success",
-                "session_id": "mock_whoop_session",
-                "transaction_count": 0, # Not applicable really, but keeps frontend happy
-                "message": "Whoop report analyzed successfully"
-            })
-            
+            results.append(
+                {
+                    "filename": filename,
+                    "status": "success",
+                    "session_id": "mock_whoop_session",
+                    "transaction_count": 0,  # Not applicable really, but keeps frontend happy
+                    "message": "Whoop report analyzed successfully",
+                }
+            )
+
         return {
             "files": results,
             "total_files": len(results),
             "successful": len(results),
-            "failed": 0
+            "failed": 0,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

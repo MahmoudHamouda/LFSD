@@ -20,10 +20,10 @@ from .schemas import InputEnvelope
 logger = logging.getLogger("intelligence.input_processor")
 
 # Characters that should never appear in user input
-_DANGEROUS_PATTERN = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f]')
+_DANGEROUS_PATTERN = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
 
 # Collapse multiple whitespace
-_WHITESPACE_COLLAPSE = re.compile(r'\s+')
+_WHITESPACE_COLLAPSE = re.compile(r"\s+")
 
 # Max input length (characters) — anything beyond this is truncated
 MAX_INPUT_LENGTH = 4000
@@ -106,13 +106,13 @@ class InputProcessor:
             logger.warning("Input truncated to %d characters", MAX_INPUT_LENGTH)
 
         # Remove control characters (keep newlines and tabs)
-        result = _DANGEROUS_PATTERN.sub('', result)
+        result = _DANGEROUS_PATTERN.sub("", result)
 
         # Escape HTML entities to prevent injection
         result = html.unescape(result)
 
         # Collapse multiple whitespace into single space
-        result = _WHITESPACE_COLLAPSE.sub(' ', result).strip()
+        result = _WHITESPACE_COLLAPSE.sub(" ", result).strip()
 
         return result
 

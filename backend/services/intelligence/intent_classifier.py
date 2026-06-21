@@ -276,11 +276,11 @@ Return: {{"intent": "...", "confidence": 0.0-1.0, "entities": {{}}}}"""
 
         # Money amounts
         money_match = re.search(
-            r'(?:aed|usd|\$|£|€)\s*[\d,]+\.?\d*|[\d,]+\.?\d*\s*(?:aed|usd|dollars?)',
+            r"(?:aed|usd|\$|£|€)\s*[\d,]+\.?\d*|[\d,]+\.?\d*\s*(?:aed|usd|dollars?)",
             text_lower,
         )
         if money_match:
-            amount_str = re.sub(r'[^\d.]', '', money_match.group())
+            amount_str = re.sub(r"[^\d.]", "", money_match.group())
             try:
                 entities["amount"] = float(amount_str)
             except ValueError:
@@ -288,8 +288,8 @@ Return: {{"intent": "...", "confidence": 0.0-1.0, "entities": {{}}}}"""
 
         # Locations (for mobility intents)
         if intent_name.startswith("mobility_") or intent_name == "commute_planning":
-            from_to = re.search(r'from\s+(.+?)\s+to\s+(.+)', text_lower)
-            to_from = re.search(r'to\s+(.+?)\s+from\s+(.+)', text_lower)
+            from_to = re.search(r"from\s+(.+?)\s+to\s+(.+)", text_lower)
+            to_from = re.search(r"to\s+(.+?)\s+from\s+(.+)", text_lower)
             if from_to:
                 entities["start_location"] = from_to.group(1).strip()
                 entities["destination"] = from_to.group(2).strip()
@@ -297,13 +297,13 @@ Return: {{"intent": "...", "confidence": 0.0-1.0, "entities": {{}}}}"""
                 entities["destination"] = to_from.group(1).strip()
                 entities["start_location"] = to_from.group(2).strip()
             else:
-                to_only = re.search(r'to\s+([^,\s.?!]+(?:\s+[^,\s.?!]+)*)', text_lower)
+                to_only = re.search(r"to\s+([^,\s.?!]+(?:\s+[^,\s.?!]+)*)", text_lower)
                 if to_only:
                     entities["destination"] = to_only.group(1).strip()
 
         # Time periods
         time_match = re.search(
-            r'(?:this|last|past)\s+(?:week|month|year|quarter)', text_lower
+            r"(?:this|last|past)\s+(?:week|month|year|quarter)", text_lower
         )
         if time_match:
             entities["time_period"] = time_match.group()
@@ -311,9 +311,19 @@ Return: {{"intent": "...", "confidence": 0.0-1.0, "entities": {{}}}}"""
         # Categories (for spending)
         if intent_name in ("spending_report", "expense_categorize"):
             categories = [
-                "food", "transport", "rent", "utilities", "entertainment",
-                "shopping", "health", "education", "travel", "groceries",
-                "dining", "fuel", "insurance",
+                "food",
+                "transport",
+                "rent",
+                "utilities",
+                "entertainment",
+                "shopping",
+                "health",
+                "education",
+                "travel",
+                "groceries",
+                "dining",
+                "fuel",
+                "insurance",
             ]
             for cat in categories:
                 if cat in text_lower:

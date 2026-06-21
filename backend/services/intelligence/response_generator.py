@@ -44,7 +44,6 @@ RESPONSE_TEMPLATES: Dict[str, str] = {
         "Thanks for the feedback! I've noted it. "
         "Your input helps me serve you better."
     ),
-
     # --- Wealth ---
     "balance_report": (
         "Your current balance across all accounts is **{currency} {total_balance:,.2f}**."
@@ -53,66 +52,35 @@ RESPONSE_TEMPLATES: Dict[str, str] = {
         "Here's your spending summary{period_text}. "
         "Total: **{currency} {total_spent:,.2f}**."
     ),
-    "financial_advice": (
-        "Based on your financial profile, here's my take on this."
-    ),
+    "financial_advice": ("Based on your financial profile, here's my take on this."),
     "goal_created": (
         "Great goal! I've noted your target of **{currency} {target_amount:,.0f}** "
         "for *{title}*. Let's track your progress."
     ),
     "bill_payment_confirm": (
-        "I can schedule that payment for you. "
-        "Just confirm and I'll take care of it."
+        "I can schedule that payment for you. " "Just confirm and I'll take care of it."
     ),
-    "budget_status": (
-        "Here's where you stand with your budget this month."
-    ),
-    "investment_info": (
-        "Let me pull up some investment insights for you."
-    ),
-    "loan_info": (
-        "Here's what I can tell you about loan options."
-    ),
-    "salary_report": (
-        "Your income summary is ready."
-    ),
-    "expense_categorized": (
-        "Done — I've updated the category for that expense."
-    ),
-    "net_worth_report": (
-        "Your net worth summary is ready."
-    ),
-    "cashflow_report": (
-        "Here's your income vs. expenses breakdown."
-    ),
-    "subscription_list": (
-        "Here are your active subscriptions and recurring charges."
-    ),
-
+    "budget_status": ("Here's where you stand with your budget this month."),
+    "investment_info": ("Let me pull up some investment insights for you."),
+    "loan_info": ("Here's what I can tell you about loan options."),
+    "salary_report": ("Your income summary is ready."),
+    "expense_categorized": ("Done — I've updated the category for that expense."),
+    "net_worth_report": ("Your net worth summary is ready."),
+    "cashflow_report": ("Here's your income vs. expenses breakdown."),
+    "subscription_list": ("Here are your active subscriptions and recurring charges."),
     # --- Health ---
-    "health_summary": (
-        "Here's your health overview, {user_name}."
-    ),
+    "health_summary": ("Here's your health overview, {user_name}."),
     "sleep_report": (
         "Last night you got **{sleep_hours:.1f} hours** of sleep "
         "with a quality score of **{sleep_quality:.0f}/100**."
     ),
-    "activity_report": (
-        "You've taken **{steps:,} steps** today. Keep it up!"
-    ),
-    "nutrition_logged": (
-        "Logged! Your nutrition entry has been saved."
-    ),
+    "activity_report": ("You've taken **{steps:,} steps** today. Keep it up!"),
+    "nutrition_logged": ("Logged! Your nutrition entry has been saved."),
     "stress_report": (
-        "Your current stress level is at **{stress_level:.0f}/100**. "
-        "{stress_advice}"
+        "Your current stress level is at **{stress_level:.0f}/100**. " "{stress_advice}"
     ),
-    "recovery_report": (
-        "Your recovery status: {recovery_text}."
-    ),
-    "workout_plan": (
-        "Here's a workout plan based on your fitness level."
-    ),
+    "recovery_report": ("Your recovery status: {recovery_text}."),
+    "workout_plan": ("Here's a workout plan based on your fitness level."),
     "hydration_reminder": (
         "💧 Time to hydrate! Staying hydrated improves focus and energy."
     ),
@@ -122,77 +90,42 @@ RESPONSE_TEMPLATES: Dict[str, str] = {
     "health_goal_created": (
         "Your health goal *{title}* has been set. Let's make it happen! 💪"
     ),
-
     # --- Time ---
-    "event_scheduled": (
-        "Done! *{title}* has been added to your calendar."
-    ),
-    "calendar_view": (
-        "Here's what's coming up on your calendar."
-    ),
+    "event_scheduled": ("Done! *{title}* has been added to your calendar."),
+    "calendar_view": ("Here's what's coming up on your calendar."),
     "focus_time_blocked": (
         "I've blocked focus time on your calendar. "
         "No interruptions — deep work mode. 🎯"
     ),
-    "meeting_scheduled": (
-        "Meeting scheduled. I'll send the invite out."
-    ),
-    "reminder_set": (
-        "Reminder set! I'll make sure you don't forget."
-    ),
-    "time_audit": (
-        "Here's how you've been spending your time."
-    ),
-    "productivity_report": (
-        "Your productivity score is **{productivity:.0f}/100**."
-    ),
-    "commute_options": (
-        "Here are your commute options."
-    ),
-
+    "meeting_scheduled": ("Meeting scheduled. I'll send the invite out."),
+    "reminder_set": ("Reminder set! I'll make sure you don't forget."),
+    "time_audit": ("Here's how you've been spending your time."),
+    "productivity_report": ("Your productivity score is **{productivity:.0f}/100**."),
+    "commute_options": ("Here are your commute options."),
     # --- Mobility ---
-    "ride_prices": (
-        "Here are the ride options I found."
-    ),
-    "ride_booked": (
-        "Your ride has been booked! 🚗"
-    ),
+    "ride_prices": ("Here are the ride options I found."),
+    "ride_booked": ("Your ride has been booked! 🚗"),
     "ride_cancelled": (
         "Your ride has been cancelled. No cancellation fee was charged."
     ),
-    "booking_list": (
-        "Here are your current bookings."
-    ),
+    "booking_list": ("Here are your current bookings."),
     "car_purchase_analysis": (
         "I've analyzed car options based on your financial profile."
     ),
-
     # --- Phase 2: New Templates ---
     "subscription_list": (
         "Here are your active subscriptions. "
         "Review them to see if any can be optimized. 💰"
     ),
-    "budget_monitor": (
-        "Here's your budget status for the month."
-    ),
-    "salary_insight": (
-        "Based on your salary data, here's an income overview."
-    ),
-    "net_worth_report": (
-        "Your estimated net worth summary is ready."
-    ),
-    "expense_breakdown": (
-        "Here's how your expenses break down by category."
-    ),
+    "budget_monitor": ("Here's your budget status for the month."),
+    "salary_insight": ("Based on your salary data, here's an income overview."),
+    "net_worth_report": ("Your estimated net worth summary is ready."),
+    "expense_breakdown": ("Here's how your expenses break down by category."),
     "hydration_reminder": (
         "Quick reminder: stay hydrated! 💧 Aim for 8 glasses today."
     ),
-    "health_overview": (
-        "Here's a snapshot of your overall health metrics."
-    ),
-    "deadline_alert": (
-        "Heads-up: you have an upcoming deadline. Stay on track! ⏰"
-    ),
+    "health_overview": ("Here's a snapshot of your overall health metrics."),
+    "deadline_alert": ("Heads-up: you have an upcoming deadline. Stay on track! ⏰"),
     "productivity_insight": (
         "Your productivity score is **{productivity:.0f}/100**. "
         "Here's what stood out."
@@ -267,7 +200,10 @@ class ResponseGenerator:
             # Check for crisis-mode override
             if context.crisis_mode and template_id in CRISIS_TEMPLATE_OVERRIDES:
                 text = self._interpolate_template(
-                    template_id, context, intent, scores,
+                    template_id,
+                    context,
+                    intent,
+                    scores,
                     template_override=CRISIS_TEMPLATE_OVERRIDES[template_id],
                 )
                 logger.info("Using crisis-mode template override for '%s'", template_id)
@@ -322,9 +258,17 @@ class ResponseGenerator:
             "steps": context.health.steps_avg,
             "stress_level": context.health.stress_level,
             "productivity": context.time.productivity_score,
-            "period_text": f" for {intent.entities['time_period']}" if intent.entities.get("time_period") else "",
+            "period_text": (
+                f" for {intent.entities['time_period']}"
+                if intent.entities.get("time_period")
+                else ""
+            ),
             "stress_advice": self._get_stress_advice(context.health.stress_level),
-            "recovery_text": "Looking good" if (context.health.hrv_avg or 50) > 40 else "Take it easy today",
+            "recovery_text": (
+                "Looking good"
+                if (context.health.hrv_avg or 50) > 40
+                else "Take it easy today"
+            ),
         }
 
         try:
@@ -354,26 +298,42 @@ class ResponseGenerator:
             wealth_score = context.helm_scores.wealth
             time_score = context.helm_scores.time
             health_score = context.helm_scores.health
-            
+
             advice = []
             if scores.wealth.delta < 0 and scores.time.delta > 0:
                 if wealth_score < 40:
-                    advice.append("💡 **HELM Advice:** Since your Wealth index is currently low, you should prioritize less expensive options even if they take more time.")
+                    advice.append(
+                        "💡 **HELM Advice:** Since your Wealth index is currently low, you should prioritize less expensive options even if they take more time."
+                    )
                 elif time_score < 40:
-                    advice.append("💡 **HELM Advice:** Since you are currently very short on time, this financial trade-off is recommended to protect your schedule.")
+                    advice.append(
+                        "💡 **HELM Advice:** Since you are currently very short on time, this financial trade-off is recommended to protect your schedule."
+                    )
                 else:
-                    advice.append("💡 **HELM Advice:** Both your Wealth and Time indices are healthy, making this a balanced personal choice.")
+                    advice.append(
+                        "💡 **HELM Advice:** Both your Wealth and Time indices are healthy, making this a balanced personal choice."
+                    )
             elif scores.time.delta < 0 and scores.wealth.delta > 0:
                 if time_score < 40:
-                    advice.append("💡 **HELM Advice:** Since your Time index is currently low, you should avoid options that consume excessive time, even if they save money.")
+                    advice.append(
+                        "💡 **HELM Advice:** Since your Time index is currently low, you should avoid options that consume excessive time, even if they save money."
+                    )
                 elif wealth_score < 40:
-                    advice.append("💡 **HELM Advice:** Since your Wealth index is currently low, taking extra time to save money is a highly recommended trade-off.")
+                    advice.append(
+                        "💡 **HELM Advice:** Since your Wealth index is currently low, taking extra time to save money is a highly recommended trade-off."
+                    )
                 else:
-                    advice.append("💡 **HELM Advice:** Both your Wealth and Time indices are healthy, making this a balanced personal choice.")
-            elif scores.health.delta > 0 and (scores.wealth.delta < 0 or scores.time.delta < 0):
+                    advice.append(
+                        "💡 **HELM Advice:** Both your Wealth and Time indices are healthy, making this a balanced personal choice."
+                    )
+            elif scores.health.delta > 0 and (
+                scores.wealth.delta < 0 or scores.time.delta < 0
+            ):
                 if health_score < 40:
-                    advice.append("💡 **HELM Advice:** Your Health index needs attention. Investing time or money into this health benefit is strongly recommended.")
-            
+                    advice.append(
+                        "💡 **HELM Advice:** Your Health index needs attention. Investing time or money into this health benefit is strongly recommended."
+                    )
+
             if advice:
                 parts.append("\n" + "\n".join(advice))
 
@@ -383,7 +343,9 @@ class ResponseGenerator:
                 parts.append(f"- {impact}")
 
         if scores.crisis_override:
-            parts.append("\n⚠️ *Note: One of your HELM dimensions is in critical range.*")
+            parts.append(
+                "\n⚠️ *Note: One of your HELM dimensions is in critical range.*"
+            )
 
         if parts:
             return text + "\n".join(parts)

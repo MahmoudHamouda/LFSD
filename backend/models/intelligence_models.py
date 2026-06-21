@@ -37,6 +37,7 @@ class PipelineTraceRecord(Base):
     Append-only. Never delete rows. Every field is indexed and queryable.
     This is the raw material for the learning loop.
     """
+
     __tablename__ = "intelligence_traces"
 
     __table_args__ = (
@@ -83,7 +84,9 @@ class PipelineTraceRecord(Base):
 
     # Phase 2: Cost tracking
     estimated_cost_usd = Column(Float, default=0.0, nullable=False)
-    tradeoff_resolution = Column(String(20), nullable=True)  # proceed/clarify/escalate/safe_minimal
+    tradeoff_resolution = Column(
+        String(20), nullable=True
+    )  # proceed/clarify/escalate/safe_minimal
 
 
 class DecisionRecord(Base):
@@ -95,6 +98,7 @@ class DecisionRecord(Base):
 
     Append-only. Never update or delete.
     """
+
     __tablename__ = "decision_records"
 
     __table_args__ = (
@@ -117,7 +121,9 @@ class DecisionRecord(Base):
     intent_type = Column(String(100), nullable=False)
     tier = Column(Integer, default=0, nullable=False)
     confidence = Column(Float, default=0.0, nullable=False)
-    action_type = Column(String(50), nullable=True)  # respond_only, execute_financial, etc.
+    action_type = Column(
+        String(50), nullable=True
+    )  # respond_only, execute_financial, etc.
 
     # Tri-dimensional impact (denormalized for fast queries)
     wealth_delta = Column(Float, default=0.0, nullable=False)
@@ -135,4 +141,3 @@ class DecisionRecord(Base):
 
     # Outcome
     execution_success = Column(Boolean, default=True, nullable=False)
-

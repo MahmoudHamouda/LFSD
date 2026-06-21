@@ -27,17 +27,22 @@ from typing import Dict, Any
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
-        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+        )
     except Exception as e:
         logger.error(f"Bcrypt verification error: {e}")
         return False
 
+
 def get_password_hash(password: str) -> str:
     salt = bcrypt.gensalt()
-    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
+
 
 def get_user(db: Session, username: str) -> Optional[DBUser]:
     return db.query(DBUser).filter(DBUser.email == username).first()
+
 
 def authenticate_user(db: Session, username: str, password: str) -> Optional[DBUser]:
     user = get_user(db, username)
@@ -47,7 +52,10 @@ def authenticate_user(db: Session, username: str, password: str) -> Optional[DBU
         return None
     return user
 
-def create_access_token(data: Dict[str, Any], expires_minutes: Optional[float] = None) -> str:
+
+def create_access_token(
+    data: Dict[str, Any], expires_minutes: Optional[float] = None
+) -> str:
     settings = core.config.get_settings()
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(
@@ -65,29 +73,32 @@ class Token(BaseModel):
 
 class UserSchema(BaseModel):
     """Pydantic model for User data."""
+
     id: str
     username: str
     disabled: Optional[bool] = None
 
 
-async def get_current_user(request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> DBUser:
+async def get_current_user(
+    request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+) -> DBUser:
     """
     Validate Auth0 JWT token and return corresponding user from database.
     Auto-creates user on first Auth0 login if they don't exist.
-    
+
     Args:
         request: FastAPI Request object.
         token: Bearer token from Authorization header or cookie.
         db: Database session.
-        
+
     Returns:
         DBUser: The authenticated user instance.
-        
+
     Raises:
         HTTPException(401): If token is missing, invalid, or user creation fails.
     """
     settings = core.config.get_settings()
-    
+
     # DEV BYPASS: Allow X-Test-User-Id header for testing when not in prod
     if settings.ENV != "prod":
         test_user_id = request.headers.get("X-Test-User-Id")
@@ -104,11 +115,11 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     # Try to get token from cookie if header token is missing
     active_token = token
     logger.debug(f"Auth - Header Token: {token[:10] if token else 'None'}...")
-    
+
     if not active_token:
         cookie_token = request.cookies.get("access_token")
         logger.debug(f"Auth - Cookie Token found: {bool(cookie_token)}")
@@ -117,7 +128,7 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
                 active_token = cookie_token[7:]
             else:
                 active_token = cookie_token
-                
+
     if not active_token:
         logger.warning("Auth failed - No token found in header or cookie.")
         logger.debug(f"Auth - All cookies: {list(request.cookies.keys())}")
@@ -127,30 +138,31 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
     try:
         # Some clients might send the literal string "undefined" or "null"
         if active_token in ["undefined", "null", ""]:
-             logger.warning(f"Auth failed - Token is literal '{active_token}'")
-             raise credentials_exception
-              
+            logger.warning(f"Auth failed - Token is literal '{active_token}'")
+            raise credentials_exception
+
         from core.auth0_utils import verify_auth0_jwt
+
         payload = verify_auth0_jwt(active_token)
-        
+
         # Extract Auth0 user information
         auth0_id = payload.get("sub")  # Auth0 user ID (e.g. google-oauth2|12345)
         email = payload.get("email")
         name = payload.get("name", email.split("@")[0] if email else "User")
-        
+
         # Find or create user in database
         # First try finding by auth0_id
         user = db.query(DBUser).filter(DBUser.auth0_id == auth0_id).first()
-        
+
         if not user and email:
-             # Fallback to email for existing users
-             user = db.query(DBUser).filter(DBUser.email == email).first()
-             if user and not user.auth0_id:
-                 # Link existing user to Auth0
-                 user.auth0_id = auth0_id
-                 db.commit()
-                 logger.info(f"Linked existing user {email} to Auth0 ID {auth0_id}")
-             
+            # Fallback to email for existing users
+            user = db.query(DBUser).filter(DBUser.email == email).first()
+            if user and not user.auth0_id:
+                # Link existing user to Auth0
+                user.auth0_id = auth0_id
+                db.commit()
+                logger.info(f"Linked existing user {email} to Auth0 ID {auth0_id}")
+
         if user:
             logger.info(f"Auth0 user authenticated: {email}")
             return user
@@ -164,17 +176,26 @@ async def get_current_user(request: Request, token: str = Depends(oauth2_scheme)
                 profile_json={"name": name},
                 hashed_password=None,  # Auth0 users don't have local passwords
                 account_status="ACTIVE",
-                role="user"
+                role="user",
             )
             db.add(new_user)
             db.commit()
             db.refresh(new_user)
             logger.info(f"Auto-created Auth0 user: {email}")
             return new_user
-            
+
     except Exception as e:
         logger.error(f"Auth0 token validation failed: {e}")
         raise credentials_exception
 
 
-__all__ = ["Token", "UserSchema", "get_current_user", "oauth2_scheme", "get_password_hash", "verify_password", "authenticate_user", "create_access_token"]
+__all__ = [
+    "Token",
+    "UserSchema",
+    "get_current_user",
+    "oauth2_scheme",
+    "get_password_hash",
+    "verify_password",
+    "authenticate_user",
+    "create_access_token",
+]

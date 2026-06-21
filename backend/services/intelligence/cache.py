@@ -29,15 +29,16 @@ T = TypeVar("T", bound=BaseModel)
 
 # Default TTLs in seconds
 DEFAULT_TTLS = {
-    "ctx": 300,       # 5 minutes
-    "intent": 60,     # 1 minute
-    "resp": 300,      # 5 minutes
+    "ctx": 300,  # 5 minutes
+    "intent": 60,  # 1 minute
+    "resp": 300,  # 5 minutes
 }
 
 
 # ============================================================================
 # Invalidation Events
 # ============================================================================
+
 
 class InvalidationEvent(str, Enum):
     """
@@ -47,26 +48,27 @@ class InvalidationEvent(str, Enum):
     Wire these from your service layer — whenever one of these
     events occurs, call cache.invalidate_on_event(user_id, event).
     """
-    TRANSACTION_LOGGED = "transaction_logged"       # Financial data changed
-    ORDER_CREATED = "order_created"                 # New order/booking
-    ORDER_UPDATED = "order_updated"                 # Order status change
-    PREFERENCE_CHANGED = "preference_changed"       # User preferences changed
-    CRISIS_MODE_TOGGLED = "crisis_mode_toggled"     # Crisis mode on/off
-    HEALTH_SIGNAL_RECEIVED = "health_signal"        # New health data point
-    GOAL_MODIFIED = "goal_modified"                 # Goal created/updated/deleted
-    SCORE_RECALCULATED = "score_recalculated"       # VivIndex scores changed
+
+    TRANSACTION_LOGGED = "transaction_logged"  # Financial data changed
+    ORDER_CREATED = "order_created"  # New order/booking
+    ORDER_UPDATED = "order_updated"  # Order status change
+    PREFERENCE_CHANGED = "preference_changed"  # User preferences changed
+    CRISIS_MODE_TOGGLED = "crisis_mode_toggled"  # Crisis mode on/off
+    HEALTH_SIGNAL_RECEIVED = "health_signal"  # New health data point
+    GOAL_MODIFIED = "goal_modified"  # Goal created/updated/deleted
+    SCORE_RECALCULATED = "score_recalculated"  # VivIndex scores changed
 
 
 # Event → which cache namespaces to invalidate
 _EVENT_INVALIDATION_MAP: Dict[InvalidationEvent, List[str]] = {
-    InvalidationEvent.TRANSACTION_LOGGED:    ["ctx", "resp"],
-    InvalidationEvent.ORDER_CREATED:         ["ctx", "resp"],
-    InvalidationEvent.ORDER_UPDATED:         ["ctx", "resp"],
-    InvalidationEvent.PREFERENCE_CHANGED:    ["ctx", "intent", "resp"],
-    InvalidationEvent.CRISIS_MODE_TOGGLED:   ["ctx", "intent", "resp"],  # Everything
-    InvalidationEvent.HEALTH_SIGNAL_RECEIVED:["ctx"],
-    InvalidationEvent.GOAL_MODIFIED:         ["ctx", "resp"],
-    InvalidationEvent.SCORE_RECALCULATED:    ["ctx"],
+    InvalidationEvent.TRANSACTION_LOGGED: ["ctx", "resp"],
+    InvalidationEvent.ORDER_CREATED: ["ctx", "resp"],
+    InvalidationEvent.ORDER_UPDATED: ["ctx", "resp"],
+    InvalidationEvent.PREFERENCE_CHANGED: ["ctx", "intent", "resp"],
+    InvalidationEvent.CRISIS_MODE_TOGGLED: ["ctx", "intent", "resp"],  # Everything
+    InvalidationEvent.HEALTH_SIGNAL_RECEIVED: ["ctx"],
+    InvalidationEvent.GOAL_MODIFIED: ["ctx", "resp"],
+    InvalidationEvent.SCORE_RECALCULATED: ["ctx"],
 }
 
 
@@ -84,11 +86,12 @@ class PipelineCache:
     def __init__(self, redis_url: Optional[str] = None):
         self._redis = None
         self._memory_store: Dict[str, tuple] = {}  # key -> (json_str, expiry_ts)
-        self._version_store: Dict[str, int] = {}   # user_id -> version counter
+        self._version_store: Dict[str, int] = {}  # user_id -> version counter
 
         if redis_url:
             try:
                 import redis
+
                 self._redis = redis.Redis.from_url(
                     redis_url, decode_responses=True, socket_timeout=2
                 )
@@ -96,7 +99,8 @@ class PipelineCache:
                 logger.info("Pipeline cache: Redis connected at %s", redis_url)
             except Exception as e:
                 logger.warning(
-                    "Pipeline cache: Redis unavailable (%s) — using in-memory fallback", e
+                    "Pipeline cache: Redis unavailable (%s) — using in-memory fallback",
+                    e,
                 )
                 self._redis = None
 
@@ -145,9 +149,7 @@ class PipelineCache:
         self._bump_version(user_id)
         logger.info("Cache invalidated for user %s (version bumped)", user_id)
 
-    def invalidate_on_event(
-        self, user_id: str, event: InvalidationEvent
-    ) -> None:
+    def invalidate_on_event(self, user_id: str, event: InvalidationEvent) -> None:
         """
         Event-driven invalidation.
 
@@ -160,7 +162,9 @@ class PipelineCache:
         affected = _EVENT_INVALIDATION_MAP.get(event, ["ctx"])
         logger.info(
             "Cache invalidation: user=%s event=%s namespaces=%s",
-            user_id, event.value, affected,
+            user_id,
+            event.value,
+            affected,
         )
 
         # If "ctx" is affected, bump user version (invalidates all versioned keys)

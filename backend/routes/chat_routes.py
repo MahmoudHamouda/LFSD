@@ -24,17 +24,27 @@ def _send_message_async(message: str, user_id: str) -> None:
     from services.gemini_service import GeminiService
     import uuid
     from datetime import datetime
-    
+
     db = SessionLocal()
     try:
         # 1. Ensure Conversation Exists (simple assumption: 1 active convo for now or create new)
         # For simplicity, let's create a new conversation id or find latest
-        convo = db.query(Conversation).filter(Conversation.user_id == user_id).order_by(Conversation.date.desc()).first()
+        convo = (
+            db.query(Conversation)
+            .filter(Conversation.user_id == user_id)
+            .order_by(Conversation.date.desc())
+            .first()
+        )
         if not convo:
-            convo = Conversation(id=str(uuid.uuid4()), user_id=user_id, title="New Chat", date=datetime.utcnow())
+            convo = Conversation(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                title="New Chat",
+                date=datetime.utcnow(),
+            )
             db.add(convo)
             db.commit()
-            
+
         # 2. Save User Message
         user_msg = Message(
             id=str(uuid.uuid4()),
@@ -42,15 +52,15 @@ def _send_message_async(message: str, user_id: str) -> None:
             user_id=user_id,
             role="user",
             content=message,
-            date=datetime.utcnow()
+            date=datetime.utcnow(),
         )
         db.add(user_msg)
         db.commit()
-        
+
         # 3. Generate AI Response
         gemini = GeminiService(db)
         ai_response_text = gemini.generate_response(user_id, message)
-        
+
         # 4. Save AI Response
         ai_msg = Message(
             id=str(uuid.uuid4()),
@@ -58,11 +68,11 @@ def _send_message_async(message: str, user_id: str) -> None:
             user_id=user_id,
             role="assistant",
             content=ai_response_text,
-            date=datetime.utcnow()
+            date=datetime.utcnow(),
         )
         db.add(ai_msg)
         db.commit()
-        
+
     except Exception as e:
         print(f"Error in chat background task: {e}")
     finally:

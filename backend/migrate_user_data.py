@@ -1,8 +1,16 @@
 """
 Emergency fix: Move data from user-finance to the actual logged-in user
 """
+
 from models.database import get_db_session
-from models.models import User, VivIndex, FinancialTransaction, FinancialAccount, FinancialScore, LifeGoal
+from models.models import (
+    User,
+    VivIndex,
+    FinancialTransaction,
+    FinancialAccount,
+    FinancialScore,
+    LifeGoal,
+)
 from sqlalchemy import update
 
 db = get_db_session()
@@ -15,15 +23,17 @@ print(f"Migrating data from {OLD_USER_ID} to {LOGGED_IN_USER_ID}")
 
 # Update all related tables
 tables_to_update = [
-    (VivIndex, 'user_id'),
-    (FinancialTransaction, 'user_id'),
-    (FinancialAccount, 'user_id'),
-    (FinancialScore, 'user_id'),
-    (LifeGoal, 'user_id'),
+    (VivIndex, "user_id"),
+    (FinancialTransaction, "user_id"),
+    (FinancialAccount, "user_id"),
+    (FinancialScore, "user_id"),
+    (LifeGoal, "user_id"),
 ]
 
 for model, user_id_column in tables_to_update:
-    count = db.query(model).filter(getattr(model, user_id_column) == OLD_USER_ID).count()
+    count = (
+        db.query(model).filter(getattr(model, user_id_column) == OLD_USER_ID).count()
+    )
     if count > 0:
         print(f"  Updating {count} records in {model.__tablename__}")
         db.execute(

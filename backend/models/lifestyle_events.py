@@ -9,8 +9,16 @@ import uuid
 from datetime import datetime, timezone
 
 from sqlalchemy import (
-    Column, String, DateTime, ForeignKey, JSON, Numeric, Float,
-    Enum, UniqueConstraint, Index
+    Column,
+    String,
+    DateTime,
+    ForeignKey,
+    JSON,
+    Numeric,
+    Float,
+    Enum,
+    UniqueConstraint,
+    Index,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -24,6 +32,7 @@ def generate_uuid() -> str:
 
 class LifestyleEventType(str, enum.Enum):
     """Types of lifestyle events."""
+
     DINING = "dining"
     CONCERT = "concert"
     SPORTS = "sports"
@@ -35,18 +44,20 @@ class LifestyleEvent(Base):
     """
     User lifestyle event.
     """
+
     __tablename__ = "lifestyle_events"
 
     __table_args__ = (
         # Prevent duplicate ingestion
-        UniqueConstraint("user_id", "source", "external_id", 
-                        name="uq_lifestyle_source_external"),
+        UniqueConstraint(
+            "user_id", "source", "external_id", name="uq_lifestyle_source_external"
+        ),
         Index("ix_lifestyle_user_time", "user_id", "start_time"),
         Index("ix_lifestyle_user_type", "user_id", "event_type"),
     )
 
     id = Column(String(36), primary_key=True, default=generate_uuid)
-    
+
     # ✅ Fixed FK to users_v2
     user_id = Column(String, ForeignKey("users_v2.id"), nullable=False, index=True)
 
@@ -72,12 +83,15 @@ class LifestyleEvent(Base):
     metadata_json = Column(JSON, nullable=False, default=dict)
 
     # Audit timestamps
-    created_at = Column(DateTime(timezone=True), 
-                       server_default=func.now(), 
-                       nullable=False, index=True)
-    updated_at = Column(DateTime(timezone=True), 
-                       server_default=func.now(),
-                       onupdate=func.now(), 
-                       nullable=False, index=True)
+    created_at = Column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True
+    )
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=func.now(),
+        onupdate=func.now(),
+        nullable=False,
+        index=True,
+    )
 
     user = relationship("User", back_populates="lifestyle_events")

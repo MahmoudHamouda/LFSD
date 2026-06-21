@@ -15,10 +15,11 @@ import core.config
 # Flask-Compatible Decorators (for legacy Flask blueprints)
 # ============================================================================
 
+
 def validate_jwt_token(token: str) -> dict:
     """
     Validate a JWT token and return the decoded payload.
-    
+
     Returns:
         dict with 'valid' boolean and either 'data' or 'error'
     """
@@ -37,7 +38,7 @@ def validate_jwt_token(token: str) -> dict:
 def token_required(f):
     """
     Flask decorator to require a valid JWT token in the Authorization header.
-    
+
     Usage:
         @app.route('/protected')
         @token_required
@@ -45,29 +46,42 @@ def token_required(f):
             user_id = request.jwt.get('user_id')
             return {'message': f'Hello {user_id}'}
     """
+
     @wraps(f)
     def decorated(*args, **kwargs):
         auth_header = request.headers.get("Authorization")
-        
+
         if not auth_header or not auth_header.startswith("Bearer "):
-            return jsonify({
-                "status": "error", 
-                "message": "Missing or invalid Authorization header"
-            }), 401
-        
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": "Missing or invalid Authorization header",
+                    }
+                ),
+                401,
+            )
+
         token = auth_header.split(" ", 1)[1].strip()
         validation_result = validate_jwt_token(token)
-        
+
         if not validation_result["valid"]:
-            return jsonify({
-                "status": "error",
-                "message": validation_result.get("error", "Authentication failed")
-            }), 401
-        
+            return (
+                jsonify(
+                    {
+                        "status": "error",
+                        "message": validation_result.get(
+                            "error", "Authentication failed"
+                        ),
+                    }
+                ),
+                401,
+            )
+
         # Attach decoded JWT claims to request for downstream use
         request.jwt = validation_result["data"]
         return f(*args, **kwargs)
-    
+
     return decorated
 
 
@@ -76,19 +90,20 @@ def admin_required(f):
     Flask decorator requiring admin role in JWT.
     Must be used AFTER @token_required.
     """
+
     @wraps(f)
     def decorated(*args, **kwargs):
-        jwt_data = getattr(request, 'jwt', {})
-        role = jwt_data.get('role', 'user')
-        
-        if role != 'admin':
-            return jsonify({
-                "status": "error",
-                "message": "Admin privileges required"
-            }), 403
-        
+        jwt_data = getattr(request, "jwt", {})
+        role = jwt_data.get("role", "user")
+
+        if role != "admin":
+            return (
+                jsonify({"status": "error", "message": "Admin privileges required"}),
+                403,
+            )
+
         return f(*args, **kwargs)
-    
+
     return decorated
 
 

@@ -18,7 +18,7 @@ class CommuteOption(BaseModel):
     confidence: float
     provider: Optional[str] = None
     action_available: bool = False
-    label: str = ""           # Human-friendly name
+    label: str = ""  # Human-friendly name
     cost_currency: str = "AED"
 
 
@@ -26,10 +26,10 @@ class CommuteOption(BaseModel):
 # Dubai-specific cost & speed baselines (2026 rates)
 # ---------------------------------------------------------------------------
 DUBAI_COST_PER_KM = {
-    "ride_hailing":   {"base": 12.0, "per_km": 1.82, "per_min": 0.52},
-    "taxi":           {"base": 12.0, "per_km": 1.82, "per_min": 0.52},
-    "public_transit":  {"flat_zone": 5.0},
-    "drive":          {"per_km": 0.30},   # fuel cost only
+    "ride_hailing": {"base": 12.0, "per_km": 1.82, "per_min": 0.52},
+    "taxi": {"base": 12.0, "per_km": 1.82, "per_min": 0.52},
+    "public_transit": {"flat_zone": 5.0},
+    "drive": {"per_km": 0.30},  # fuel cost only
 }
 
 
@@ -37,7 +37,12 @@ def _estimate_cost(mode: str, distance_km: float, duration_min: float) -> float:
     """Compute a realistic cost estimate using Dubai tariff tables."""
     rates = DUBAI_COST_PER_KM.get(mode, {})
     if mode in ("ride_hailing", "taxi"):
-        return round(rates["base"] + rates["per_km"] * distance_km + rates["per_min"] * duration_min, 1)
+        return round(
+            rates["base"]
+            + rates["per_km"] * distance_km
+            + rates["per_min"] * duration_min,
+            1,
+        )
     if mode == "public_transit":
         # Zone-based: < 10km = 1 zone, < 20km = 2 zones, else 3 zones
         if distance_km < 10:
@@ -55,9 +60,12 @@ def _haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     R = 6371  # km
     dLat = math.radians(lat2 - lat1)
     dLon = math.radians(lon2 - lon1)
-    a = (math.sin(dLat / 2) ** 2 +
-         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
-         math.sin(dLon / 2) ** 2)
+    a = (
+        math.sin(dLat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dLon / 2) ** 2
+    )
     return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
@@ -102,12 +110,14 @@ class MobilityExecutor(BaseExecutor):
         # Dubai-centre fallback
         return (25.2048, 55.2708)
 
-    async def _get_driving_info(self, origin: str, destination: str, distance_fallback: float):
+    async def _get_driving_info(
+        self, origin: str, destination: str, distance_fallback: float
+    ):
         """Try Google Distance Matrix; fall back to haversine-based estimate."""
         try:
             api_dist = await self.maps_service.get_distance(origin, destination)
             if api_dist is not None:
-                return max(api_dist, 2.0), None   # (distance_km, duration_min or None)
+                return max(api_dist, 2.0), None  # (distance_km, duration_min or None)
         except Exception as e:
             logger.warning(f"Distance matrix failed: {e}")
         return max(distance_fallback, 2.0), None
@@ -127,7 +137,9 @@ class MobilityExecutor(BaseExecutor):
 
     # ----- main execute -----
 
-    async def execute_safe(self, entities: Dict[str, Any], user_id: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_safe(
+        self, entities: Dict[str, Any], user_id: str, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         origin = entities.get("origin", "Current Location")
         destination = entities.get("destination", "Airport")
 
@@ -136,12 +148,15 @@ class MobilityExecutor(BaseExecutor):
         end_coords = await self._resolve_location(destination)
 
         # 2. Distance
-        haversine_dist = _haversine(
-            start_coords[0], start_coords[1],
-            end_coords[0], end_coords[1]
-        ) if start_coords and end_coords else 15.0
+        haversine_dist = (
+            _haversine(start_coords[0], start_coords[1], end_coords[0], end_coords[1])
+            if start_coords and end_coords
+            else 15.0
+        )
 
-        distance_km, duration_api = await self._get_driving_info(origin, destination, haversine_dist)
+        distance_km, duration_api = await self._get_driving_info(
+            origin, destination, haversine_dist
+        )
 
         # Base driving time estimate (avg 40 km/h in Dubai)
         base_drive_min = round(distance_km / 40.0 * 60)
@@ -151,55 +166,69 @@ class MobilityExecutor(BaseExecutor):
 
         # Ride-hailing (Uber / Careem style)
         ride_eta = base_drive_min + random.randint(3, 7)  # pickup wait
-        options.append(CommuteOption(
-            mode="ride_hailing",
-            label="Uber / Careem",
-            eta_minutes=max(ride_eta, 8),
-            distance_km=round(distance_km, 1),
-            estimated_cost=_estimate_cost("ride_hailing", distance_km, base_drive_min),
-            confidence=0.85,
-            provider="Uber",
-            action_available=True,
-        ))
+        options.append(
+            CommuteOption(
+                mode="ride_hailing",
+                label="Uber / Careem",
+                eta_minutes=max(ride_eta, 8),
+                distance_km=round(distance_km, 1),
+                estimated_cost=_estimate_cost(
+                    "ride_hailing", distance_km, base_drive_min
+                ),
+                confidence=0.85,
+                provider="Uber",
+                action_available=True,
+            )
+        )
 
         # Taxi
         taxi_eta = base_drive_min + random.randint(5, 10)
-        options.append(CommuteOption(
-            mode="taxi",
-            label="Dubai Taxi (RTA)",
-            eta_minutes=max(taxi_eta, 10),
-            distance_km=round(distance_km, 1),
-            estimated_cost=_estimate_cost("taxi", distance_km, base_drive_min),
-            confidence=0.80,
-            provider="RTA",
-            action_available=False,
-        ))
+        options.append(
+            CommuteOption(
+                mode="taxi",
+                label="Dubai Taxi (RTA)",
+                eta_minutes=max(taxi_eta, 10),
+                distance_km=round(distance_km, 1),
+                estimated_cost=_estimate_cost("taxi", distance_km, base_drive_min),
+                confidence=0.80,
+                provider="RTA",
+                action_available=False,
+            )
+        )
 
         # Public Transit (Metro + Bus)
         if distance_km > 3:
-            transit_eta = round(base_drive_min * 1.6) + random.randint(5, 12)  # slower + wait
-            options.append(CommuteOption(
-                mode="public_transit",
-                label="Dubai Metro / Bus",
-                eta_minutes=max(transit_eta, 15),
-                distance_km=round(distance_km, 1),
-                estimated_cost=_estimate_cost("public_transit", distance_km, transit_eta),
-                confidence=0.75,
-                provider="RTA",
-                action_available=False,
-            ))
+            transit_eta = round(base_drive_min * 1.6) + random.randint(
+                5, 12
+            )  # slower + wait
+            options.append(
+                CommuteOption(
+                    mode="public_transit",
+                    label="Dubai Metro / Bus",
+                    eta_minutes=max(transit_eta, 15),
+                    distance_km=round(distance_km, 1),
+                    estimated_cost=_estimate_cost(
+                        "public_transit", distance_km, transit_eta
+                    ),
+                    confidence=0.75,
+                    provider="RTA",
+                    action_available=False,
+                )
+            )
 
         # Drive yourself
-        options.append(CommuteOption(
-            mode="drive",
-            label="Drive Yourself",
-            eta_minutes=max(base_drive_min, 5),
-            distance_km=round(distance_km, 1),
-            estimated_cost=_estimate_cost("drive", distance_km, base_drive_min),
-            confidence=0.90,
-            provider=None,
-            action_available=False,
-        ))
+        options.append(
+            CommuteOption(
+                mode="drive",
+                label="Drive Yourself",
+                eta_minutes=max(base_drive_min, 5),
+                distance_km=round(distance_km, 1),
+                estimated_cost=_estimate_cost("drive", distance_km, base_drive_min),
+                confidence=0.90,
+                provider=None,
+                action_available=False,
+            )
+        )
 
         # 4. Score & recommend
         best_score = float("inf")
@@ -234,8 +263,8 @@ class MobilityExecutor(BaseExecutor):
                     "driver_name": "Tariq A.",
                     "car_model": "Lexus ES300h",
                     "license_plate": "D 58291",
-                    "pickup_eta_mins": random.randint(3, 7)
-                }
+                    "pickup_eta_mins": random.randint(3, 7),
+                },
             }
 
         return {
@@ -247,7 +276,11 @@ class MobilityExecutor(BaseExecutor):
             "rationale": rationale,
             "data_source": "google_maps_computed",
             "actions": [
-                {"action": "book_ride", "mode": "ride_hailing", "is_available": True,
-                 "description": "Book Uber / Careem"}
+                {
+                    "action": "book_ride",
+                    "mode": "ride_hailing",
+                    "is_available": True,
+                    "description": "Book Uber / Careem",
+                }
             ],
         }

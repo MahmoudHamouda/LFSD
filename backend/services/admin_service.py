@@ -7,6 +7,7 @@ from datetime import datetime
 from services.audit_service import AuditService, AuditAction, AuditEntity
 from loguru import logger
 
+
 class AdminService:
     def __init__(self, db: Session):
         self.db = db
@@ -17,10 +18,16 @@ class AdminService:
         """
         return self.db.query(User).offset(skip).limit(limit).all()
 
-    def unlock_user(self, target_user_id: str, admin_user_id: str, reason: str, correlation_id: str = None):
+    def unlock_user(
+        self,
+        target_user_id: str,
+        admin_user_id: str,
+        reason: str,
+        correlation_id: str = None,
+    ):
         """
         Unlock a user, emit AuditLog and ActivityFeed events.
-        
+
         Features:
         - Strict Audit Taxonomy (AuditAction.SECURITY_REVOKE used as proxy for critical security changes)
         - Impersonation/Admin Context Tracking
@@ -30,14 +37,14 @@ class AdminService:
         user = self.db.query(User).filter(User.id == target_user_id).first()
         if not user:
             raise ValueError("User not found")
-        
+
         if user.account_status == "ACTIVE":
-            return user 
+            return user
 
         # 1. Update Status
         old_status = user.account_status
         user.account_status = "ACTIVE"
-        
+
         # 2. Emit Audit Log (CRITICAL)
         # We use UPDATE but marking as critical because it changes security posture.
         AuditService.log_audit(
@@ -48,14 +55,14 @@ class AdminService:
             entity_type=AuditEntity.USER,
             entity_id=target_user_id,
             changes={
-                "account_status": {"old": old_status, "new": "ACTIVE"}, 
-                "reason_redacted": True # Don't store free-text reason in 'changes' if sensitive
+                "account_status": {"old": old_status, "new": "ACTIVE"},
+                "reason_redacted": True,  # Don't store free-text reason in 'changes' if sensitive
             },
             metadata={"admin_reason": reason},
             correlation_id=correlation_id,
-            is_critical=True # If this fails, the status change must rollback
+            is_critical=True,  # If this fails, the status change must rollback
         )
-        
+
         # 3. Emit Activity Feed (User visible)
         feed = ActivityFeed(
             user_id=target_user_id,
@@ -63,10 +70,10 @@ class AdminService:
             title="Account Unlocked",
             description="Your account has been manually unlocked by support.",
             metadata_json={"reason": reason},
-            is_read=False
+            is_read=False,
         )
         self.db.add(feed)
-        
+
         try:
             self.db.commit()
             self.db.refresh(user)
@@ -78,9 +85,14 @@ class AdminService:
 
     def get_audit_logs(self, limit: int = 50):
         """
-        Get recent audit logs. (Moved from AdminService to a more appropriate place if needed, 
+        Get recent audit logs. (Moved from AdminService to a more appropriate place if needed,
         but kept here for now per request).
         """
         from models.logging_models import AuditLog
-        return self.db.query(AuditLog).order_by(desc(AuditLog.timestamp)).limit(limit).all()
 
+        return (
+            self.db.query(AuditLog)
+            .order_by(desc(AuditLog.timestamp))
+            .limit(limit)
+            .all()
+        )

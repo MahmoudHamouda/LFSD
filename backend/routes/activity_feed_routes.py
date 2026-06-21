@@ -15,6 +15,7 @@ from models.logging_models import ActivityFeed
 
 router = APIRouter(prefix="/activity", tags=["Activity"])
 
+
 @router.get("/feed", summary="Get activity feed")
 @limiter.limit("30/minute")
 async def get_activity_feed(
@@ -26,24 +27,25 @@ async def get_activity_feed(
     cursor: Optional[str] = Query(None),
 ) -> dict[str, Any]:
     """Return a paginated activity feed for the current user."""
-    
+
     query = db.query(ActivityFeed).filter(ActivityFeed.user_id == current_user.id)
-    
+
     if cursor:
         query = query.filter(ActivityFeed.created_at < cursor)
-        
+
     items = query.order_by(ActivityFeed.created_at.desc()).limit(limit).all()
-    
+
     formatted_items = [
         {
             "id": item.id,
             "action": item.action_type,
             "description": item.description,
             "timestamp": item.created_at.isoformat(),
-            "metadata": item.metadata_json
-        } for item in items
+            "metadata": item.metadata_json,
+        }
+        for item in items
     ]
-    
+
     next_cursor = None
     if items and len(items) == limit:
         next_cursor = items[-1].created_at.isoformat()

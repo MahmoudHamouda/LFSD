@@ -32,6 +32,7 @@ logger = logging.getLogger("intelligence.tradeoff_validator")
 
 class TradeoffResolution(str, Enum):
     """Possible outcomes of tradeoff validation."""
+
     PROCEED = "proceed"
     CLARIFY = "clarify"
     ESCALATE = "escalate"
@@ -41,6 +42,7 @@ class TradeoffResolution(str, Enum):
 # ============================================================================
 # SAFE_MINIMAL Product Contract
 # ============================================================================
+
 
 @dataclass
 class SafeMinimalContract:
@@ -55,6 +57,7 @@ class SafeMinimalContract:
         - offer_one_next_action is always non-empty
         - offer_one_question is always non-empty
     """
+
     no_spending_commitments: bool = True
     no_irreversible_actions: bool = True
     only_reversible_suggestions: bool = True
@@ -76,6 +79,7 @@ class SafeMinimalContract:
 @dataclass
 class TradeoffResult:
     """Output of the Tradeoff Validator."""
+
     resolution: TradeoffResolution
     reason: str = ""
     clarifying_question: Optional[str] = None
@@ -94,32 +98,36 @@ class TradeoffResult:
 
 # Intents where ONE question gets the missing info → prefer CLARIFY
 # These are "scalar-resolvable": budget, deadline, preference, constraint
-SCALAR_RESOLVABLE_INTENTS: FrozenSet[str] = frozenset({
-    "mobility_booking",         # "What's your budget?"
-    "mobility_price_check",     # "Where are you going?"
-    "schedule_event",           # "What time works best?"
-    "meeting_schedule",         # "What time?"
-    "focus_time_block",         # "How long?"
-    "deadline_reminder",        # "When is the deadline?"
-    "bill_payment",             # "Which bill?"
-    "set_savings_goal",         # "What's the target amount?"
-    "goal_set",                 # "What's the target amount?"
-    "health_goal_set",          # "What's the specific goal?"
-    "investment_query",         # "What amount?"
-    "loan_inquiry",             # "What amount and term?"
-    "travel_booking",           # "What's your budget?"
-    "nutrition_log",            # "What did you eat?"
-})
+SCALAR_RESOLVABLE_INTENTS: FrozenSet[str] = frozenset(
+    {
+        "mobility_booking",  # "What's your budget?"
+        "mobility_price_check",  # "Where are you going?"
+        "schedule_event",  # "What time works best?"
+        "meeting_schedule",  # "What time?"
+        "focus_time_block",  # "How long?"
+        "deadline_reminder",  # "When is the deadline?"
+        "bill_payment",  # "Which bill?"
+        "set_savings_goal",  # "What's the target amount?"
+        "goal_set",  # "What's the target amount?"
+        "health_goal_set",  # "What's the specific goal?"
+        "investment_query",  # "What amount?"
+        "loan_inquiry",  # "What amount and term?"
+        "travel_booking",  # "What's your budget?"
+        "nutrition_log",  # "What did you eat?"
+    }
+)
 
 # Intents requiring multi-variable reasoning → always ESCALATE
 # One question can't resolve these — they need full LLM analysis
-MULTI_VARIABLE_INTENTS: FrozenSet[str] = frozenset({
-    "career_change",
-    "relocation_analysis",
-    "tradeoff_analysis",
-    "life_event_planning",
-    "car_purchase",
-})
+MULTI_VARIABLE_INTENTS: FrozenSet[str] = frozenset(
+    {
+        "career_change",
+        "relocation_analysis",
+        "tradeoff_analysis",
+        "life_event_planning",
+        "car_purchase",
+    }
+)
 
 # Questions to ask per scalar-resolvable intent (targeted, not generic)
 _SCALAR_QUESTIONS: dict = {
@@ -212,7 +220,8 @@ class TradeoffValidator:
                 if delta and delta.delta < -CRISIS_SPEND_THRESHOLD:
                     logger.info(
                         "Tradeoff: crisis guardrail (%s delta=%.1f) → SAFE_MINIMAL",
-                        dim, delta.delta,
+                        dim,
+                        delta.delta,
                     )
                     contract = self._build_safe_minimal_contract(
                         dimension=dim,
@@ -222,7 +231,7 @@ class TradeoffValidator:
                     return TradeoffResult(
                         resolution=TradeoffResolution.SAFE_MINIMAL,
                         reason=f"User is in {dim} crisis (score < 30) and this action "
-                               f"would further decrease {dim} by {abs(delta.delta):.0f} points.",
+                        f"would further decrease {dim} by {abs(delta.delta):.0f} points.",
                         safe_action_override=contract.offer_one_next_action,
                         contradictions=[f"Crisis on {dim} + negative {dim} delta"],
                         safe_minimal_contract=contract,
@@ -250,7 +259,9 @@ class TradeoffValidator:
         # One question can't resolve these — needs full LLM analysis.
         # ------------------------------------------------------------------
         if intent.intent in MULTI_VARIABLE_INTENTS:
-            logger.info("Tradeoff: multi-variable intent '%s' → ESCALATE", intent.intent)
+            logger.info(
+                "Tradeoff: multi-variable intent '%s' → ESCALATE", intent.intent
+            )
             return TradeoffResult(
                 resolution=TradeoffResolution.ESCALATE,
                 reason=f"Intent '{intent.intent}' requires multi-variable reasoning.",
@@ -261,20 +272,23 @@ class TradeoffValidator:
         # Rule 3.5: SCALAR-RESOLVABLE + LOW CONFIDENCE → CLARIFY
         # The missing piece is one scalar — ask for it instead of escalating.
         # ------------------------------------------------------------------
-        if (
-            intent.intent in SCALAR_RESOLVABLE_INTENTS
-            and intent.confidence < 0.85
-        ):
+        if intent.intent in SCALAR_RESOLVABLE_INTENTS and intent.confidence < 0.85:
             question = _SCALAR_QUESTIONS.get(
                 intent.intent,
-                "Could you give me a bit more detail so I can help you better?"
+                "Could you give me a bit more detail so I can help you better?",
             )
-            logger.info("Tradeoff: scalar-resolvable '%s' + conf=%.2f → CLARIFY", intent.intent, intent.confidence)
+            logger.info(
+                "Tradeoff: scalar-resolvable '%s' + conf=%.2f → CLARIFY",
+                intent.intent,
+                intent.confidence,
+            )
             return TradeoffResult(
                 resolution=TradeoffResolution.CLARIFY,
                 reason=f"Missing scalar for '{intent.intent}' — one question can resolve.",
                 clarifying_question=question,
-                contradictions=[f"Low confidence ({intent.confidence:.2f}) on scalar-resolvable intent"],
+                contradictions=[
+                    f"Low confidence ({intent.confidence:.2f}) on scalar-resolvable intent"
+                ],
             )
 
         # ------------------------------------------------------------------
@@ -286,7 +300,7 @@ class TradeoffValidator:
             ("time", scores.time.delta),
         ]
         for i, (d1_name, d1_val) in enumerate(dims):
-            for d2_name, d2_val in dims[i + 1:]:
+            for d2_name, d2_val in dims[i + 1 :]:
                 if (
                     abs(d1_val) >= SEVERE_DELTA
                     and abs(d2_val) >= SIGNIFICANT_DELTA
@@ -314,9 +328,7 @@ class TradeoffValidator:
                 resolution=TradeoffResolution.CLARIFY,
                 reason="Moderate tradeoff with ambiguous intent — asking for preference.",
                 clarifying_question=question,
-                contradictions=[
-                    f"Tradeoff: {d}={v:+.0f}" for d, v in dims if v != 0
-                ],
+                contradictions=[f"Tradeoff: {d}={v:+.0f}" for d, v in dims if v != 0],
             )
 
         # ------------------------------------------------------------------

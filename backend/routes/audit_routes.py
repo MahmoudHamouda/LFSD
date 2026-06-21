@@ -19,8 +19,6 @@ from models.database import get_db
 router = APIRouter(prefix="/audit", tags=["Audit"])
 
 
-
-
 @router.get("/", summary="List audits", response_model=dict[str, Any])
 @limiter.limit("20/minute")
 async def list_audits(
@@ -34,20 +32,20 @@ async def list_audits(
     """Return a paginated list of audits for the authenticated user and/or system admins."""
     # Ensure AuditLog model is imported
     from models.logging_models import AuditLog
-    
-    # Filter by user (actors can see their own actions, or maybe restrict to admin? 
+
+    # Filter by user (actors can see their own actions, or maybe restrict to admin?
     # Usually audit logs are for admins, but let's assume personal audit trail if not admin)
     query = db.query(AuditLog)
-    
+
     # If not admin, restrict to own actions
     if getattr(current_user, "role", "user") != "admin":
         query = query.filter(AuditLog.actor_id == current_user.id)
-    
+
     if cursor:
         query = query.filter(AuditLog.timestamp < cursor)
-        
+
     items = query.order_by(AuditLog.timestamp.desc()).limit(limit).all()
-    
+
     # Calculate next cursor
     next_cursor = None
     if items and len(items) == limit:
@@ -61,9 +59,10 @@ async def list_audits(
                     "action": item.action,
                     "entity_type": item.entity_type,
                     "timestamp": item.timestamp.isoformat(),
-                    "details": item.changes_json
-                } for item in items
-            ], 
-            "next_cursor": next_cursor
+                    "details": item.changes_json,
+                }
+                for item in items
+            ],
+            "next_cursor": next_cursor,
         }
     }

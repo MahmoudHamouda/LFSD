@@ -24,17 +24,19 @@ logger = logging.getLogger(__name__)
 # 1. Pydantic Models for Validation
 # ============================================================================
 
+
 class TransactionModel(BaseModel):
     date: date
     description: str
     amount: float
     category: Optional[str] = "Uncategorized"
 
-    @validator('date', pre=True)
+    @validator("date", pre=True)
     def parse_date(cls, v):
         if isinstance(v, str):
-            return datetime.strptime(v, '%Y-%m-%d').date()
+            return datetime.strptime(v, "%Y-%m-%d").date()
         return v
+
 
 class StatementMetadata(BaseModel):
     bank_name: Optional[str] = None
@@ -44,22 +46,24 @@ class StatementMetadata(BaseModel):
     total_debits: Optional[float] = 0.0
     account_number: Optional[str] = None
 
-    @validator('period_start', 'period_end', pre=True)
+    @validator("period_start", "period_end", pre=True)
     def parse_date(cls, v):
         if isinstance(v, str):
             try:
-                return datetime.strptime(v, '%Y-%m-%d').date()
+                return datetime.strptime(v, "%Y-%m-%d").date()
             except ValueError:
                 return None
         return v
+
 
 class ParsedStatement(BaseModel):
     metadata: StatementMetadata
     transactions: List[TransactionModel]
 
+
 class PDFProcessor:
     """PDF text extraction service with OCR fallback."""
-    
+
     @staticmethod
     def extract_text(pdf_bytes: bytes) -> str:
         """Extract text from PDF bytes using PyMuPDF, falling back to OCR if scanned/image-only."""
@@ -69,7 +73,7 @@ class PDFProcessor:
             doc = fitz.open(stream=pdf_bytes, filetype="pdf")
             for page in doc:
                 text += page.get_text()
-            
+
             # 2. Fallback to OCR using pytesseract if text is empty or too short
             if len(text.strip()) < 100:
                 logger.info("Extracted PDF text is too short. Running OCR fallback...")
@@ -78,11 +82,12 @@ class PDFProcessor:
                 for img in images:
                     ocr_text.append(pytesseract.image_to_string(img))
                 text = "\n".join(ocr_text)
-                
+
             return text
         except Exception as e:
             logger.error(f"Error extracting text from PDF: {e}")
             raise e
+
 
 # ============================================================================
 # 3. Gemini LLM Parsing
@@ -90,16 +95,17 @@ class PDFProcessor:
 
 import core.config
 
+
 class GeminiParser:
     def __init__(self):
         settings = core.config.get_settings()
         api_key = settings.GEMINI_API_KEY
-        
+
         if not api_key:
             logger.warning("GEMINI_API_KEY not found in settings. Parsing will fail.")
-            
+
         genai.configure(api_key=api_key)
-        self.model = genai.GenerativeModel('gemini-2.0-flash')
+        self.model = genai.GenerativeModel("gemini-2.0-flash")
 
     async def parse_pdf(self, pdf_bytes: bytes) -> ParsedStatement:
         """
@@ -143,42 +149,41 @@ class GeminiParser:
         - If a value does not exist, set it to null.
         - Output ONLY JSON. No commentary.
         """
-        
+
         # Try available models based on account access
         # Prioritize 2.5-flash as it seems most reliable with current quotas
         models_to_try = [
-            'models/gemini-2.5-flash',
-            'models/gemini-2.0-flash', 
-            'models/gemini-2.0-flash-lite', 
-            'models/gemini-2.0-flash-exp'
+            "models/gemini-2.5-flash",
+            "models/gemini-2.0-flash",
+            "models/gemini-2.0-flash-lite",
+            "models/gemini-2.0-flash-exp",
         ]
-        
+
         errors = []
         for model_name in models_to_try:
             try:
                 logger.info(f"Attempting native PDF parse with model: {model_name}")
                 model = genai.GenerativeModel(model_name)
-                
+
                 # Create the content part with PDF data
-                pdf_part = {
-                    "mime_type": "application/pdf",
-                    "data": pdf_bytes
-                }
-                
+                pdf_part = {"mime_type": "application/pdf", "data": pdf_bytes}
+
                 # Run in thread with INCREASED timeout
                 response = await asyncio.wait_for(
                     asyncio.to_thread(
                         model.generate_content,
-                        [prompt, pdf_part], # Pass prompt AND pdf part
-                        generation_config={"response_mime_type": "application/json"}
+                        [prompt, pdf_part],  # Pass prompt AND pdf part
+                        generation_config={"response_mime_type": "application/json"},
                     ),
-                    timeout=240.0 # Increased to 4 minutes per user request
+                    timeout=240.0,  # Increased to 4 minutes per user request
                 )
-                
+
                 response_text = response.text
-                
+
                 # --- DEBUG LOGGING ---
-                logger.debug(f"Gemini Response ({model_name}): {response_text[:500]}...")
+                logger.debug(
+                    f"Gemini Response ({model_name}): {response_text[:500]}..."
+                )
                 # -----------------------------
 
                 # Clean up potential markdown code blocks
@@ -186,63 +191,76 @@ class GeminiParser:
                     response_text = response_text[7:]
                 if response_text.endswith("```"):
                     response_text = response_text[:-3]
-                
+
                 try:
                     data = json.loads(response_text)
-                    
+
                     # Handle case where LLM returns a list instead of a dict
                     if isinstance(data, list):
                         if len(data) == 1 and isinstance(data[0], dict):
-                             data = data[0]
+                            data = data[0]
                         else:
-                             # Fallback: if it looks like a list of transactions, try to wrap it
-                             if all(isinstance(x, dict) and "amount" in x for x in data):
-                                 logger.warning("Gemini returned list of transactions without metadata. wrapping.")
-                                 data = {"metadata": {}, "transactions": data}
-                             else:
-                                 raise ValueError(f"Expected JSON object, got list: {data[:100]}")
+                            # Fallback: if it looks like a list of transactions, try to wrap it
+                            if all(isinstance(x, dict) and "amount" in x for x in data):
+                                logger.warning(
+                                    "Gemini returned list of transactions without metadata. wrapping."
+                                )
+                                data = {"metadata": {}, "transactions": data}
+                            else:
+                                raise ValueError(
+                                    f"Expected JSON object, got list: {data[:100]}"
+                                )
 
                 except json.JSONDecodeError as json_err:
-                    raise ValueError(f"Invalid JSON returned: {json_err}. Content snippet: {response_text[:100]}...")
-                
+                    raise ValueError(
+                        f"Invalid JSON returned: {json_err}. Content snippet: {response_text[:100]}..."
+                    )
+
                 # Validate with Pydantic
                 return ParsedStatement(**data)
 
                 msg = f"Model {model_name} timed out."
                 logger.warning(msg)
                 errors.append(msg)
-                continue # Try next model
+                continue  # Try next model
             except Exception as e:
                 msg = f"Model {model_name} failed: {e}"
                 logger.error(msg)
                 errors.append(msg)
-                continue # Try next model
-        
+                continue  # Try next model
+
         # If all multimodal attempts failed, try text-based fallback
-        logger.warning("All multimodal attempts failed. Falling back to text-based parsing.")
+        logger.warning(
+            "All multimodal attempts failed. Falling back to text-based parsing."
+        )
         return await self.parse_text_fallback(pdf_bytes, errors)
 
-    async def parse_text_fallback(self, pdf_bytes: bytes, previous_errors: list) -> ParsedStatement:
+    async def parse_text_fallback(
+        self, pdf_bytes: bytes, previous_errors: list
+    ) -> ParsedStatement:
         """
         Fallback: Extract text from PDF (using PyMuPDF/OCR) and send text to Gemini.
         This is often lighter and avoids some quota/timeout issues with heavy PDF processing.
         """
         try:
             # 1. Extract Text
-            # We can use the PDFProcessor class defined in this file. 
+            # We can use the PDFProcessor class defined in this file.
             # Since it's a static method service, we can call it directly.
             text_content = PDFProcessor.extract_text(pdf_bytes)
-            
-            if len(text_content) < 50:
-                 raise ValueError("Extracted text is too short for parsing.")
 
-            prompt = """
+            if len(text_content) < 50:
+                raise ValueError("Extracted text is too short for parsing.")
+
+            prompt = (
+                """
             You are a financial statement parser.
             Analyze the following bank statement text transactions.
             Extract ALL transactions into a structured JSON format.
             
             TEXT CONTENT:
-            """ + text_content[:50000] + """ <TRUNCATED IF TOO LONG>
+            """
+                + text_content[:50000]
+                + """ <TRUNCATED IF TOO LONG>
             
             Output ONLY valid JSON matching exactly this schema:
             {
@@ -270,10 +288,14 @@ class GeminiParser:
             - If a value does not exist, set it to null.
             - Output ONLY JSON.
             """
+            )
 
             # Try the most lightweight model first
-            fallback_models = ['models/gemini-2.0-flash', 'models/gemini-2.0-flash-lite']
-            
+            fallback_models = [
+                "models/gemini-2.0-flash",
+                "models/gemini-2.0-flash-lite",
+            ]
+
             for model_name in fallback_models:
                 try:
                     model = genai.GenerativeModel(model_name)
@@ -281,11 +303,13 @@ class GeminiParser:
                         asyncio.to_thread(
                             model.generate_content,
                             prompt,
-                            generation_config={"response_mime_type": "application/json"}
+                            generation_config={
+                                "response_mime_type": "application/json"
+                            },
                         ),
-                        timeout=60.0
+                        timeout=60.0,
                     )
-                    
+
                     data = json.loads(response.text)
                     return ParsedStatement(**data)
                 except Exception as e:
@@ -298,9 +322,11 @@ class GeminiParser:
             all_errors = "; ".join(previous_errors) + f"; Fallback error: {str(e)}"
             raise ValueError(f"Processing failed completely. Details: {all_errors}")
 
+
 # ============================================================================
 # 4. Statement Service (Orchestrator)
 # ============================================================================
+
 
 class StatementService:
     def __init__(self, db: Session):
@@ -309,19 +335,22 @@ class StatementService:
         self.gemini_service = GeminiService(db)
         self.gemini_parser = GeminiParser()
         self.settings = core.config.get_settings()
+
     async def process_statement(
-        self, 
-        user_id: Optional[str], 
-        file_content: bytes, 
-        filename: str, 
-        persist: bool = True
+        self,
+        user_id: Optional[str],
+        file_content: bytes,
+        filename: str,
+        persist: bool = True,
     ) -> Dict[str, Any]:
         """
         Frontend and test entrypoint to process a statement.
         """
         return await self.process_pdf(file_content, user_id, persist=persist)
 
-    async def process_pdf(self, file_content: bytes, user_id: Optional[str], persist: bool = True) -> Dict[str, Any]:
+    async def process_pdf(
+        self, file_content: bytes, user_id: Optional[str], persist: bool = True
+    ) -> Dict[str, Any]:
         """
         Full pipeline: PDF -> Text -> Gemini -> JSON -> DB
         """
@@ -331,7 +360,9 @@ class StatementService:
         try:
             # 1. Parse PDF directly with Gemini (Native Multimodal)
             # We skip local OCR extraction and send the PDF bytes directly.
-            parsed_data: ParsedStatement = await self.gemini_parser.parse_pdf(file_content)
+            parsed_data: ParsedStatement = await self.gemini_parser.parse_pdf(
+                file_content
+            )
 
             statement_id = None
 
@@ -339,8 +370,12 @@ class StatementService:
                 # 2. Clear existing transactions for default_user to ensure fresh data
                 if user_id == "default_user":
                     logger.info("Clearing existing transactions for default_user")
-                    self.db.query(FinancialTransaction).filter(FinancialTransaction.user_id == user_id).delete()
-                    self.db.query(Statement).filter(Statement.user_id == user_id).delete()
+                    self.db.query(FinancialTransaction).filter(
+                        FinancialTransaction.user_id == user_id
+                    ).delete()
+                    self.db.query(Statement).filter(
+                        Statement.user_id == user_id
+                    ).delete()
                     self.db.commit()
 
                 # 3. Insert into Database
@@ -352,33 +387,38 @@ class StatementService:
                     period_end=parsed_data.metadata.period_end,
                     total_credits=parsed_data.metadata.total_credits,
                     total_debits=parsed_data.metadata.total_debits,
-                    uploaded_at=datetime.utcnow()
+                    uploaded_at=datetime.utcnow(),
                 )
                 self.db.add(statement)
-                self.db.flush() # Get ID
+                self.db.flush()  # Get ID
                 statement_id = statement.id
 
                 # Create Transactions
                 import hashlib
+
                 transactions = []
                 duplicates_count = 0
-                
+
                 # Fetch existing keys for this user to minimize DB hits (or check one by one)
                 # For robustness, checking one by one or doing a bulk check is better.
                 # Let's do a bulk check if list is small, or just try/except integrity error if we trust DB constraints.
                 # But we want to "Prevent re-insertion" gracefully.
-                
+
                 for tx in parsed_data.transactions:
                     # Deterministic Key: Date + Amount + Description (slugified)
                     raw_str = f"{tx.date.isoformat()}_{tx.amount}_{tx.description.strip().lower()}"
                     dedup_key = hashlib.sha256(raw_str.encode()).hexdigest()
-                    
+
                     # Check existence
-                    exists = self.db.query(FinancialTransaction).filter(
-                        FinancialTransaction.deduplication_key == dedup_key,
-                        FinancialTransaction.user_id == user_id
-                    ).first()
-                    
+                    exists = (
+                        self.db.query(FinancialTransaction)
+                        .filter(
+                            FinancialTransaction.deduplication_key == dedup_key,
+                            FinancialTransaction.user_id == user_id,
+                        )
+                        .first()
+                    )
+
                     if exists:
                         duplicates_count += 1
                         continue
@@ -391,19 +431,22 @@ class StatementService:
                         amount=tx.amount,
                         currency_code="USD",
                         category_primary=tx.category or "Uncategorized",
-                        deduplication_key=dedup_key
+                        deduplication_key=dedup_key,
                     )
                     transactions.append(transaction)
-                
+
                 if transactions:
                     self.db.add_all(transactions)
                     self.db.commit()
-                    logger.info(f"Imported {len(transactions)} new transactions. Skipped {duplicates_count} duplicates.")
+                    logger.info(
+                        f"Imported {len(transactions)} new transactions. Skipped {duplicates_count} duplicates."
+                    )
                 else:
-                    logger.info(f"No new transactions found. Skipped {duplicates_count} duplicates.")
+                    logger.info(
+                        f"No new transactions found. Skipped {duplicates_count} duplicates."
+                    )
             else:
                 logger.info("Persist=False: Skipping DB insertion.")
-
 
             processing_time = (datetime.utcnow() - start_time).total_seconds()
             logger.info(f"Statement processed successfully in {processing_time}s")
@@ -412,30 +455,36 @@ class StatementService:
                 "status": "success",
                 "statement_id": statement_id,
                 "data": parsed_data.dict(),
-                "processing_time": processing_time
+                "processing_time": processing_time,
             }
 
         except Exception as e:
             self.db.rollback()
             logger.error(f"Failed to process statement: {e}")
-            
+
             # Map technical errors to user-friendly messages
             error_str = str(e)
-            user_friendly_error = "An unexpected error occurred while processing your statement."
-            
+            user_friendly_error = (
+                "An unexpected error occurred while processing your statement."
+            )
+
             if "429" in error_str or "quota" in error_str.lower():
-                user_friendly_error = "We're experiencing high demand. Please try again in a few minutes."
+                user_friendly_error = (
+                    "We're experiencing high demand. Please try again in a few minutes."
+                )
             elif "timed out" in error_str.lower():
                 user_friendly_error = "The file processing timed out. Please try a smaller file or try again."
             elif "image_to_string" in error_str or "ocr" in error_str.lower():
                 user_friendly_error = "Could not read text from this PDF. Please ensure it's a clear, readable bank statement."
             elif "pdf" in error_str.lower() and "cannot open" in error_str.lower():
-                user_friendly_error = "The PDF file appears to be corrupted or password protected."
+                user_friendly_error = (
+                    "The PDF file appears to be corrupted or password protected."
+                )
             elif "expecting value" in error_str.lower() or "json" in error_str.lower():
                 user_friendly_error = "We couldn't understand the data format. Please try another statement or enter data manually."
-            
+
             return {
                 "status": "error",
                 "error": user_friendly_error,
-                "technical_details": error_str # Keep raw error for debugging if needed
+                "technical_details": error_str,  # Keep raw error for debugging if needed
             }

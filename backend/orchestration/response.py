@@ -10,19 +10,27 @@ class ResponseComposer:
     Formats deterministic tool data into a human-friendly response.
     Only uses LLM if necessary to "phrase" the answer.
     """
+
     def __init__(self, llm_service=None):
         self.llm = llm_service
 
-    async def compose(self, intent: str, tool_data: Dict[str, Any], context: Dict[str, Any]) -> str:
+    async def compose(
+        self, intent: str, tool_data: Dict[str, Any], context: Dict[str, Any]
+    ) -> str:
         """Produce a short human answer based on tool data."""
         if intent == "MOBILITY":
             return self._format_mobility_response(tool_data, context)
         return "I have received your request, but do not have a composer configuration for it."
 
-    def _format_mobility_response(self, data: Dict[str, Any], context: Dict[str, Any]) -> str:
+    def _format_mobility_response(
+        self, data: Dict[str, Any], context: Dict[str, Any]
+    ) -> str:
         if data.get("error"):
-            return data.get("message", "An unknown error occurred while communicating with mobility providers.")
-            
+            return data.get(
+                "message",
+                "An unknown error occurred while communicating with mobility providers.",
+            )
+
         if data.get("status") == "booked":
             details = data.get("booking_details", {})
             origin = data.get("origin", "your location")
@@ -73,9 +81,11 @@ class ResponseComposer:
         if any(a["is_available"] for a in data.get("actions", [])):
             lines.append(
                 "Would you like me to **book a ride** for you? "
-                "Just say *\"yes, book it\"* or choose a different option."
+                'Just say *"yes, book it"* or choose a different option.'
             )
 
         response = "\n".join(lines)
-        logger.info(f"Composed Response for {origin}->{destination}: len={len(response)}")
+        logger.info(
+            f"Composed Response for {origin}->{destination}: len={len(response)}"
+        )
         return response

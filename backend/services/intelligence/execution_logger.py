@@ -70,7 +70,7 @@ class ExecutionLogger:
         execution_id = str(uuid.uuid4())
         start_time = time.monotonic()
 
-        #--- Dispatch actions (if any non-respond-only steps) ---
+        # --- Dispatch actions (if any non-respond-only steps) ---
         execution_success = True
         error_message = None
 
@@ -93,7 +93,11 @@ class ExecutionLogger:
         timings.execution_logging_ms = execution_ms
 
         # Calculate total token usage across pipeline
-        total_input_tokens = intent.llm_tokens_used + action_plan.llm_tokens_used + response.llm_tokens_used
+        total_input_tokens = (
+            intent.llm_tokens_used
+            + action_plan.llm_tokens_used
+            + response.llm_tokens_used
+        )
         total_output_tokens = 0  # Rough estimate: output is ~40% of total
         if total_input_tokens > 0:
             total_output_tokens = int(total_input_tokens * 0.4)
@@ -172,8 +176,16 @@ class ExecutionLogger:
                 user_id=trace.user_id,
                 timestamp=trace.timestamp,
                 tier=trace.tier,
-                intent_type=trace.intent_result.get("intent", "unknown") if trace.intent_result else "unknown",
-                confidence=trace.intent_result.get("confidence", 0) if trace.intent_result else 0,
+                intent_type=(
+                    trace.intent_result.get("intent", "unknown")
+                    if trace.intent_result
+                    else "unknown"
+                ),
+                confidence=(
+                    trace.intent_result.get("confidence", 0)
+                    if trace.intent_result
+                    else 0
+                ),
                 score_deltas_json=trace.score_deltas,
                 action_plan_json=trace.action_plan,
                 response_text=(trace.response_envelope or {}).get("text", "")[:2000],
@@ -189,7 +201,9 @@ class ExecutionLogger:
 
         except ImportError:
             # Model not yet created — log warning but don't crash
-            logger.warning("PipelineTraceRecord model not available — trace not persisted to DB")
+            logger.warning(
+                "PipelineTraceRecord model not available — trace not persisted to DB"
+            )
         except Exception as e:
             logger.error("Failed to persist pipeline trace: %s", e)
             self.db.rollback()
@@ -217,9 +231,7 @@ class ExecutionLogger:
                 user_id=trace.user_id,
                 timestamp=datetime.now(timezone.utc),
                 user_intent=intent.intent,
-                decision_logic=json.dumps(
-                    trace.score_deltas or {}, default=str
-                )[:2000],
+                decision_logic=json.dumps(trace.score_deltas or {}, default=str)[:2000],
                 ai_response=response.text[:2000],
                 context_snapshot_json=snapshot,
             )

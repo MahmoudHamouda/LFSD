@@ -16,39 +16,40 @@ MOBILITY_PROVIDERS = {
     "uber": {
         "class_path": "uber_service.UberService",
         "capabilities": ["on_demand", "ride_share"],
-        "supports_booking": True
+        "supports_booking": True,
     },
     "rta": {
         "class_path": "rta_service.RTAService",
         "capabilities": ["public_transit", "metro", "bus", "sched_routes"],
-        "supports_booking": True
-    }
+        "supports_booking": True,
+    },
 }
 
 __all__ = [
-    'get_mobility_aggregator',
-    'get_mobility_provider',
-    'BaseMobilityService',
-    'MOBILITY_PROVIDERS'
+    "get_mobility_aggregator",
+    "get_mobility_provider",
+    "BaseMobilityService",
+    "MOBILITY_PROVIDERS",
 ]
+
 
 def get_mobility_provider(provider_key: str) -> BaseMobilityService:
     """
     Factory to resolve and instantiate a specific mobility provider.
-    
+
     Args:
         provider_key: Identifier (e.g., 'uber', 'rta')
-        
+
     Returns:
         An instance of the requested provider service.
     """
     pkg_key = provider_key.lower()
     if pkg_key not in MOBILITY_PROVIDERS:
         raise ValueError(f"Unsupported mobility provider: {provider_key}")
-    
+
     config = MOBILITY_PROVIDERS[pkg_key]
     module_name, class_name = config["class_path"].rsplit(".", 1)
-    
+
     try:
         # Lazy import to manage memory and avoid circularities
         module = importlib.import_module(f".{module_name}", package=__name__)

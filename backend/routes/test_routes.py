@@ -2,6 +2,7 @@
 Simple test router to verify basic functionality
 No database access - just returns static JSON
 """
+
 from fastapi import APIRouter
 
 router = APIRouter(prefix="/test", tags=["test"])
@@ -22,7 +23,8 @@ async def check_env():
     Check environment configuration
     """
     import os
+
     return {
         "debug": os.getenv("DEBUG", "not set"),
-        "has_gemini_key": "set" if os.getenv("GEMINI_API_KEY") else "not set"
+        "has_gemini_key": "set" if os.getenv("GEMINI_API_KEY") else "not set",
     }

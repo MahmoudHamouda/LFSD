@@ -9,34 +9,33 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 from pydantic import BaseModel, Field
 
+
 class MessageResponse(BaseModel):
     """Standardized response for messaging operations."""
+
     success: bool
     message_id: Optional[str] = None
     provider: str
-    status: str # "sent", "failed", "pending"
+    status: str  # "sent", "failed", "pending"
     error: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
 
 class BaseMessagingService(ABC):
     """
     Abstract interface for all messaging providers.
     """
-    
+
     @property
     @abstractmethod
     def provider_name(self) -> str:
         """Return the provider identifier (e.g., 'whatsapp', 'sms')."""
 
         raise NotImplementedError
-    
+
     @abstractmethod
     async def send_text_message(
-        self,
-        to: str,
-        message: str,
-        user_id: Optional[str] = None,
-        **kwargs
+        self, to: str, message: str, user_id: Optional[str] = None, **kwargs
     ) -> MessageResponse:
         """Send a plain text message."""
 

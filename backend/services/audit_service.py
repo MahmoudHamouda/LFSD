@@ -7,6 +7,7 @@ from models.logging_models import AuditLog
 
 logger = logging.getLogger("audit_service")
 
+
 # Action Taxonomy
 class AuditAction:
     CREATE = "CREATE"
@@ -17,7 +18,8 @@ class AuditAction:
     PAYMENT = "PAYMENT"
     SUBSCRIPTION_CHANGE = "SUBSCRIPTION_CHANGE"
     SECURITY_REVOKE = "SECURITY_REVOKE"
-    VIEW = "VIEW" # Low criticality
+    VIEW = "VIEW"  # Low criticality
+
 
 class AuditEntity:
     USER = "USER"
@@ -27,6 +29,7 @@ class AuditEntity:
     CONNECTION = "CONNECTION"
     GOAL = "GOAL"
     SYSTEM = "SYSTEM"
+
 
 class AuditService:
     @staticmethod
@@ -41,11 +44,11 @@ class AuditService:
         metadata: Optional[Dict[str, Any]] = None,
         correlation_id: Optional[str] = None,
         request_id: Optional[str] = None,
-        is_critical: bool = False
+        is_critical: bool = False,
     ) -> Optional[AuditLog]:
         """
         Emits a business audit event.
-        
+
         Rules:
         1. If is_critical=True, failures will raise exceptions to rollback the main transaction.
         2. Normalizes action strings to the taxonomy.
@@ -53,16 +56,22 @@ class AuditService:
         """
         # Normalize action to uppercase
         action = action.upper().strip()
-        
+
         # Enforce criticality for specific actions automatically
-        if action in [AuditAction.PAYMENT, AuditAction.SUBSCRIPTION_CHANGE, AuditAction.SECURITY_REVOKE]:
+        if action in [
+            AuditAction.PAYMENT,
+            AuditAction.SUBSCRIPTION_CHANGE,
+            AuditAction.SECURITY_REVOKE,
+        ]:
             is_critical = True
 
         try:
             # Ensure metadata captures traceability
             actual_metadata = metadata or {}
-            if correlation_id: actual_metadata["correlation_id"] = correlation_id
-            if request_id: actual_metadata["request_id"] = request_id
+            if correlation_id:
+                actual_metadata["correlation_id"] = correlation_id
+            if request_id:
+                actual_metadata["request_id"] = request_id
 
             audit = AuditLog(
                 id=str(uuid.uuid4()),
@@ -74,18 +83,19 @@ class AuditService:
                 changes_json=changes or {},
                 metadata_json=actual_metadata or {},
                 timestamp=datetime.utcnow(),
-                correlation_id=correlation_id
+                correlation_id=correlation_id,
             )
             db.add(audit)
-            
-            # Use separate non-blocking logging for emission if needed, 
+
+            # Use separate non-blocking logging for emission if needed,
             # but DB state is the source of truth.
             return audit
-            
+
         except Exception as e:
-            logger.error(f"Failed to create audit log for {action} on {entity_type}: {e}")
+            logger.error(
+                f"Failed to create audit log for {action} on {entity_type}: {e}"
+            )
             if is_critical:
                 # Fail the entire transaction if audit logging is critical
                 raise RuntimeError(f"Critical Audit Failure: {e}")
             return None
-

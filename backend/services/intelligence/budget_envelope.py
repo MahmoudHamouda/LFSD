@@ -24,6 +24,7 @@ logger = logging.getLogger("intelligence.budget_envelope")
 
 class UserPlan(str, Enum):
     """User subscription plan tier."""
+
     FREE = "free"
     STANDARD = "standard"
     PREMIUM = "premium"
@@ -36,12 +37,15 @@ class BudgetEnvelope:
 
     Applied at the start of each pipeline run to constrain the tier router.
     """
-    max_tier: int = 3                    # Maximum allowed tier
-    max_input_tokens: int = 2000         # Total input token budget per request
-    max_output_tokens: int = 500         # Total output token budget per request
-    clarify_confidence_boost: float = 0.0  # Added to CLARIFY threshold (higher = more CLARIFYs)
-    force_deterministic: bool = False    # If True, skip all LLM calls
-    reason: str = ""                     # Why this envelope was chosen
+
+    max_tier: int = 3  # Maximum allowed tier
+    max_input_tokens: int = 2000  # Total input token budget per request
+    max_output_tokens: int = 500  # Total output token budget per request
+    clarify_confidence_boost: float = (
+        0.0  # Added to CLARIFY threshold (higher = more CLARIFYs)
+    )
+    force_deterministic: bool = False  # If True, skip all LLM calls
+    reason: str = ""  # Why this envelope was chosen
 
 
 class BudgetEnvelopeEngine:
@@ -100,8 +104,10 @@ class BudgetEnvelopeEngine:
 
         logger.info(
             "Budget envelope: max_tier=%d tokens=%d/%d clarify_boost=%.2f reason=%s",
-            envelope.max_tier, envelope.max_input_tokens,
-            envelope.max_output_tokens, envelope.clarify_confidence_boost,
+            envelope.max_tier,
+            envelope.max_input_tokens,
+            envelope.max_output_tokens,
+            envelope.clarify_confidence_boost,
             envelope.reason,
         )
 

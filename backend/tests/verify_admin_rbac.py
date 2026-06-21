@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 # Mock problematic modules before imports
 import types
+
 g = types.ModuleType("google")
 g.cloud = types.ModuleType("google.cloud")
 g.generativeai = MagicMock()
@@ -32,19 +33,23 @@ from core.authentication import get_current_user
 
 # Test database setup
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 
 class TestAdminRBAC(unittest.TestCase):
     def setUp(self):
         # Patch database before app creation
         from models import database
+
         database.engine = engine
         database.SessionLocal = TestingSessionLocal
-        
+
         Base.metadata.create_all(bind=engine)
         self.app = create_app()
-        
+
         # Helper to get DB session
         def override_get_db():
             db = TestingSessionLocal()
@@ -55,9 +60,11 @@ class TestAdminRBAC(unittest.TestCase):
 
         # Dependency override to control "current_user"
         self.mock_user = None
+
         async def override_get_current_user():
             if self.mock_user is None:
                 from fastapi import HTTPException
+
                 raise HTTPException(status_code=401, detail="Unauthorized")
             return self.mock_user
 
@@ -99,6 +106,7 @@ class TestAdminRBAC(unittest.TestCase):
         self.mock_user = None
         response = self.client.get("/api/admin/users")
         self.assertEqual(response.status_code, 401)
+
 
 if __name__ == "__main__":
     unittest.main()

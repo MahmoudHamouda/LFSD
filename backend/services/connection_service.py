@@ -8,12 +8,16 @@ import core.config
 from cryptography.fernet import Fernet
 from loguru import logger
 
+
 class ConnectionService:
     def __init__(self, db: Session):
         self.db = db
         settings = core.config.get_settings()
-        if not hasattr(settings, "CREDENTIALS_ENCRYPTION_KEY") or not settings.CREDENTIALS_ENCRYPTION_KEY:
-             raise ValueError("CREDENTIALS_ENCRYPTION_KEY is missing in configuration.")
+        if (
+            not hasattr(settings, "CREDENTIALS_ENCRYPTION_KEY")
+            or not settings.CREDENTIALS_ENCRYPTION_KEY
+        ):
+            raise ValueError("CREDENTIALS_ENCRYPTION_KEY is missing in configuration.")
         self.fernet = Fernet(settings.CREDENTIALS_ENCRYPTION_KEY.encode())
 
     def _encrypt(self, data: Dict) -> str:
@@ -41,10 +45,11 @@ class ConnectionService:
     def get_connection(self, user_id: str, provider: str) -> Optional[Connection]:
         """Get a specific connection for a user."""
         provider = provider.strip().lower()
-        return self.db.query(Connection).filter(
-            Connection.user_id == user_id,
-            Connection.provider == provider
-        ).first()
+        return (
+            self.db.query(Connection)
+            .filter(Connection.user_id == user_id, Connection.provider == provider)
+            .first()
+        )
 
     def get_decrypted_credentials(self, user_id: str, provider: str) -> Dict[str, Any]:
         """Fetch and decrypt credentials only when needed."""
@@ -54,23 +59,23 @@ class ConnectionService:
         return self._decrypt(conn.credentials_json)
 
     def create_or_update_connection(
-        self, 
-        user_id: str, 
-        provider: str, 
-        credentials: Optional[Dict] = None, 
+        self,
+        user_id: str,
+        provider: str,
+        credentials: Optional[Dict] = None,
         metadata: Optional[Dict] = None,
-        status: str = "connected"
+        status: str = "connected",
     ) -> Connection:
         """Create or update a connection with encrypted credentials."""
         provider = provider.strip().lower()
         connection = self.get_connection(user_id, provider)
-        
+
         try:
             if connection:
                 # Security Rule: Never overwrite credentials with an empty dict
                 if credentials and credentials != {}:
                     connection.credentials_json = self._encrypt(credentials)
-                
+
                 connection.status = status
                 if metadata:
                     connection.metadata_json = json.dumps(metadata)
@@ -81,11 +86,13 @@ class ConnectionService:
                     user_id=user_id,
                     provider=provider,
                     status=status,
-                    credentials_json=self._encrypt(credentials) if credentials else None,
-                    metadata_json=json.dumps(metadata or {})
+                    credentials_json=(
+                        self._encrypt(credentials) if credentials else None
+                    ),
+                    metadata_json=json.dumps(metadata or {}),
                 )
                 self.db.add(connection)
-            
+
             self.db.commit()
             self.db.refresh(connection)
             return connection
@@ -101,7 +108,7 @@ class ConnectionService:
         if connection:
             try:
                 connection.status = "revoked"
-                connection.credentials_json = None # Wipe sensitive data
+                connection.credentials_json = None  # Wipe sensitive data
                 connection.updated_at = datetime.utcnow()
                 self.db.commit()
                 return True
@@ -125,4 +132,3 @@ class ConnectionService:
                 logger.error(f"Failed to delete connection: {e}")
                 return False
         return False
-

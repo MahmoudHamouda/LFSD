@@ -1,6 +1,7 @@
 """
 Auth0 Token Verification Utilities
 """
+
 from fastapi import HTTPException, status, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
@@ -21,7 +22,7 @@ def get_auth0_public_key():
     """Fetch Auth0 public key for token verification"""
     settings = get_auth0_settings()
     jwks_url = f"https://{settings.AUTH0_DOMAIN}/.well-known/jwks.json"
-    
+
     try:
         response = httpx.get(jwks_url)
         response.raise_for_status()
@@ -31,35 +32,37 @@ def get_auth0_public_key():
         return None
 
 
-def verify_auth0_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
+def verify_auth0_token(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> dict:
     """
     Verify Auth0 JWT token and return decoded payload
-    
+
     Args:
         credentials: HTTP Authorization header with Bearer token
-        
+
     Returns:
         dict: Decoded token payload containing user info
-        
+
     Raises:
         HTTPException: If token is invalid or expired
     """
     settings = get_auth0_settings()
     token = credentials.credentials
-    
+
     try:
         # Get public key
         jwks = get_auth0_public_key()
         if not jwks:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Unable to verify token - JWKS unavailable"
+                detail="Unable to verify token - JWKS unavailable",
             )
-        
+
         # Decode and verify token
         unverified_header = jwt.get_unverified_header(token)
         rsa_key = {}
-        
+
         for key in jwks["keys"]:
             if key["kid"] == unverified_header["kid"]:
                 rsa_key = {
@@ -67,39 +70,38 @@ def verify_auth0_token(credentials: HTTPAuthorizationCredentials = Depends(secur
                     "kid": key["kid"],
                     "use": key["use"],
                     "n": key["n"],
-                    "e": key["e"]
+                    "e": key["e"],
                 }
                 break
-        
+
         if not rsa_key:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Unable to find appropriate key"
+                detail="Unable to find appropriate key",
             )
-        
+
         # Convert JWK to public key object for PyJWT
         public_key = RSAAlgorithm.from_jwk(rsa_key)
-        
+
         # Verify and decode
         payload = jwt.decode(
             token,
             public_key,
             algorithms=settings.AUTH0_ALGORITHMS,
             audience=settings.AUTH0_AUDIENCE,
-            issuer=f"https://{settings.AUTH0_DOMAIN}/"
+            issuer=f"https://{settings.AUTH0_DOMAIN}/",
         )
-        
+
         return payload
-        
+
     except JWTError as e:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid token: {str(e)}"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Invalid token: {str(e)}"
         )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Token verification failed: {str(e)}"
+            detail=f"Token verification failed: {str(e)}",
         )
 
 
@@ -112,7 +114,7 @@ def verify_auth0_jwt(token: str) -> dict:
         jwks = get_auth0_public_key()
         if not jwks:
             raise Exception("JWKS unavailable")
-        
+
         unverified_header = jwt.get_unverified_header(token)
         rsa_key = {}
         for key in jwks["keys"]:
@@ -122,22 +124,22 @@ def verify_auth0_jwt(token: str) -> dict:
                     "kid": key["kid"],
                     "use": key["use"],
                     "n": key["n"],
-                    "e": key["e"]
+                    "e": key["e"],
                 }
                 break
-        
+
         if not rsa_key:
             raise Exception("Key not found")
-        
+
         # Convert JWK to public key object for PyJWT
         public_key = RSAAlgorithm.from_jwk(rsa_key)
-        
+
         payload = jwt.decode(
             token,
             public_key,
             algorithms=settings.AUTH0_ALGORITHMS,
             audience=settings.AUTH0_AUDIENCE,
-            issuer=f"https://{settings.AUTH0_DOMAIN}/"
+            issuer=f"https://{settings.AUTH0_DOMAIN}/",
         )
         return payload
     except Exception as e:

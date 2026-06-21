@@ -1,4 +1,3 @@
-
 import yaml
 
 try:
@@ -12,8 +11,10 @@ except:
         print(f"Error reading yaml: {e}")
         exit(1)
 
-containers = data.get('spec', {}).get('template', {}).get('spec', {}).get('containers', [])
+containers = (
+    data.get("spec", {}).get("template", {}).get("spec", {}).get("containers", [])
+)
 for c in containers:
-    env = c.get('env', [])
+    env = c.get("env", [])
     for e in env:
         print(f"{e.get('name')}={e.get('value')}")

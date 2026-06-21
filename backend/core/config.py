@@ -4,44 +4,55 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+
 class Settings:
     # Application Configuration
-    ENV = os.getenv('ENV', 'dev')
-    DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
-    API_V1_STR = os.getenv('API_V1_STR', '/api')
-    
+    ENV = os.getenv("ENV", "dev")
+    DEBUG = os.getenv("DEBUG", "true").lower() == "true"
+    API_V1_STR = os.getenv("API_V1_STR", "/api")
+
     # Security Secrets
-    GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
-    GEMINI_MODEL = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')  # Updated to 2.5 Flash (2.0 deprecated March 2026)
-    GEMINI_MODEL_LIGHT = os.getenv('GEMINI_MODEL_LIGHT', 'gemini-2.5-flash')  # Tier 1-2: lightweight
-    GEMINI_MODEL_HEAVY = os.getenv('GEMINI_MODEL_HEAVY', 'gemini-2.5-pro')    # Tier 3: heavy reasoning
-    ADMIN_SECRET = os.getenv('ADMIN_SECRET')
-    CREDENTIALS_ENCRYPTION_KEY = os.getenv('CREDENTIALS_ENCRYPTION_KEY')
-    
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    GEMINI_MODEL = os.getenv(
+        "GEMINI_MODEL", "gemini-2.5-flash"
+    )  # Updated to 2.5 Flash (2.0 deprecated March 2026)
+    GEMINI_MODEL_LIGHT = os.getenv(
+        "GEMINI_MODEL_LIGHT", "gemini-2.5-flash"
+    )  # Tier 1-2: lightweight
+    GEMINI_MODEL_HEAVY = os.getenv(
+        "GEMINI_MODEL_HEAVY", "gemini-2.5-pro"
+    )  # Tier 3: heavy reasoning
+    ADMIN_SECRET = os.getenv("ADMIN_SECRET")
+    CREDENTIALS_ENCRYPTION_KEY = os.getenv("CREDENTIALS_ENCRYPTION_KEY")
+
     # Integration Tokens
-    UBER_SERVER_TOKEN = os.getenv('UBER_SERVER_TOKEN')
-    RTA_API_KEY = os.getenv('RTA_API_KEY')
-    RAPIDAPI_KEY = os.getenv('RAPIDAPI_KEY')
-    SKYSCANNER_API_KEY = os.getenv('SKYSCANNER_API_KEY')
-    GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
-    GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
-    GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
+    UBER_SERVER_TOKEN = os.getenv("UBER_SERVER_TOKEN")
+    RTA_API_KEY = os.getenv("RTA_API_KEY")
+    RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
+    SKYSCANNER_API_KEY = os.getenv("SKYSCANNER_API_KEY")
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+    GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 
     # Base URL for Callbacks
-    APP_BASE_URL = os.getenv('APP_BASE_URL', 'https://lfsd-backend-692544481281.us-central1.run.app')
-    
+    APP_BASE_URL = os.getenv(
+        "APP_BASE_URL", "https://lfsd-backend-692544481281.us-central1.run.app"
+    )
+
     # CORS Configuration
-    ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'https://dev.example.com,https://staging.example.com')
+    ALLOWED_ORIGINS = os.getenv(
+        "ALLOWED_ORIGINS", "https://dev.example.com,https://staging.example.com"
+    )
 
     # Database Configuration (Local / Alembic)
     # Default to SQLite for safety if not set
-    DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./lfsd_v2.db')
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./lfsd_v2.db")
 
     # Cloud SQL Configuration (for Production)
-    INSTANCE_CONNECTION_NAME = os.getenv('INSTANCE_CONNECTION_NAME')
-    DB_USER = os.getenv('DB_USER')
-    DB_PASS = os.getenv('DB_PASS')
-    DB_NAME = os.getenv('DB_NAME')
+    INSTANCE_CONNECTION_NAME = os.getenv("INSTANCE_CONNECTION_NAME")
+    DB_USER = os.getenv("DB_USER")
+    DB_PASS = os.getenv("DB_PASS")
+    DB_NAME = os.getenv("DB_NAME")
 
     # Security & Auth
     APP_NAME = os.getenv("APP_NAME", "LFSD")
@@ -50,7 +61,7 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
     RATE_LIMIT = os.getenv("RATE_LIMIT", "100/minute")
     REDIS_URL = os.getenv("REDIS_URL")
-    
+
     # Auth0
     AUTH0_DOMAIN = os.getenv("AUTH0_DOMAIN")
     AUTH0_CLIENT_ID = os.getenv("AUTH0_CLIENT_ID")
@@ -59,29 +70,38 @@ class Settings:
     def __init__(self):
         pass
 
+
 def get_settings():
     settings = Settings()
-    
+
     # Validation for production environment
-    if settings.ENV == 'prod':
+    if settings.ENV == "prod":
         if not settings.ADMIN_SECRET or len(settings.ADMIN_SECRET) < 32:
-           # Log warning in dev, raise error in prod? 
-           # For now, let's just warn or pass to avoid startup crashes if user hasn't set it yet
-           pass
-        
+            # Log warning in dev, raise error in prod?
+            # For now, let's just warn or pass to avoid startup crashes if user hasn't set it yet
+            pass
+
         if not settings.GEMINI_API_KEY:
             raise ValueError("GEMINI_API_KEY must be set in production")
-            
+
         if not settings.SECRET_KEY:
-             raise ValueError("SECRET_KEY must be set in production")
-             
-        if not all([settings.AUTH0_DOMAIN, settings.AUTH0_CLIENT_ID, settings.AUTH0_CLIENT_SECRET]):
-             # Warn for now as some deployments might use native auth only, but ideally raise
-             pass
+            raise ValueError("SECRET_KEY must be set in production")
+
+        if not all(
+            [
+                settings.AUTH0_DOMAIN,
+                settings.AUTH0_CLIENT_ID,
+                settings.AUTH0_CLIENT_SECRET,
+            ]
+        ):
+            # Warn for now as some deployments might use native auth only, but ideally raise
+            pass
 
         # Ensure we have DB connection details if not using SQLite
-        if 'sqlite' not in settings.DATABASE_URL:
+        if "sqlite" not in settings.DATABASE_URL:
             if not settings.INSTANCE_CONNECTION_NAME and not settings.DATABASE_URL:
-                 raise ValueError("Database configuration invalid: set DATABASE_URL or Cloud SQL vars")
+                raise ValueError(
+                    "Database configuration invalid: set DATABASE_URL or Cloud SQL vars"
+                )
 
     return settings

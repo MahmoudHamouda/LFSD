@@ -11,9 +11,10 @@ class BaseExecutor(ABC):
     Enforces a safe execution lifecycle: setup() -> execute_safe()
     to prevent unhandled third-party API exceptions from crashing the Orchestrator.
     """
+
     def __init__(self):
         self.is_healthy = True
-        
+
     async def setup(self) -> bool:
         """
         Lazy Initialization hook.
@@ -23,7 +24,9 @@ class BaseExecutor(ABC):
         return True
 
     @abstractmethod
-    async def execute_safe(self, entities: Dict[str, Any], user_id: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_safe(
+        self, entities: Dict[str, Any], user_id: str, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         The core logic of the tool. Must return a structured dictionary.
         Do NOT wrap in try/except here; the Orchestrator Router will catch and wrap it.

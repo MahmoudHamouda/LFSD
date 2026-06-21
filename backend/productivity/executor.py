@@ -5,11 +5,13 @@ from orchestration.registry import IntegrationRegistry
 
 logger = logging.getLogger("productivity.executor")
 
+
 @IntegrationRegistry.register("SCHEDULE_EVENT")
 class ProductivityExecutor(BaseExecutor):
     """
     Handles Google Calendar and Notion syncing for time management.
     """
+
     def __init__(self):
         super().__init__()
 
@@ -18,9 +20,11 @@ class ProductivityExecutor(BaseExecutor):
         self.is_healthy = True
         return True
 
-    async def execute_safe(self, entities: Dict[str, Any], user_id: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    async def execute_safe(
+        self, entities: Dict[str, Any], user_id: str, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
         logger.info(f"ProductivityExecutor processing for {user_id}")
         return {
             "summary": "Calendar synced successfully.",
-            "metrics": {"events_scheduled": 1}
+            "metrics": {"events_scheduled": 1},
         }

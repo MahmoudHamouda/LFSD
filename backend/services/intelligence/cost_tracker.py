@@ -19,6 +19,7 @@ logger = logging.getLogger("intelligence.cost_tracker")
 @dataclass
 class CostSummary:
     """Immutable summary of pipeline cost for a single request."""
+
     tier: int = 0
     total_input_tokens: int = 0
     total_output_tokens: int = 0
@@ -69,9 +70,10 @@ class CostTracker:
             return False
 
         return (
-            (self._input_tokens + estimated_input) <= self._config.max_input_tokens
-            and (self._output_tokens + estimated_output) <= self._config.max_output_tokens
-        )
+            self._input_tokens + estimated_input
+        ) <= self._config.max_input_tokens and (
+            self._output_tokens + estimated_output
+        ) <= self._config.max_output_tokens
 
     def record_usage(
         self,
@@ -88,8 +90,11 @@ class CostTracker:
         }
         logger.debug(
             "Cost recorded: stage=%s, in=%d, out=%d, total_in=%d, total_out=%d",
-            stage_name, input_tokens, output_tokens,
-            self._input_tokens, self._output_tokens,
+            stage_name,
+            input_tokens,
+            output_tokens,
+            self._input_tokens,
+            self._output_tokens,
         )
 
     def summarize(self) -> CostSummary:
@@ -103,8 +108,12 @@ class CostTracker:
             total_output_tokens=self._output_tokens,
             total_tokens=self._input_tokens + self._output_tokens,
             estimated_cost_usd=cost,
-            budget_input_remaining=max(0, self._config.max_input_tokens - self._input_tokens),
-            budget_output_remaining=max(0, self._config.max_output_tokens - self._output_tokens),
+            budget_input_remaining=max(
+                0, self._config.max_input_tokens - self._input_tokens
+            ),
+            budget_output_remaining=max(
+                0, self._config.max_output_tokens - self._output_tokens
+            ),
             budget_exceeded=(
                 self._input_tokens > self._config.max_input_tokens
                 or self._output_tokens > self._config.max_output_tokens

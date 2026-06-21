@@ -16,6 +16,7 @@ from backend.models.growth_models import Subscription, TierConfig, UserLimitOver
 from backend.services.growth_service import GrowthService
 from backend.models.growth_schemas import PlanId
 
+
 class TestSubscriptionLogic(unittest.TestCase):
     def setUp(self):
         # Use a temporary SQLite database for logic testing
@@ -36,10 +37,12 @@ class TestSubscriptionLogic(unittest.TestCase):
     def test_default_entitlements_no_config(self):
         """Test that GrowthService returns hardcoded defaults if no DB config exists."""
         entitlements = GrowthService.get_entitlements(self.test_user.id, self.db)
-        
+
         self.assertEqual(entitlements.plan, "tier_free")
         self.assertEqual(entitlements.limits["goals"], 5)
-        self.assertEqual(entitlements.limits["ai_chat_calls"], 100) # Updated from 5 because of PLAN_CONFIGS in GrowthService
+        self.assertEqual(
+            entitlements.limits["ai_chat_calls"], 100
+        )  # Updated from 5 because of PLAN_CONFIGS in GrowthService
 
     def test_tier_config_override_defaults(self):
         """Test that DB-driven TierConfig is respected."""
@@ -50,8 +53,8 @@ class TestSubscriptionLogic(unittest.TestCase):
             name="Global Free",
             config_json={
                 "features": ["basic"],
-                "limits": {"goals": 10, "ai_chat_calls": 20}
-            }
+                "limits": {"goals": 10, "ai_chat_calls": 20},
+            },
         )
         self.db.add(tier)
         self.db.commit()
@@ -67,20 +70,20 @@ class TestSubscriptionLogic(unittest.TestCase):
             id="free_id",
             plan_id="tier_free",
             name="Global Free",
-            config_json={"limits": {"goals": 5, "ai_chat_calls": 5}}
+            config_json={"limits": {"goals": 5, "ai_chat_calls": 5}},
         )
         # User Override
         override = UserLimitOverride(
             id="override_id",
             user_id=self.test_user.id,
-            overrides_json={"ai_chat_calls": 100}
+            overrides_json={"ai_chat_calls": 100},
         )
         self.db.add(tier)
         self.db.add(override)
         self.db.commit()
 
         entitlements = GrowthService.get_entitlements(self.test_user.id, self.db)
-        
+
         # Goals should stay 5 (from tier), but queries should be 100 (from override)
         self.assertEqual(entitlements.limits["goals"], 5)
         self.assertEqual(entitlements.limits["ai_chat_calls"], 100)
@@ -92,16 +95,19 @@ class TestSubscriptionLogic(unittest.TestCase):
             id="pro_id",
             plan_id="tier_pro",
             name="Pro Tier",
-            config_json={"limits": {"goals": -1, "ai_queries_per_day": -1}}
+            config_json={"limits": {"goals": -1, "ai_queries_per_day": -1}},
         )
         self.db.add(pro_tier)
-        
+
         # Grant Pro subscription
-        GrowthService.create_or_upgrade_subscription(self.test_user.id, "tier_pro", self.db)
-        
+        GrowthService.create_or_upgrade_subscription(
+            self.test_user.id, "tier_pro", self.db
+        )
+
         entitlements = GrowthService.get_entitlements(self.test_user.id, self.db)
         self.assertEqual(entitlements.plan, "tier_pro")
         self.assertEqual(entitlements.limits["goals"], -1)
+
 
 if __name__ == "__main__":
     unittest.main()

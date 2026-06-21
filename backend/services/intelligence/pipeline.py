@@ -206,15 +206,24 @@ class IntelligencePipeline:
                     synthesized_by="tradeoff_validator",
                 )
                 return self._finalize(
-                    envelope, context, intent, scores, action_plan,
-                    response, user_id, timings, cost_tracker,
-                    tradeoff.resolution.value, pipeline_start,
+                    envelope,
+                    context,
+                    intent,
+                    scores,
+                    action_plan,
+                    response,
+                    user_id,
+                    timings,
+                    cost_tracker,
+                    tradeoff.resolution.value,
+                    pipeline_start,
                 )
 
             if tradeoff.resolution == TradeoffResolution.SAFE_MINIMAL:
                 # Return safe minimal action — skip synthesis LLM
                 response = ResponseEnvelope(
-                    text=tradeoff.safe_action_override or "Let me suggest a safer alternative.",
+                    text=tradeoff.safe_action_override
+                    or "Let me suggest a safer alternative.",
                     response_type="safe_minimal",
                     generated_by="tradeoff_validator",
                 )
@@ -223,9 +232,17 @@ class IntelligencePipeline:
                     synthesized_by="tradeoff_validator",
                 )
                 return self._finalize(
-                    envelope, context, intent, scores, action_plan,
-                    response, user_id, timings, cost_tracker,
-                    tradeoff.resolution.value, pipeline_start,
+                    envelope,
+                    context,
+                    intent,
+                    scores,
+                    action_plan,
+                    response,
+                    user_id,
+                    timings,
+                    cost_tracker,
+                    tradeoff.resolution.value,
+                    pipeline_start,
                 )
 
             # For ESCALATE: force tier upgrade → synthesis will use heavy LLM
@@ -269,9 +286,17 @@ class IntelligencePipeline:
             # Finalize: Stage 7 + DecisionRecord + cost summary
             # ============================================================
             return self._finalize(
-                envelope, context, intent, scores, action_plan,
-                response, user_id, timings, cost_tracker,
-                tradeoff.resolution.value, pipeline_start,
+                envelope,
+                context,
+                intent,
+                scores,
+                action_plan,
+                response,
+                user_id,
+                timings,
+                cost_tracker,
+                tradeoff.resolution.value,
+                pipeline_start,
             )
 
         except Exception as e:
@@ -300,9 +325,18 @@ class IntelligencePipeline:
     # ------------------------------------------------------------------
 
     def _finalize(
-        self, envelope, context, intent, scores, action_plan,
-        response, user_id, timings, cost_tracker,
-        tradeoff_resolution, pipeline_start,
+        self,
+        envelope,
+        context,
+        intent,
+        scores,
+        action_plan,
+        response,
+        user_id,
+        timings,
+        cost_tracker,
+        tradeoff_resolution,
+        pipeline_start,
     ) -> PipelineResult:
         """Run Stage 7 (sync), write DecisionRecord, and return PipelineResult."""
         import asyncio
@@ -326,33 +360,66 @@ class IntelligencePipeline:
         if loop and loop.is_running():
             # We're in an async context — await properly
             import concurrent.futures
-            trace = loop.run_until_complete(
-                self.execution_logger.execute_and_log(
-                    envelope=envelope, context=context, intent=intent,
-                    scores=scores, action_plan=action_plan, response=response,
-                    user_id=user_id, stage_timings=timings,
+
+            trace = (
+                loop.run_until_complete(
+                    self.execution_logger.execute_and_log(
+                        envelope=envelope,
+                        context=context,
+                        intent=intent,
+                        scores=scores,
+                        action_plan=action_plan,
+                        response=response,
+                        user_id=user_id,
+                        stage_timings=timings,
+                    )
                 )
-            ) if False else self._build_trace_sync(
-                envelope, context, intent, scores, action_plan,
-                response, user_id, timings, cost_summary, tradeoff_resolution,
+                if False
+                else self._build_trace_sync(
+                    envelope,
+                    context,
+                    intent,
+                    scores,
+                    action_plan,
+                    response,
+                    user_id,
+                    timings,
+                    cost_summary,
+                    tradeoff_resolution,
+                )
             )
         else:
             trace = self._build_trace_sync(
-                envelope, context, intent, scores, action_plan,
-                response, user_id, timings, cost_summary, tradeoff_resolution,
+                envelope,
+                context,
+                intent,
+                scores,
+                action_plan,
+                response,
+                user_id,
+                timings,
+                cost_summary,
+                tradeoff_resolution,
             )
 
         # Persist trace and DecisionRecord
-        self._persist_trace(trace, intent, scores, action_plan, cost_summary, tradeoff_resolution)
-        self._persist_decision_record(trace, intent, scores, action_plan, cost_summary, tradeoff_resolution)
+        self._persist_trace(
+            trace, intent, scores, action_plan, cost_summary, tradeoff_resolution
+        )
+        self._persist_decision_record(
+            trace, intent, scores, action_plan, cost_summary, tradeoff_resolution
+        )
 
         timings.execution_logging_ms = (time.monotonic() - t0) * 1000
         timings.total_ms = (time.monotonic() - pipeline_start) * 1000
 
         logger.info(
             "Pipeline complete: intent=%s tier=%d tradeoff=%s cost=$%.6f total=%.1fms",
-            intent.intent, tier, tradeoff_resolution,
-            cost_summary.estimated_cost_usd, timings.total_ms,
+            intent.intent,
+            tier,
+            tradeoff_resolution,
+            cost_summary.estimated_cost_usd,
+            timings.total_ms,
         )
 
         return PipelineResult(
@@ -363,8 +430,17 @@ class IntelligencePipeline:
         )
 
     def _build_trace_sync(
-        self, envelope, context, intent, scores, action_plan,
-        response, user_id, timings, cost_summary, tradeoff_resolution,
+        self,
+        envelope,
+        context,
+        intent,
+        scores,
+        action_plan,
+        response,
+        user_id,
+        timings,
+        cost_summary,
+        tradeoff_resolution,
     ) -> PipelineTrace:
         """Build PipelineTrace without async."""
         from datetime import datetime, timezone
@@ -398,7 +474,9 @@ class IntelligencePipeline:
     # Persistence
     # ------------------------------------------------------------------
 
-    def _persist_trace(self, trace, intent, scores, action_plan, cost_summary, tradeoff_resolution):
+    def _persist_trace(
+        self, trace, intent, scores, action_plan, cost_summary, tradeoff_resolution
+    ):
         """Write PipelineTrace to intelligence_traces table."""
         try:
             from models.intelligence_models import PipelineTraceRecord
@@ -430,7 +508,9 @@ class IntelligencePipeline:
             logger.error("Failed to persist trace: %s", e)
             self.db.rollback()
 
-    def _persist_decision_record(self, trace, intent, scores, action_plan, cost_summary, tradeoff_resolution):
+    def _persist_decision_record(
+        self, trace, intent, scores, action_plan, cost_summary, tradeoff_resolution
+    ):
         """Write DecisionRecord (small, immutable, audit-ready)."""
         try:
             from models.intelligence_models import DecisionRecord

@@ -39,14 +39,14 @@ async def create_feedback(
 ) -> dict[str, Any]:
     """Create a new feedback entry."""
     from core.observability import Observability
-    
+
     Observability.send_notification(
-        user_id="admin", # Send to admin
+        user_id="admin",  # Send to admin
         subject=f"New Feedback from {current_user.email}",
         body=message,
         channel="system",
         priority="normal",
-        payload={"reporter_id": current_user.id, "message": message}
+        payload={"reporter_id": current_user.id, "message": message},
     )
-    
+
     return {"data": {"message": "Feedback received"}}

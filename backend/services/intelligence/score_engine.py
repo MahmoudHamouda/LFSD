@@ -29,9 +29,11 @@ logger = logging.getLogger("intelligence.score_engine")
 # Scoring Policy Definition
 # ============================================================================
 
+
 @dataclass
 class DimensionRule:
     """A single rule for computing a dimension's delta."""
+
     dimension: str  # "wealth", "health", or "time"
     base_delta: float = 0.0  # Default delta if no modifiers apply
     temporal_weight: str = "short_term"  # "short_term" or "long_term"
@@ -55,6 +57,7 @@ class ScoringPolicy:
         created_at:     ISO date of policy creation.
         changelog:      List of changes per version bump.
     """
+
     name: str
     version: str = "1.0"
     rules: List[DimensionRule] = field(default_factory=list)
@@ -71,6 +74,7 @@ class ScoringPolicy:
 # ============================================================================
 # Policy Modifiers (Context-Aware Delta Adjusters)
 # ============================================================================
+
 
 def _spending_wealth_modifier(intent: IntentResult, ctx: ContextFrame) -> float:
     """Adjust wealth delta based on spending amount vs. income."""
@@ -309,277 +313,368 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
         name="spending_report",
         description="Viewing spending data — awareness is slightly positive for wealth.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+1.0,
-                          description="Awareness of spending patterns"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+1.0,
+                description="Awareness of spending patterns",
+            ),
         ],
     ),
     "financial_advisory": ScoringPolicy(
         name="financial_advisory",
         description="Seeking financial advice — context-dependent impact.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=-2.0,
-                          modifier=_spending_wealth_modifier,
-                          description="Depends on amount relative to income"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=-2.0,
+                modifier=_spending_wealth_modifier,
+                description="Depends on amount relative to income",
+            ),
         ],
     ),
     "goal_set": ScoringPolicy(
         name="goal_set",
         description="Setting a savings goal — positive for wealth.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+5.0,
-                          modifier=_goal_set_wealth_modifier,
-                          description="Commitment to saving is positive"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+5.0,
+                modifier=_goal_set_wealth_modifier,
+                description="Commitment to saving is positive",
+            ),
         ],
     ),
     "bill_payment": ScoringPolicy(
         name="bill_payment",
         description="Paying bills — responsible financial behavior.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+2.0,
-                          description="Timely bill payment improves financial health"),
-            DimensionRule(dimension="time", base_delta=+1.0,
-                          description="Automated payment saves time"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+2.0,
+                description="Timely bill payment improves financial health",
+            ),
+            DimensionRule(
+                dimension="time",
+                base_delta=+1.0,
+                description="Automated payment saves time",
+            ),
         ],
     ),
     "cashflow_report": ScoringPolicy(
         name="cashflow_report",
         description="Reviewing cashflow — awareness.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+1.0,
-                          description="Cashflow awareness"),
+            DimensionRule(
+                dimension="wealth", base_delta=+1.0, description="Cashflow awareness"
+            ),
         ],
     ),
     "investment_query": ScoringPolicy(
         name="investment_query",
         description="Investment research — neutral to slightly positive.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+2.0,
-                          description="Investment research is proactive"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+2.0,
+                description="Investment research is proactive",
+            ),
         ],
     ),
     "loan_inquiry": ScoringPolicy(
         name="loan_inquiry",
         description="Loan research — neutral, depends on context.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=-1.0,
-                          description="Debt consideration — slight caution"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=-1.0,
+                description="Debt consideration — slight caution",
+            ),
         ],
     ),
-
     # --- Health Policies ---
     "sleep_analysis": ScoringPolicy(
         name="sleep_analysis",
         description="Analyzing sleep — awareness improves behavior.",
         rules=[
-            DimensionRule(dimension="health", base_delta=+2.0,
-                          modifier=_sleep_health_modifier,
-                          description="Sleep awareness"),
+            DimensionRule(
+                dimension="health",
+                base_delta=+2.0,
+                modifier=_sleep_health_modifier,
+                description="Sleep awareness",
+            ),
         ],
     ),
     "activity_summary": ScoringPolicy(
         name="activity_summary",
         description="Reviewing activity — reinforces healthy behavior.",
         rules=[
-            DimensionRule(dimension="health", base_delta=+2.0,
-                          modifier=_exercise_health_modifier,
-                          description="Activity awareness"),
+            DimensionRule(
+                dimension="health",
+                base_delta=+2.0,
+                modifier=_exercise_health_modifier,
+                description="Activity awareness",
+            ),
         ],
     ),
     "nutrition_log": ScoringPolicy(
         name="nutrition_log",
         description="Logging nutrition — awareness and tracking.",
         rules=[
-            DimensionRule(dimension="health", base_delta=+3.0,
-                          description="Nutrition tracking is proactive"),
+            DimensionRule(
+                dimension="health",
+                base_delta=+3.0,
+                description="Nutrition tracking is proactive",
+            ),
         ],
     ),
     "stress_check": ScoringPolicy(
         name="stress_check",
         description="Checking stress levels — self-awareness.",
         rules=[
-            DimensionRule(dimension="health", base_delta=+2.0,
-                          description="Stress awareness is positive"),
+            DimensionRule(
+                dimension="health",
+                base_delta=+2.0,
+                description="Stress awareness is positive",
+            ),
         ],
     ),
     "recovery_status": ScoringPolicy(
         name="recovery_status",
         description="Checking recovery — health awareness.",
         rules=[
-            DimensionRule(dimension="health", base_delta=+1.0,
-                          description="Recovery monitoring"),
+            DimensionRule(
+                dimension="health", base_delta=+1.0, description="Recovery monitoring"
+            ),
         ],
     ),
     "workout_plan": ScoringPolicy(
         name="workout_plan",
         description="Planning workouts — commitment to fitness.",
         rules=[
-            DimensionRule(dimension="health", base_delta=+5.0,
-                          modifier=_exercise_health_modifier,
-                          description="Workout commitment"),
-            DimensionRule(dimension="time", base_delta=-2.0,
-                          description="Time investment for exercise"),
+            DimensionRule(
+                dimension="health",
+                base_delta=+5.0,
+                modifier=_exercise_health_modifier,
+                description="Workout commitment",
+            ),
+            DimensionRule(
+                dimension="time",
+                base_delta=-2.0,
+                description="Time investment for exercise",
+            ),
         ],
     ),
     "mental_health_check": ScoringPolicy(
         name="mental_health_check",
         description="Mental health check-in — important self-care.",
         rules=[
-            DimensionRule(dimension="health", base_delta=+3.0,
-                          description="Mental health awareness"),
+            DimensionRule(
+                dimension="health",
+                base_delta=+3.0,
+                description="Mental health awareness",
+            ),
         ],
     ),
     "health_goal_set": ScoringPolicy(
         name="health_goal_set",
         description="Setting a health goal — commitment.",
         rules=[
-            DimensionRule(dimension="health", base_delta=+5.0,
-                          description="Health goal commitment"),
+            DimensionRule(
+                dimension="health",
+                base_delta=+5.0,
+                description="Health goal commitment",
+            ),
         ],
     ),
-
     # --- Time Policies ---
     "schedule_event": ScoringPolicy(
         name="schedule_event",
         description="Scheduling events — time management.",
         rules=[
-            DimensionRule(dimension="time", base_delta=+2.0,
-                          modifier=_schedule_time_modifier,
-                          description="Proactive scheduling"),
+            DimensionRule(
+                dimension="time",
+                base_delta=+2.0,
+                modifier=_schedule_time_modifier,
+                description="Proactive scheduling",
+            ),
         ],
     ),
     "focus_time_block": ScoringPolicy(
         name="focus_time_block",
         description="Blocking focus time — productivity and health.",
         rules=[
-            DimensionRule(dimension="time", base_delta=+5.0,
-                          description="Focus time improves productivity"),
-            DimensionRule(dimension="health", base_delta=+2.0,
-                          description="Focus time reduces stress"),
+            DimensionRule(
+                dimension="time",
+                base_delta=+5.0,
+                description="Focus time improves productivity",
+            ),
+            DimensionRule(
+                dimension="health",
+                base_delta=+2.0,
+                description="Focus time reduces stress",
+            ),
         ],
     ),
     "meeting_schedule": ScoringPolicy(
         name="meeting_schedule",
         description="Scheduling meetings — neutral time impact.",
         rules=[
-            DimensionRule(dimension="time", base_delta=-1.0,
-                          description="Meetings consume time"),
+            DimensionRule(
+                dimension="time", base_delta=-1.0, description="Meetings consume time"
+            ),
         ],
     ),
     "time_audit": ScoringPolicy(
         name="time_audit",
         description="Auditing time usage — awareness.",
         rules=[
-            DimensionRule(dimension="time", base_delta=+2.0,
-                          description="Time awareness"),
+            DimensionRule(
+                dimension="time", base_delta=+2.0, description="Time awareness"
+            ),
         ],
     ),
     "commute_planning": ScoringPolicy(
         name="commute_planning",
         description="Commute planning — time and cost optimization.",
         rules=[
-            DimensionRule(dimension="time", base_delta=+2.0,
-                          description="Route optimization"),
-            DimensionRule(dimension="wealth", base_delta=+1.0,
-                          description="Cost-aware commute"),
+            DimensionRule(
+                dimension="time", base_delta=+2.0, description="Route optimization"
+            ),
+            DimensionRule(
+                dimension="wealth", base_delta=+1.0, description="Cost-aware commute"
+            ),
         ],
     ),
-
     # --- Mobility Policies ---
     "mobility_price_check": ScoringPolicy(
         name="mobility_price_check",
         description="Checking ride prices — cost-conscious.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+1.0,
-                          description="Price awareness before spending"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+1.0,
+                description="Price awareness before spending",
+            ),
         ],
     ),
     "mobility_booking": ScoringPolicy(
         name="mobility_booking",
         description="Booking a ride — wealth and time impact.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=-3.0,
-                          description="Ride cost"),
-            DimensionRule(dimension="time", base_delta=+3.0,
-                          description="Time saved vs. alternatives"),
+            DimensionRule(dimension="wealth", base_delta=-3.0, description="Ride cost"),
+            DimensionRule(
+                dimension="time",
+                base_delta=+3.0,
+                description="Time saved vs. alternatives",
+            ),
         ],
     ),
     "car_purchase": ScoringPolicy(
         name="car_purchase",
         description="Car purchase — major cross-dimensional decision.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=-10.0,
-                          modifier=_car_purchase_wealth_modifier,
-                          description="Significant financial commitment"),
-            DimensionRule(dimension="time", base_delta=+3.0,
-                          modifier=_car_purchase_time_modifier,
-                          description="Commute time savings"),
-            DimensionRule(dimension="health", base_delta=0.0,
-                          description="Neutral health impact"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=-10.0,
+                modifier=_car_purchase_wealth_modifier,
+                description="Significant financial commitment",
+            ),
+            DimensionRule(
+                dimension="time",
+                base_delta=+3.0,
+                modifier=_car_purchase_time_modifier,
+                description="Commute time savings",
+            ),
+            DimensionRule(
+                dimension="health", base_delta=0.0, description="Neutral health impact"
+            ),
         ],
     ),
-
     # --- Cross-Domain Policies ---
     "tradeoff_analysis": ScoringPolicy(
         name="tradeoff_analysis",
         description="Multi-dimensional tradeoff — computed per scenario.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=0.0,
-                          description="Depends on scenario"),
-            DimensionRule(dimension="health", base_delta=0.0,
-                          description="Depends on scenario"),
-            DimensionRule(dimension="time", base_delta=0.0,
-                          description="Depends on scenario"),
+            DimensionRule(
+                dimension="wealth", base_delta=0.0, description="Depends on scenario"
+            ),
+            DimensionRule(
+                dimension="health", base_delta=0.0, description="Depends on scenario"
+            ),
+            DimensionRule(
+                dimension="time", base_delta=0.0, description="Depends on scenario"
+            ),
         ],
     ),
     "career_change": ScoringPolicy(
         name="career_change",
         description="Career change — full tri-dimensional analysis.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+5.0,
-                          modifier=_career_change_wealth_modifier,
-                          description="Income change", temporal_weight="long_term"),
-            DimensionRule(dimension="time", base_delta=-3.0,
-                          modifier=_career_change_time_modifier,
-                          description="Commute and schedule change"),
-            DimensionRule(dimension="health", base_delta=-2.0,
-                          modifier=_career_change_health_modifier,
-                          description="Transition stress"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+5.0,
+                modifier=_career_change_wealth_modifier,
+                description="Income change",
+                temporal_weight="long_term",
+            ),
+            DimensionRule(
+                dimension="time",
+                base_delta=-3.0,
+                modifier=_career_change_time_modifier,
+                description="Commute and schedule change",
+            ),
+            DimensionRule(
+                dimension="health",
+                base_delta=-2.0,
+                modifier=_career_change_health_modifier,
+                description="Transition stress",
+            ),
         ],
     ),
     "relocation_analysis": ScoringPolicy(
         name="relocation_analysis",
         description="Relocation — significant multi-dimensional impact.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=0.0,
-                          description="Cost of living delta"),
-            DimensionRule(dimension="health", base_delta=0.0,
-                          description="Lifestyle change"),
-            DimensionRule(dimension="time", base_delta=-5.0,
-                          description="Transition time cost"),
+            DimensionRule(
+                dimension="wealth", base_delta=0.0, description="Cost of living delta"
+            ),
+            DimensionRule(
+                dimension="health", base_delta=0.0, description="Lifestyle change"
+            ),
+            DimensionRule(
+                dimension="time", base_delta=-5.0, description="Transition time cost"
+            ),
         ],
     ),
     "life_event_planning": ScoringPolicy(
         name="life_event_planning",
         description="Major life event — significant cross-dimensional impact.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=-10.0,
-                          description="Financial commitment"),
-            DimensionRule(dimension="health", base_delta=+2.0,
-                          description="Purpose and fulfillment"),
-            DimensionRule(dimension="time", base_delta=-5.0,
-                          description="Time commitment"),
+            DimensionRule(
+                dimension="wealth", base_delta=-10.0, description="Financial commitment"
+            ),
+            DimensionRule(
+                dimension="health",
+                base_delta=+2.0,
+                description="Purpose and fulfillment",
+            ),
+            DimensionRule(
+                dimension="time", base_delta=-5.0, description="Time commitment"
+            ),
         ],
     ),
-
     # --- Phase 2: New Policies ---
     "subscription_review": ScoringPolicy(
         name="subscription_review",
         version="2.0",
         description="Reviewing subscriptions — savings awareness.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+2.0,
-                          modifier=_subscription_wealth_modifier,
-                          description="Subscription cost awareness"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+2.0,
+                modifier=_subscription_wealth_modifier,
+                description="Subscription cost awareness",
+            ),
         ],
     ),
     "budget_alert": ScoringPolicy(
@@ -587,9 +682,12 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
         version="2.0",
         description="Budget monitoring — proactive financial management.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+1.0,
-                          modifier=_budget_wealth_modifier,
-                          description="Budget awareness"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+1.0,
+                modifier=_budget_wealth_modifier,
+                description="Budget awareness",
+            ),
         ],
     ),
     "salary_analysis": ScoringPolicy(
@@ -597,9 +695,12 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
         version="2.0",
         description="Salary analysis — income awareness.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+2.0,
-                          modifier=_salary_wealth_modifier,
-                          description="Income awareness"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+2.0,
+                modifier=_salary_wealth_modifier,
+                description="Income awareness",
+            ),
         ],
     ),
     "net_worth_check": ScoringPolicy(
@@ -607,9 +708,12 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
         version="2.0",
         description="Net worth check — asset awareness.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+2.0,
-                          modifier=_net_worth_wealth_modifier,
-                          description="Asset and liability awareness"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+2.0,
+                modifier=_net_worth_wealth_modifier,
+                description="Asset and liability awareness",
+            ),
         ],
     ),
     "expense_categorize": ScoringPolicy(
@@ -617,9 +721,12 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
         version="2.0",
         description="Expense categorization — spending pattern awareness.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+1.0,
-                          modifier=_expense_wealth_modifier,
-                          description="Spending pattern management"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+1.0,
+                modifier=_expense_wealth_modifier,
+                description="Spending pattern management",
+            ),
         ],
     ),
     "hydration_reminder": ScoringPolicy(
@@ -627,9 +734,12 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
         version="2.0",
         description="Hydration reminder — basic health habit.",
         rules=[
-            DimensionRule(dimension="health", base_delta=+2.0,
-                          modifier=_hydration_health_modifier,
-                          description="Hydration habit"),
+            DimensionRule(
+                dimension="health",
+                base_delta=+2.0,
+                modifier=_hydration_health_modifier,
+                description="Hydration habit",
+            ),
         ],
     ),
     "health_report": ScoringPolicy(
@@ -637,8 +747,9 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
         version="2.0",
         description="Health report — comprehensive health awareness.",
         rules=[
-            DimensionRule(dimension="health", base_delta=+2.0,
-                          description="Health data awareness"),
+            DimensionRule(
+                dimension="health", base_delta=+2.0, description="Health data awareness"
+            ),
         ],
     ),
     "deadline_reminder": ScoringPolicy(
@@ -646,9 +757,12 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
         version="2.0",
         description="Deadline reminder — accountability.",
         rules=[
-            DimensionRule(dimension="time", base_delta=+2.0,
-                          modifier=_deadline_time_modifier,
-                          description="Deadline accountability"),
+            DimensionRule(
+                dimension="time",
+                base_delta=+2.0,
+                modifier=_deadline_time_modifier,
+                description="Deadline accountability",
+            ),
         ],
     ),
     "productivity_report": ScoringPolicy(
@@ -656,9 +770,12 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
         version="2.0",
         description="Productivity report — time awareness.",
         rules=[
-            DimensionRule(dimension="time", base_delta=+1.0,
-                          modifier=_productivity_time_modifier,
-                          description="Productivity awareness"),
+            DimensionRule(
+                dimension="time",
+                base_delta=+1.0,
+                modifier=_productivity_time_modifier,
+                description="Productivity awareness",
+            ),
         ],
     ),
     "set_savings_goal": ScoringPolicy(
@@ -666,9 +783,12 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
         version="2.0",
         description="Setting savings goal — commitment to wealth building.",
         rules=[
-            DimensionRule(dimension="wealth", base_delta=+5.0,
-                          modifier=_goal_set_wealth_modifier,
-                          description="Savings commitment"),
+            DimensionRule(
+                dimension="wealth",
+                base_delta=+5.0,
+                modifier=_goal_set_wealth_modifier,
+                description="Savings commitment",
+            ),
         ],
     ),
 }
@@ -677,6 +797,7 @@ SCORING_POLICIES: Dict[str, ScoringPolicy] = {
 # ============================================================================
 # Score Evaluation Engine
 # ============================================================================
+
 
 class ScoreEvaluationEngine:
     """
@@ -706,6 +827,7 @@ class ScoreEvaluationEngine:
         entry_from_taxonomy = None
         try:
             from .intent_taxonomy import get_intent_entry
+
             entry_from_taxonomy = get_intent_entry(intent.intent)
         except ImportError:
             pass
@@ -720,14 +842,20 @@ class ScoreEvaluationEngine:
 
         if policy is None:
             # No scoring policy for this intent — return neutral deltas
-            logger.debug("No scoring policy for intent '%s' — neutral deltas", intent.intent)
+            logger.debug(
+                "No scoring policy for intent '%s' — neutral deltas", intent.intent
+            )
             return ScoreDeltas(policies_applied=[])
 
         # Evaluate each rule
         deltas = {"wealth": 0.0, "health": 0.0, "time": 0.0}
         rule_descriptions = {"wealth": "", "health": "", "time": ""}
         rule_names = {"wealth": "", "health": "", "time": ""}
-        temporal = {"wealth": "short_term", "health": "short_term", "time": "short_term"}
+        temporal = {
+            "wealth": "short_term",
+            "health": "short_term",
+            "time": "short_term",
+        }
 
         for rule in policy.rules:
             dim = rule.dimension
@@ -766,8 +894,10 @@ class ScoreEvaluationEngine:
 
         # Build ScoreDeltas
         def _direction(d: float) -> str:
-            if d > 0: return "up"
-            if d < 0: return "down"
+            if d > 0:
+                return "up"
+            if d < 0:
+                return "down"
             return "neutral"
 
         # Determine net impact
@@ -822,8 +952,11 @@ class ScoreEvaluationEngine:
 
         logger.info(
             "Score evaluation: W=%.1f H=%.1f T=%.1f (net=%s, policy=%s)",
-            deltas["wealth"], deltas["health"], deltas["time"],
-            net_impact, policy.name,
+            deltas["wealth"],
+            deltas["health"],
+            deltas["time"],
+            net_impact,
+            policy.name,
         )
 
         return result
@@ -869,9 +1002,7 @@ class ScoreEvaluationEngine:
         if deltas.get("wealth", 0) < -5 and context.life_goals:
             for goal in context.life_goals:
                 if goal.get("priority") == "high":
-                    impacts.append(
-                        f"May delay '{goal.get('title', 'goal')}' progress."
-                    )
+                    impacts.append(f"May delay '{goal.get('title', 'goal')}' progress.")
                     break
 
         # Hard guardrail: check if spending exceeds total balance
@@ -887,6 +1018,7 @@ class ScoreEvaluationEngine:
 # ============================================================================
 # Policy Governance: Registry Validation
 # ============================================================================
+
 
 def validate_policy_registry() -> Dict[str, List[str]]:
     """
@@ -910,6 +1042,7 @@ def validate_policy_registry() -> Dict[str, List[str]]:
     # Get all intent names from taxonomy
     try:
         from .intent_taxonomy import get_all_intent_names, get_intent_entry
+
         all_intents = get_all_intent_names()
     except ImportError:
         logger.warning("Cannot validate: intent_taxonomy not importable")
@@ -949,4 +1082,3 @@ def validate_policy_registry() -> Dict[str, List[str]]:
             )
 
     return issues
-

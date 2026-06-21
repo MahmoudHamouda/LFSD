@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Optional
 
 from fastapi import Request
+
 try:
     # Import from slowapi if available
     from slowapi import Limiter  # type: ignore
@@ -64,6 +65,7 @@ except Exception:
         client = getattr(request, "client", None)
         return getattr(client, "host", "") if client else ""
 
+
 try:
     # RedisStorage may raise if redis is unavailable
     from slowapi.storages.redis import RedisStorage
@@ -84,7 +86,11 @@ else:
     storage = None
 
 if storage:
-    limiter = Limiter(key_func=get_remote_address, default_limits=[settings.RATE_LIMIT], storage=storage)
+    limiter = Limiter(
+        key_func=get_remote_address,
+        default_limits=[settings.RATE_LIMIT],
+        storage=storage,
+    )
 else:
     limiter = Limiter(key_func=get_remote_address, default_limits=[settings.RATE_LIMIT])
 
@@ -92,14 +98,16 @@ else:
 # When slowapi is available we subclass SlowAPIMiddleware to enforce rate limits.
 # When slowapi is unavailable the fallback RateLimitMiddleware above already provides
 # a minimal implementation. In that case we avoid overriding the fallback class.
-if 'SlowAPIMiddleware' in globals():
+if "SlowAPIMiddleware" in globals():
+
     class RateLimitMiddleware(SlowAPIMiddleware):  # type: ignore[misc]
         """
         Middleware to enforce rate limits on incoming requests.
 
         Inherits from SlowAPIMiddleware to integrate with FastAPI's middleware stack.
         """
-        pass # Removed __init__ override
+
+        pass  # Removed __init__ override
 
 
 __all__ = ["limiter", "RateLimitMiddleware", "RateLimitExceeded"]

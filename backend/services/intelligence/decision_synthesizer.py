@@ -53,15 +53,21 @@ ACTION_TEMPLATES: Dict[str, Dict[str, Any]] = {
     "set_savings_goal": {
         "response_template_id": "goal_created",
         "steps": [
-            {"action_type": "execute_financial", "target_service": "goal_service",
-             "requires_confirmation": True},
+            {
+                "action_type": "execute_financial",
+                "target_service": "goal_service",
+                "requires_confirmation": True,
+            },
         ],
     },
     "bill_payment": {
         "response_template_id": "bill_payment_confirm",
         "steps": [
-            {"action_type": "execute_financial", "target_service": "billing_service",
-             "requires_confirmation": True},
+            {
+                "action_type": "execute_financial",
+                "target_service": "billing_service",
+                "requires_confirmation": True,
+            },
         ],
     },
     "budget_alert": {
@@ -96,7 +102,6 @@ ACTION_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "response_template_id": "subscription_list",
         "steps": [{"action_type": "respond_only"}],
     },
-
     # --- Health ---
     "health_report": {
         "response_template_id": "health_summary",
@@ -113,8 +118,11 @@ ACTION_TEMPLATES: Dict[str, Dict[str, Any]] = {
     "nutrition_log": {
         "response_template_id": "nutrition_logged",
         "steps": [
-            {"action_type": "execute_health", "target_service": "nutrition_service",
-             "requires_confirmation": False},
+            {
+                "action_type": "execute_health",
+                "target_service": "nutrition_service",
+                "requires_confirmation": False,
+            },
         ],
     },
     "stress_check": {
@@ -140,17 +148,22 @@ ACTION_TEMPLATES: Dict[str, Dict[str, Any]] = {
     "health_goal_set": {
         "response_template_id": "health_goal_created",
         "steps": [
-            {"action_type": "execute_health", "target_service": "goal_service",
-             "requires_confirmation": True},
+            {
+                "action_type": "execute_health",
+                "target_service": "goal_service",
+                "requires_confirmation": True,
+            },
         ],
     },
-
     # --- Time ---
     "schedule_event": {
         "response_template_id": "event_scheduled",
         "steps": [
-            {"action_type": "execute_calendar", "target_service": "calendar_service",
-             "requires_confirmation": True},
+            {
+                "action_type": "execute_calendar",
+                "target_service": "calendar_service",
+                "requires_confirmation": True,
+            },
         ],
     },
     "calendar_view": {
@@ -160,22 +173,31 @@ ACTION_TEMPLATES: Dict[str, Dict[str, Any]] = {
     "focus_time_block": {
         "response_template_id": "focus_time_blocked",
         "steps": [
-            {"action_type": "execute_calendar", "target_service": "calendar_service",
-             "requires_confirmation": False},
+            {
+                "action_type": "execute_calendar",
+                "target_service": "calendar_service",
+                "requires_confirmation": False,
+            },
         ],
     },
     "meeting_schedule": {
         "response_template_id": "meeting_scheduled",
         "steps": [
-            {"action_type": "execute_calendar", "target_service": "calendar_service",
-             "requires_confirmation": True},
+            {
+                "action_type": "execute_calendar",
+                "target_service": "calendar_service",
+                "requires_confirmation": True,
+            },
         ],
     },
     "deadline_reminder": {
         "response_template_id": "reminder_set",
         "steps": [
-            {"action_type": "execute_calendar", "target_service": "calendar_service",
-             "requires_confirmation": False},
+            {
+                "action_type": "execute_calendar",
+                "target_service": "calendar_service",
+                "requires_confirmation": False,
+            },
         ],
     },
     "time_audit": {
@@ -190,7 +212,6 @@ ACTION_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "response_template_id": "commute_options",
         "steps": [{"action_type": "respond_only"}],
     },
-
     # --- Mobility ---
     "mobility_price_check": {
         "response_template_id": "ride_prices",
@@ -199,15 +220,21 @@ ACTION_TEMPLATES: Dict[str, Dict[str, Any]] = {
     "mobility_booking": {
         "response_template_id": "ride_booked",
         "steps": [
-            {"action_type": "execute_mobility", "target_service": "mobility_service",
-             "requires_confirmation": True},
+            {
+                "action_type": "execute_mobility",
+                "target_service": "mobility_service",
+                "requires_confirmation": True,
+            },
         ],
     },
     "mobility_cancellation": {
         "response_template_id": "ride_cancelled",
         "steps": [
-            {"action_type": "execute_mobility", "target_service": "mobility_service",
-             "requires_confirmation": False},
+            {
+                "action_type": "execute_mobility",
+                "target_service": "mobility_service",
+                "requires_confirmation": False,
+            },
         ],
     },
     "get_bookings": {
@@ -218,7 +245,6 @@ ACTION_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "response_template_id": "car_purchase_analysis",
         "steps": [{"action_type": "respond_only"}],
     },
-
     # --- Cross-Domain ---
     "greeting": {
         "response_template_id": "greeting",
@@ -294,7 +320,9 @@ class DecisionSynthesizer:
         self, intent: IntentResult, scores: ScoreDeltas
     ) -> ActionPlan:
         """Build ActionPlan from template registry."""
-        template = ACTION_TEMPLATES.get(intent.intent, ACTION_TEMPLATES["general_conversation"])
+        template = ACTION_TEMPLATES.get(
+            intent.intent, ACTION_TEMPLATES["general_conversation"]
+        )
 
         steps = []
         for step_def in template.get("steps", []):
@@ -359,10 +387,14 @@ class DecisionSynthesizer:
             for step_def in data.get("steps", [{"action_type": "respond_only"}]):
                 steps.append(
                     ActionStep(
-                        action_type=ActionType(step_def.get("action_type", "respond_only")),
+                        action_type=ActionType(
+                            step_def.get("action_type", "respond_only")
+                        ),
                         target_service=step_def.get("target_service"),
                         parameters=step_def.get("parameters", {}),
-                        requires_confirmation=step_def.get("requires_confirmation", True),
+                        requires_confirmation=step_def.get(
+                            "requires_confirmation", True
+                        ),
                     )
                 )
 
@@ -440,11 +472,20 @@ Be concise. Focus on the tradeoffs between dimensions. Return ONLY valid JSON.""
             return True
 
         # Escalate if scores are contradictory (mixed impact)
-        if scores.has_tradeoff and abs(scores.wealth.delta) > 5 and abs(scores.health.delta) > 5:
+        if (
+            scores.has_tradeoff
+            and abs(scores.wealth.delta) > 5
+            and abs(scores.health.delta) > 5
+        ):
             return True
 
         # Escalate if user explicitly asks for deep analysis
-        deep_analysis_keywords = ["help me think", "help me decide", "what should i do", "analyze this"]
+        deep_analysis_keywords = [
+            "help me think",
+            "help me decide",
+            "what should i do",
+            "analyze this",
+        ]
         if any(kw in intent.original_text.lower() for kw in deep_analysis_keywords):
             return True
 
