@@ -14,7 +14,7 @@ httpx==0.28.1
 requests==2.32.3
 python-dateutil==2.9.0.post0
 dateparser==1.2.2
-python-multipart==0.0.30
+python-multipart==0.0.32
 APScheduler==3.11.1
 
 # Security & Auth
