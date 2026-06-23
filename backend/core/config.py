@@ -88,7 +88,9 @@ def get_settings():
     # Validation for production environment
     if settings.ENV == "prod":
         if not settings.ADMIN_SECRET or len(settings.ADMIN_SECRET) < 48:
-            raise ValueError("ADMIN_SECRET must be at least 48 characters in production")
+            raise ValueError(
+                "ADMIN_SECRET must be at least 48 characters in production"
+            )
 
         if not settings.SECRET_KEY or len(settings.SECRET_KEY) < 48:
             raise ValueError("SECRET_KEY must be at least 48 characters in production")
@@ -96,12 +98,16 @@ def get_settings():
         if not settings.CREDENTIALS_ENCRYPTION_KEY:
             raise ValueError("CREDENTIALS_ENCRYPTION_KEY must be set in production")
 
-        if not all([
-            settings.AUTH0_DOMAIN,
-            settings.AUTH0_CLIENT_ID,
-            settings.AUTH0_CLIENT_SECRET,
-        ]):
-            raise ValueError("AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET must all be set in production")
+        if not all(
+            [
+                settings.AUTH0_DOMAIN,
+                settings.AUTH0_CLIENT_ID,
+                settings.AUTH0_CLIENT_SECRET,
+            ]
+        ):
+            raise ValueError(
+                "AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET must all be set in production"
+            )
 
         if "sqlite" not in settings.DATABASE_URL:
             if not settings.INSTANCE_CONNECTION_NAME and not settings.DATABASE_URL:

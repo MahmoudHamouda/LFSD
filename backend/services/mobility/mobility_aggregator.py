@@ -299,7 +299,7 @@ class MobilityAggregator:
             start_lat=start_location["lat"],
             start_lng=start_location["lng"],
             end_lat=end_location["lat"],
-            end_lng=end_location["lng"]
+            end_lng=end_location["lng"],
         )
         cheapest = comparison.get("cheapest")
         if not cheapest:
@@ -312,11 +312,10 @@ class MobilityAggregator:
             start_location=start_location,
             end_location=end_location,
             db=db,
-            **kwargs
+            **kwargs,
         )
 
 
 # Internal factory instead of singleton to avoid stale state in long-running procs
 def get_mobility_aggregator() -> MobilityAggregator:
     return MobilityAggregator()
-

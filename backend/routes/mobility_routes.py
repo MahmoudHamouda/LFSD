@@ -174,7 +174,6 @@ async def get_ride_status(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-
 @router.get("/providers", summary="List available providers")
 async def list_providers():
     """
