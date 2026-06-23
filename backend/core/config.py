@@ -25,6 +25,17 @@ class Settings:
     ADMIN_SECRET = os.getenv("ADMIN_SECRET")
     CREDENTIALS_ENCRYPTION_KEY = os.getenv("CREDENTIALS_ENCRYPTION_KEY")
 
+    # Uber
+    UBER_CLIENT_ID = os.getenv("UBER_CLIENT_ID")
+    UBER_CLIENT_SECRET = os.getenv("UBER_CLIENT_SECRET")
+
+    # Stripe
+    STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
+    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+
+    # WhatsApp
+    WHATSAPP_API_TOKEN = os.getenv("WHATSAPP_API_TOKEN")
+
     # Integration Tokens
     UBER_SERVER_TOKEN = os.getenv("UBER_SERVER_TOKEN")
     RTA_API_KEY = os.getenv("RTA_API_KEY")
@@ -76,28 +87,22 @@ def get_settings():
 
     # Validation for production environment
     if settings.ENV == "prod":
-        if not settings.ADMIN_SECRET or len(settings.ADMIN_SECRET) < 32:
-            # Log warning in dev, raise error in prod?
-            # For now, let's just warn or pass to avoid startup crashes if user hasn't set it yet
-            pass
+        if not settings.ADMIN_SECRET or len(settings.ADMIN_SECRET) < 48:
+            raise ValueError("ADMIN_SECRET must be at least 48 characters in production")
 
-        if not settings.GEMINI_API_KEY:
-            raise ValueError("GEMINI_API_KEY must be set in production")
+        if not settings.SECRET_KEY or len(settings.SECRET_KEY) < 48:
+            raise ValueError("SECRET_KEY must be at least 48 characters in production")
 
-        if not settings.SECRET_KEY:
-            raise ValueError("SECRET_KEY must be set in production")
+        if not settings.CREDENTIALS_ENCRYPTION_KEY:
+            raise ValueError("CREDENTIALS_ENCRYPTION_KEY must be set in production")
 
-        if not all(
-            [
-                settings.AUTH0_DOMAIN,
-                settings.AUTH0_CLIENT_ID,
-                settings.AUTH0_CLIENT_SECRET,
-            ]
-        ):
-            # Warn for now as some deployments might use native auth only, but ideally raise
-            pass
+        if not all([
+            settings.AUTH0_DOMAIN,
+            settings.AUTH0_CLIENT_ID,
+            settings.AUTH0_CLIENT_SECRET,
+        ]):
+            raise ValueError("AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET must all be set in production")
 
-        # Ensure we have DB connection details if not using SQLite
         if "sqlite" not in settings.DATABASE_URL:
             if not settings.INSTANCE_CONNECTION_NAME and not settings.DATABASE_URL:
                 raise ValueError(
