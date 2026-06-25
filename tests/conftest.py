@@ -1,7 +1,9 @@
 import pytest
 import sys
 import os
-os.environ["CREDENTIALS_ENCRYPTION_KEY"] = "rVi0toIfQ1QE55m6qGgzRxEd1b3cFEcw4jXKqQ84xGA="
+# Define safe environment defaults for testing
+os.environ.setdefault("CREDENTIALS_ENCRYPTION_KEY", "yTA972sJDSyacuu6_DPuibR412Mqp4g-iaerwubc8DU=")
+os.environ.setdefault("SECRET_KEY", "test_secret_key_for_signing_tokens_123456")
 from fastapi.testclient import TestClient
 
 # Add backend to sys.path

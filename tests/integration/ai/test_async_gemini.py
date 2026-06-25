@@ -2,8 +2,10 @@ import google.generativeai as genai
 import asyncio
 import os
 
-# Use the key that we know works
-api_key = "AIzaSyBTeVnxIK98KHnToQRNWw_HJgsfDHh0pJI"
+# Fetch GEMINI_API_KEY from environment variable
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    raise ValueError("GEMINI_API_KEY environment variable is not set")
 genai.configure(api_key=api_key)
 
 async def test_async():

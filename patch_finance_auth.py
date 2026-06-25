@@ -2,9 +2,15 @@ import requests
 import jwt
 from sqlalchemy import create_engine, text
 
+import os
+
 # 1. Login to get Token
-url = "https://lfsd-backend-692544481281.us-central1.run.app/api/auth/login"
-payload = {"username": "finance@helm.com", "email": "finance@helm.com", "password": "P@ssword123"}
+url = os.getenv("BACKEND_URL", "https://lfsd-backend-692544481281.us-central1.run.app") + "/api/auth/login"
+payload = {
+    "username": "finance@helm.com",
+    "email": "finance@helm.com",
+    "password": os.getenv("FINANCE_USER_PASSWORD", "dummy_pass")
+}
 print(f"Logging in to {url}...")
 
 try:
@@ -20,7 +26,7 @@ try:
     
     # 3. Patch DB
     if auth0_id:
-        DB_URL = "postgresql+psycopg2://postgres:LfsdSecure2024!@136.119.201.13:5432/lfsd"
+        DB_URL = os.getenv("DATABASE_URL", "sqlite:///./lfsd_v2.db")
         engine = create_engine(DB_URL)
         with engine.connect() as conn:
             print(f"Patching finance@helm.com with auth0_id={auth0_id}...")

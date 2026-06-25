@@ -8,7 +8,7 @@ import uuid
 BACKEND_URL = "https://lfsd-backend-692544481281.us-central1.run.app"
 AUTH0_DOMAIN = "dev-lmc05ou12e7ep05p.eu.auth0.com"
 AUTH0_MGMT_CLIENT_ID = "IRJU5sZi2elmPMgqyC3cvYVSQvzFUzia"
-AUTH0_MGMT_CLIENT_SECRET = "xymjRYlEU5r0V37kws7PnOyhIBRhm2Nz_cCQTGL7NEjnuqNMBcZUDmbsmd6V96P8"
+AUTH0_MGMT_CLIENT_SECRET = os.getenv("AUTH0_CLIENT_SECRET", "dummy_secret")
 
 PERSONAS = [
     {"email": "finance.v6@helm.com", "password": "P@ssword123", "name": "Finance User", "type": "finance"},

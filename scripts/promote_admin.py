@@ -7,8 +7,8 @@ root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(root_dir)
 sys.path.append(os.path.join(root_dir, "backend"))
 
-# Use the direct connection string
-DATABASE_URL = "postgresql+psycopg2://postgres:LfsdSecure2024!@136.119.201.13:5432/lfsd"
+# Use database URL from environment variable
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./lfsd_v2.db")
 
 def promote_admin(email: str):
     print(f"Connecting to database...")

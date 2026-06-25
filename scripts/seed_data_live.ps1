@@ -2,7 +2,12 @@ $ErrorActionPreference = "Stop"
 
 $Auth0Domain = "dev-lmc05ou12e7ep05p.eu.auth0.com"
 $ClientId = "IRJU5sZi2elmPMgqyC3cvYVSQvzFUzia"
-$ClientSecret = "xymjRYlEU5r0V37kws7PnOyhIBRhm2Nz_cCQTGL7NEjnuqNMBcZUDmbsmd6V96P8"
+# Fetch ClientSecret from environment variable
+$ClientSecret = $env:AUTH0_CLIENT_SECRET
+if (-not $ClientSecret) {
+    Write-Host "Warning: AUTH0_CLIENT_SECRET environment variable is not set. Using dummy fallback."
+    $ClientSecret = "dummy_secret"
+}
 $Audience = "https://dev-lmc05ou12e7ep05p.eu.auth0.com/api/v2/"
 $BackendUrl = "https://lfsd-backend-692544481281.us-central1.run.app"
 

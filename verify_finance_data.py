@@ -1,7 +1,8 @@
-from sqlalchemy import create_engine, text
+import os
 import json
+from sqlalchemy import create_engine, text
 
-DB_URL = "postgresql+psycopg2://postgres:LfsdSecure2024!@136.119.201.13:5432/lfsd"
+DB_URL = os.getenv("DATABASE_URL", "sqlite:///./lfsd_v2.db")
 
 def verify():
     try:
