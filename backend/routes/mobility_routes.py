@@ -88,9 +88,10 @@ async def get_cheapest(
     provider_list = providers.split(",") if providers else None
 
     try:
-        cheapest = await aggregator.get_cheapest_option(
+        comparison = await aggregator.compare_prices(
             current_user.id, start_lat, start_lng, end_lat, end_lng, provider_list
         )
+        cheapest = comparison.get("cheapest")
 
         if not cheapest:
             return {"success": False, "message": "No ride options available"}
@@ -103,8 +104,8 @@ async def get_cheapest(
 @router.post("/book-ride", summary="Book a ride")
 @limiter.limit("10/minute")
 async def book_ride(
-    request: BookRideRequest,
-    req: Request,
+    request: Request,
+    body: BookRideRequest,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -116,12 +117,12 @@ async def book_ride(
     try:
         result = await aggregator.book_ride(
             current_user.id,
-            request.provider,
-            request.ride_type,
-            request.start_location.dict(),
-            request.end_location.dict(),
+            body.provider,
+            body.ride_type,
+            body.start_location.dict(),
+            body.end_location.dict(),
             db,
-            **(request.options or {})
+            **(body.options or {})
         )
 
         return {"success": result.get("success", False), "data": result}
@@ -132,9 +133,9 @@ async def book_ride(
 @router.post("/book-cheapest", summary="Book the cheapest ride")
 @limiter.limit("10/minute")
 async def book_cheapest(
+    request: Request,
     start_location: LocationModel,
     end_location: LocationModel,
-    request: Request,
     current_user=Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -156,9 +157,9 @@ async def book_cheapest(
 @router.get("/ride-status/{provider}/{ride_id}", summary="Get ride status")
 @limiter.limit("60/minute")
 async def get_ride_status(
+    request: Request,
     provider: str,
     ride_id: str,
-    request: Request,
     current_user=Depends(get_current_user),
 ):
     """
