@@ -189,10 +189,31 @@ async def get_current_user(
         raise credentials_exception
 
 
+async def get_optional_user(
+    request: Request, token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
+) -> Optional[DBUser]:
+    """
+    Best-effort authentication.
+
+    Returns the authenticated user when a valid token is present, otherwise
+    returns ``None`` instead of raising. Used by endpoints (e.g. the public
+    ``/conversation`` chat surface) that must still function for unauthenticated
+    visitors while giving signed-in users personalized, data-backed responses.
+    """
+    try:
+        return await get_current_user(request, token=token, db=db)
+    except HTTPException:
+        return None
+    except Exception as e:  # pragma: no cover - defensive
+        logger.debug(f"Optional auth resolution failed: {e}")
+        return None
+
+
 __all__ = [
     "Token",
     "UserSchema",
     "get_current_user",
+    "get_optional_user",
     "oauth2_scheme",
     "get_password_hash",
     "verify_password",

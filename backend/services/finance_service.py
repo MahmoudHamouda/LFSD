@@ -54,6 +54,7 @@ class FinanceService:
 
         return round(assets - liabilities, 2)
 
+    def get_portfolio_performance(self, user_id: str) -> dict:
         """Get aggregated portfolio performance."""
         if not InvestmentPortfolio:
             return {"total_value": 0, "daily_change_percent": 0}
