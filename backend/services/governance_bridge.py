@@ -99,7 +99,9 @@ def _ensure_importable() -> None:
         repo_root = Path(__file__).resolve().parents[2]
         candidates = [repo_root / "packages" / "responsible-ai", repo_root]
         for candidate in candidates:
-            if (candidate / "responsible_ai").is_dir() and str(candidate) not in sys.path:
+            if (candidate / "responsible_ai").is_dir() and str(
+                candidate
+            ) not in sys.path:
                 sys.path.insert(0, str(candidate))
 
 
