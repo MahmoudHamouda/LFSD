@@ -171,33 +171,24 @@ async def read_users_me(
         .all()
     )
 
+    # Honest streak: count consecutive check-in days ending today (or, if the
+    # user hasn't checked in yet today, yesterday). No check-in in the last two
+    # days => streak is 0. Do NOT fabricate a "1" for users with no data.
     check_in_streak = 0
     if summary_dates:
         import datetime as dt
 
         today = dt.date.today()
-        dates = [d[0] for d in summary_dates]
-        if today in dates or (today - dt.timedelta(days=1)) in dates:
-            current = today
-            if today not in dates:
-                current = today - dt.timedelta(days=1)
-            while current in dates:
-                check_in_streak += 1
-                current -= dt.timedelta(days=1)
-        if today not in dates and check_in_streak == 0:
-            yesterday = today - dt.timedelta(days=1)
-            if yesterday in dates:
-                current = yesterday
-                check_in_streak = 1
-                while current in dates:
-                    check_in_streak += 1
-                    current -= dt.timedelta(days=1)
-            else:
-                check_in_streak = 1
-        elif today not in dates and check_in_streak > 0:
+        dates = {d[0] for d in summary_dates}
+        anchor = None
+        if today in dates:
+            anchor = today
+        elif (today - dt.timedelta(days=1)) in dates:
+            anchor = today - dt.timedelta(days=1)
+        current = anchor
+        while current is not None and current in dates:
             check_in_streak += 1
-    else:
-        check_in_streak = 1
+            current -= dt.timedelta(days=1)
 
     index_count = db.query(VivIndex).filter(VivIndex.user_id == user_id).count()
     financial_streak = min(index_count, 52)
