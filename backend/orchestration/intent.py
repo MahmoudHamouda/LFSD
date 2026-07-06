@@ -27,6 +27,93 @@ class IntentClassifier:
         "GENERAL": {"required": []},
     }
 
+    # Whole-word mobility triggers. Matched with \b boundaries so common words
+    # like "good", "ago", "category" don't accidentally trigger a ride flow.
+    MOBILITY_KEYWORDS = [
+        "go",
+        "going",
+        "ride",
+        "rides",
+        "airport",
+        "hotel",
+        "taxi",
+        "cab",
+        "uber",
+        "careem",
+        "drive",
+        "driving",
+        "commute",
+        "book",
+    ]
+
+    # Short affirmations / answers that indicate the user is continuing a
+    # pending clarification (e.g. answering "where are you coming from?").
+    CONTINUATION_PHRASES = {
+        "yes",
+        "yeah",
+        "yep",
+        "yup",
+        "sure",
+        "ok",
+        "okay",
+        "please",
+        "correct",
+        "right",
+        "now",
+        "current location",
+        "use current location",
+        "from current location",
+        "my current location",
+    }
+
+    # Keywords that clearly belong to another vertical — if the current message
+    # contains one of these it is a fresh request, not a mobility continuation.
+    _OTHER_INTENT_KEYWORDS = [
+        "spend",
+        "budget",
+        "afford",
+        "balance",
+        "buy",
+        "invest",
+        "save",
+        "weather",
+        "eat",
+        "sleep",
+        "workout",
+        "exercise",
+        "meeting",
+        "schedule",
+        "calendar",
+        "weight",
+        "steps",
+    ]
+
+    def _has_mobility_signal(self, text: str) -> bool:
+        """True when a message independently expresses a ride/commute request."""
+        text_lower = (text or "").lower()
+        is_mobility = any(
+            re.search(rf"\b{re.escape(k)}\b", text_lower)
+            for k in self.MOBILITY_KEYWORDS
+        )
+        has_direction = bool(re.search(r"\b(to|from)\b", text_lower))
+        is_explicit_booking = bool(re.search(r"\b(book|uber|careem)\b", text_lower))
+        return is_mobility and (has_direction or is_explicit_booking)
+
+    def _looks_like_continuation(self, text: str) -> bool:
+        """
+        True when a message reads like an answer to a pending mobility
+        clarification (a short place/time reply or an affirmation) rather than a
+        brand-new question on another topic.
+        """
+        t = (text or "").lower().strip(" .!?")
+        if t in self.CONTINUATION_PHRASES:
+            return True
+        words = t.split()
+        if len(words) <= 4 and "?" not in text:
+            if not any(k in t for k in self._OTHER_INTENT_KEYWORDS):
+                return True
+        return False
+
     def _extract_mobility_entities(self, text: str) -> Dict[str, str]:
         text_lower = text.lower()
         entities = {}
@@ -56,41 +143,24 @@ class IntentClassifier:
         """Determines the intent from text with confidence."""
         text_lower = text.lower()
 
-        # 1. Mobility Check
-        mobility_keywords = [
-            "go",
-            "ride",
-            "airport",
-            "hotel",
-            "taxi",
-            "uber",
-            "careem",
-            "drive",
-            "commute",
-            "book",
-        ]
-        is_mobility = any(keyword in text_lower for keyword in mobility_keywords)
-        has_direction = "to " in text_lower or "from " in text_lower
-        is_explicit_booking = (
-            "book " in text_lower or "uber" in text_lower or "careem" in text_lower
-        )
+        # 1. Mobility Check — does THIS message express a ride request?
+        has_mobility_signal = self._has_mobility_signal(text)
 
-        # Check history to see if we were just discussing mobility
+        # Only treat the message as a mobility continuation when the user is
+        # plausibly answering a pending clarification. Critically, we scan only
+        # prior USER messages for real mobility intent — never the assistant's
+        # own clarification text (which contains "going?"/"destination" and
+        # would otherwise trap every following message in the ride flow).
         recent_mobility_context = False
-        if history and not is_mobility:
-            # If the user says "yes" or similar, check if the assistant just asked a mobility question
-            for msg in reversed(history[-3:]):
-                content = msg.get("content", "") if isinstance(msg, dict) else str(msg)
-                if any(
-                    keyword in content.lower()
-                    for keyword in ["ride", "uber", "careem", "destination", "going?"]
-                ):
+        if history and not has_mobility_signal and self._looks_like_continuation(text):
+            for msg in reversed(history[-6:]):
+                if not isinstance(msg, dict) or msg.get("role") != "user":
+                    continue
+                if self._has_mobility_signal(msg.get("content", "")):
                     recent_mobility_context = True
                     break
 
-        if (
-            is_mobility and (has_direction or is_explicit_booking)
-        ) or recent_mobility_context:
+        if has_mobility_signal or recent_mobility_context:
             entities = self._extract_mobility_entities(text)
 
             # Determine if this is an explicit execution command

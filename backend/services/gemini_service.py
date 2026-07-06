@@ -997,16 +997,39 @@ class GeminiService:
             }
 
         elif intent == "financial_balance":
-            # This might be deprecated if merged into financial_report, but keeping for now
+            # Pull real account balances for this user.
+            try:
+                accounts = self.finance_service.get_accounts(user_id)
+            except Exception as e:
+                logger.error(f"Error querying accounts: {e}")
+                return {
+                    "type": "error",
+                    "text": "I had trouble accessing your account balances.",
+                }
+
+            if not accounts:
+                return {
+                    "type": "financial_balance",
+                    "text": "I don't see any linked accounts yet. Please connect your bank account to view balances.",
+                    "data": {"total_balance": 0.0, "accounts": [], "status": "no_data"},
+                }
+
+            account_data = [
+                {
+                    "name": (acc.account_type or "Account").title(),
+                    "balance": float(acc.current_balance or 0.0),
+                    "bank": acc.institution_name or "",
+                }
+                for acc in accounts
+            ]
+            total_balance = round(sum(a["balance"] for a in account_data), 2)
+
             return {
                 "type": "financial_balance",
-                "text": "Your current total balance is AED 24,500.00 across all accounts.",
+                "text": f"Your current total balance is AED {total_balance:,.2f} across {len(account_data)} account(s).",
                 "data": {
-                    "total_balance": 24500.00,
-                    "accounts": [
-                        {"name": "Main Checking", "balance": 12000.00, "bank": "ENBD"},
-                        {"name": "Savings", "balance": 12500.00, "bank": "Liv"},
-                    ],
+                    "total_balance": total_balance,
+                    "accounts": account_data,
                 },
             }
 
@@ -1021,11 +1044,12 @@ class GeminiService:
         """
         Handle financial advisory requests using the Reasoning Bridge.
         """
-        # 1. Fetch Data (Mock for now)
-        balance = 24500.00
-        avg_spend = 4500.00
-        fixed_costs = 2500.00
-        income = 5000.00
+        # 1. Fetch real financial data for this user
+        summary = self.finance_service.get_monthly_summary(user_id)
+        balance = self.finance_service.get_net_worth(user_id)
+        income = summary.get("total_income", 0.0)
+        avg_spend = summary.get("total_expenses", 0.0)
+        fixed_costs = summary.get("recurring_bills", 0.0)
 
         # 2. Validate Goal (Hard Logic)
         # Check if amount is present in entities or top level

@@ -113,7 +113,7 @@ def create_base_user(user_id, email, name, persona_type, bio):
         hashed_password=PASSWORD_HASH,
         profile_json={"name": name, "type": persona_type, "bio": bio},
         viv_preferences={"risk_tolerance": "medium"},
-        onboarding_status="COMPLETED",
+        onboarding_status="COMPLETE",
     )
     db.add(user)
     db.commit()
