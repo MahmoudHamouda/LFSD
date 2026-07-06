@@ -670,6 +670,16 @@ def create_app() -> FastAPI:
                             "WHERE onboarding_status = 'COMPLETED'"
                         )
                     )
+                    # Seeded demo/persona accounts always bypass onboarding.
+                    conn.execute(
+                        text(
+                            "UPDATE users_v2 SET onboarding_status = 'COMPLETE' "
+                            "WHERE email IN ("
+                            "'super@helm.com','finance@helm.com',"
+                            "'health@helm.com','time@helm.com') "
+                            "AND onboarding_status <> 'COMPLETE'"
+                        )
+                    )
                     conn.commit()
                     if getattr(result, "rowcount", 0):
                         logger.info(
