@@ -708,21 +708,19 @@ def create_app() -> FastAPI:
         except Exception as gov_e:
             logger.error(f"Responsible-AI governance init failed: {gov_e}")
 
-        # Populate the demo/persona accounts with data (idempotent, no-op for
-        # real users) so their dashboards aren't blank.
+        # Refresh the demo/persona accounts with data current up to today
+        # (no-op for real users). Also runs on a schedule so it stays fresh.
         try:
             from models.database import SessionLocal
-            from services.demo_seed import seed_demo_accounts
+            from services.demo_seed import refresh_demo_accounts
 
             _seed_db = SessionLocal()
             try:
-                n = seed_demo_accounts(_seed_db)
-                if n:
-                    logger.info(f"Seeded demo data for {n} account(s).")
+                refresh_demo_accounts(_seed_db)
             finally:
                 _seed_db.close()
         except Exception as seed_e:
-            logger.error(f"Demo data seed failed: {seed_e}")
+            logger.error(f"Demo data refresh failed: {seed_e}")
 
     @app.on_event("shutdown")
     async def shutdown_event():
