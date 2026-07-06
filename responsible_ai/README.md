@@ -41,6 +41,10 @@ The only difference between the two runs is which **config** is passed in.
 
 ## What's inside
 
+This package lives at the **repository top level** (not under `backend/`) on
+purpose: it depends on nothing in the HELM app and is meant to be lifted whole
+into your own codebase.
+
 ```
 responsible_ai/
 ├── scoring/                     # Bridge #1 — the reusable assessment method
@@ -48,15 +52,35 @@ responsible_ai/
 │   ├── engine.py                # AssessmentEngine — deterministic, explainable
 │   ├── configs/
 │   │   ├── viv_wellbeing.py         # reference config: the HELM/Viv score
-│   │   └── inclusion_readiness.py   # example config: an FI readiness scorecard
+│   │   ├── inclusion_readiness.py   # cross-cutting institutional readiness
+│   │   └── families.py              # 10 per-use-case readiness scorecards
 │   └── demo.py
 ├── governance/                  # Bridge #2 — the controls FIs must show
 │   ├── pii.py                   # redact/minimize data before AI calls
 │   ├── consent.py               # persisted, versioned, default-deny consent
 │   └── fairness.py              # adverse-action reasons + four-fifths rule
+├── tests/
 ├── ARCHITECTURE.md
 ├── ADOPTION_GUIDE.md
 └── README.md
+```
+
+### Two levels of scorecard
+
+- **Cross-cutting** (`inclusion_readiness.py`) — one governance-posture check
+  across Data / Governance / Fair-Lending / Privacy / Operational.
+- **Per-family** (`families.py`) — a dedicated readiness scorecard for each of
+  the concept note's ten use-case families, enumerable via `FAMILY_CONFIGS`:
+  account onboarding · cash-flow & savings · credit / thin-file · SME finance ·
+  fraud & anomaly · responsible-AI ops · open banking · fintech evaluation ·
+  financial literacy · digital wealth.
+
+```python
+from responsible_ai.scoring import AssessmentEngine
+from responsible_ai.scoring.configs import FAMILY_CONFIGS
+
+cfg = FAMILY_CONFIGS["credit_thinfile"]
+result = AssessmentEngine(cfg).evaluate(answers)   # a thin-file readiness scorecard
 ```
 
 ## How it maps to the inclusion framework

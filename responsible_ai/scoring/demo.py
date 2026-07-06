@@ -60,6 +60,21 @@ def _demo_readiness() -> None:
     print(f"\nTop gaps to close before pilot: {gaps}")
 
 
+def _demo_families() -> None:
+    """The same engine scores readiness for each of the 10 use-case families."""
+    from .configs import FAMILY_CONFIGS
+    from .engine import AssessmentEngine as _E
+
+    print("\n" + "=" * 70)
+    print("PER-FAMILY readiness (partial-adoption baseline of 0.5 everywhere)")
+    print("=" * 70)
+    for slug, config in FAMILY_CONFIGS.items():
+        answers = {r.metric: 0.5 for r in config.rules}
+        result = _E(config).evaluate(answers)
+        print(f"  {slug:22} {result.composite_score:5.1f}/100  — {config.name}")
+
+
 if __name__ == "__main__":
     _demo_viv()
     _demo_readiness()
+    _demo_families()

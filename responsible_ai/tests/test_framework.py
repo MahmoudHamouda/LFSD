@@ -13,6 +13,7 @@ from responsible_ai.scoring import (
     Rule,
 )
 from responsible_ai.scoring.configs import (
+    FAMILY_CONFIGS,
     INCLUSION_READINESS_CONFIG,
     VIV_WELLBEING_CONFIG,
 )
@@ -126,3 +127,25 @@ def test_adverse_action_reasons_from_low_scores():
 def test_four_fifths_flags_disparate_impact():
     di = four_fifths_check({"A": 80, "B": 50}, {"A": 100, "B": 100})
     assert not di.passes and "B" in di.flagged_groups
+
+
+# -- the 10 family scorecards ----------------------------------------------
+
+
+def test_ten_family_configs_present():
+    assert len(FAMILY_CONFIGS) == 10
+
+
+def test_every_family_config_builds_and_scores():
+    """Each family config must be structurally valid and fully answerable."""
+    for slug, config in FAMILY_CONFIGS.items():
+        engine = AssessmentEngine(config)  # raises on orphaned/invalid config
+        # Answering every question '1.0' should yield a perfect, complete score.
+        answers = {r.metric: 1.0 for r in config.rules}
+        result = engine.evaluate(answers)
+        assert not result.missing_inputs, f"{slug} has unmapped metrics"
+        assert result.composite_score == 100.0, f"{slug} did not reach 100"
+        # And every rule must carry a regulatory ref or reasoning (explainable).
+        for dim in result.dimension_results:
+            for rr in dim.rule_results:
+                assert rr.reasoning
