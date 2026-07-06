@@ -81,7 +81,7 @@ class Settings:
     # Responsible-AI governance layer. OFF by default: turning it on enforces
     # consent, PII redaction, and the policy gate on AI advisory requests.
     RAI_GOVERNANCE_ENABLED = (
-        os.getenv("RAI_GOVERNANCE_ENABLED", "false").lower() == "true"
+        os.getenv("RAI_GOVERNANCE_ENABLED", "true").lower() == "true"
     )
     RAI_CONSENT_PURPOSE = os.getenv("RAI_CONSENT_PURPOSE", "ai_advisory")
     RAI_CONSENT_POLICY_VERSION = os.getenv("RAI_CONSENT_POLICY_VERSION", "v1")

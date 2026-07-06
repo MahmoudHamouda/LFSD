@@ -2,6 +2,38 @@ import { chatHistorySampleData } from '../constants/chatHistory';
 
 import { ChatMessage, Conversation, ConversationRequest, CosmosDBHealth, CosmosDBStatus, UserInfo } from './models';
 
+// --- Responsible-AI consent -------------------------------------------------
+
+export interface ConsentStatus {
+  purpose: string;
+  has_consent: boolean;
+}
+
+export async function getConsent(purpose = 'ai_advisory'): Promise<ConsentStatus | null> {
+  try {
+    const res = await fetch(`/api/consent?purpose=${encodeURIComponent(purpose)}`, {
+      method: 'GET',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
+export async function setConsent(granted: boolean, purpose = 'ai_advisory'): Promise<boolean> {
+  const res = await fetch('/api/consent', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${localStorage.getItem('token')}`,
+    },
+    body: JSON.stringify({ granted, purpose }),
+  });
+  return res.ok;
+}
+
 export async function conversationApi(options: ConversationRequest, abortSignal: AbortSignal): Promise<Response> {
   const response = await fetch('/conversation', {
     method: 'POST',

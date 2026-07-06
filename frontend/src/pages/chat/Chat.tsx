@@ -3,6 +3,7 @@ import { historyGenerate } from '../../api/api';
 import { ChatMessage as ChatMessageType } from '../../api/models';
 import ChatMessage from '../../components/chat/ChatMessage';
 import ChatInput from '../../components/chat/ChatInput';
+import ConsentBanner from '../../components/chat/ConsentBanner';
 import styles from './Chat.module.css';
 
 
@@ -149,7 +150,7 @@ const Chat = () => {
 
   return (
     <div className={styles.container}>
-
+      <ConsentBanner />
 
       <div className={styles.chatArea}>
         {messages.length === 0 ? (
