@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "responsible-ai"
+dynamic = ["version"]
+description = "A modular, policy-first Responsible-AI toolkit for financial-inclusion work: deterministic, explainable scoring plus governance (consent, PII redaction, a policy gate, and fair-lending controls)."
+readme = "responsible_ai/README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Helmory" }]
+keywords = [
+    "responsible-ai",
+    "financial-inclusion",
+    "governance",
+    "consent",
+    "fairness",
+    "fair-lending",
+    "scoring",
+    "explainability",
+    "pii-redaction",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial",
+    "Typing :: Typed",
+]
+# Core (scoring + pure-logic governance) has no third-party dependency.
+dependencies = []
+
+[project.optional-dependencies]
+# Needed only for the DB-backed stores (SqlConsentStore / SqlDecisionLog / …).
+db = ["SQLAlchemy>=2.0"]
+dev = ["pytest>=7", "SQLAlchemy>=2.0", "black==25.1.0"]
+
+[project.urls]
+Homepage = "https://github.com/MahmoudHamouda/LFSD"
+Source = "https://github.com/MahmoudHamouda/LFSD/tree/main/packages/responsible-ai"
+Documentation = "https://github.com/MahmoudHamouda/LFSD/blob/main/packages/responsible-ai/responsible_ai/README.md"
+
+[tool.setuptools.dynamic]
+version = { attr = "responsible_ai.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["responsible_ai*"]
+exclude = ["responsible_ai.tests*"]
+
+[tool.setuptools.package-data]
+responsible_ai = ["py.typed", "*.md", "**/*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["responsible_ai/tests"]

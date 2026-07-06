@@ -88,17 +88,19 @@ def _utc_now_iso() -> str:
 
 
 def _ensure_importable() -> None:
-    """Make ``responsible_ai`` importable in dev (it lives at the repo root, the
-    parent of this backend/ dir). In the container it is vendored alongside the
-    app, so the plain import already resolves."""
+    """Make ``responsible_ai`` importable in dev (the source lives in the
+    packages/responsible-ai/ distribution). In the container it is vendored
+    alongside the app, so the plain import already resolves."""
     try:
         import responsible_ai  # noqa: F401
 
         return
     except ImportError:
         repo_root = Path(__file__).resolve().parents[2]
-        if str(repo_root) not in sys.path:
-            sys.path.insert(0, str(repo_root))
+        candidates = [repo_root / "packages" / "responsible-ai", repo_root]
+        for candidate in candidates:
+            if (candidate / "responsible_ai").is_dir() and str(candidate) not in sys.path:
+                sys.path.insert(0, str(candidate))
 
 
 @functools.lru_cache(maxsize=1)
