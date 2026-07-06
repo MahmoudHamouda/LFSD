@@ -76,22 +76,46 @@ Guidelines:
 
 ## 3. Wire in governance
 
+The framework ships DB-backed, append-only, hash-chained stores (SQLAlchemy
+Core). Point them at your engine — `create_all` provisions `rai_*` tables:
+
 ```python
+from sqlalchemy import create_engine
 from responsible_ai.governance import (
     ConsentService, ConsentRecord, PIIRedactor,
+    ExecutionPolicy, PolicyConfig, ActionPolicy, RiskClass,
     AdverseActionReasoner, four_fifths_check,
 )
+from responsible_ai.governance import stores as st
 
-# a) Consent — back ConsentStore with YOUR database (example: SQLAlchemy)
-#    Implement append() / history() against a consent_records table.
-consent = ConsentService(MyDbConsentStore(session))
+engine = create_engine("postgresql+psycopg://…")   # your DB
+st.create_all(engine)
+
+consent = ConsentService(st.SqlConsentStore(engine))
+decisions = st.SqlDecisionLog(engine)
+
+# a) Consent — default-deny; the store is append-only + tamper-evident.
+consent.record(ConsentRecord(user_id, "thin_file_underwriting", True, "v1", iso_ts))
 if not consent.has_consent(user_id, purpose="thin_file_underwriting"):
     raise PermissionError("No consent on file for this purpose.")
 
-# b) Score
+# b) Authorize the action through the policy gate (risk tiers + consent + 2FA)
+gate = ExecutionPolicy(
+    PolicyConfig(actions={
+        "run_underwriting": ActionPolicy(RiskClass.HIGH, requires_consent=True,
+                                         consent_purpose="thin_file_underwriting"),
+    }),
+    consent_service=consent, decision_log=decisions,
+    idempotency_store=st.SqlIdempotencyStore(engine),
+)
+verdict = gate.evaluate("run_underwriting", user_id)
+if not verdict.allowed and not verdict.requires_confirmation:
+    return verdict  # DENY — stop here
+
+# c) Score
 result = AssessmentEngine(MY_CONFIG).evaluate(inputs)
 
-# c) Persist result.to_dict() to your immutable audit store
+# d) Persist result.to_dict() to your immutable audit store
 
 # d) If declining, disclose the real reasons
 if result.composite_score < 60:

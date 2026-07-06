@@ -57,12 +57,23 @@ responsible_ai/
 │   └── demo.py
 ├── governance/                  # Bridge #2 — the controls FIs must show
 │   ├── pii.py                   # redact/minimize data before AI calls
-│   ├── consent.py               # persisted, versioned, default-deny consent
-│   └── fairness.py              # adverse-action reasons + four-fifths rule
+│   ├── consent.py               # versioned, default-deny consent
+│   ├── policy.py                # execution gate: risk tiers, consent, 2FA
+│   ├── fairness.py              # adverse-action reasons + four-fifths rule
+│   ├── stores.py                # DB-backed, append-only, hash-chained ledgers
+│   ├── demo.py                  # standalone DB-backed demo
+│   └── SECURITY.md              # threat model + guarantees + readiness checklist
 ├── tests/
 ├── ARCHITECTURE.md
 ├── ADOPTION_GUIDE.md
 └── README.md
+```
+
+The governance layer runs **on its own against a database** (SQLAlchemy Core,
+its own `rai_*` tables) and is append-only + tamper-evident. See it live:
+
+```bash
+python -m responsible_ai.governance.demo    # consent, policy gate, tamper check
 ```
 
 ### Two levels of scorecard
