@@ -1,5 +1,20 @@
 import { User, UserUpdateRequest } from '../types/user';
 
+/** Real integration statuses for the current user (connector id -> connected). */
+export async function getUserConnections(): Promise<Record<string, boolean>> {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/user/connections', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) return {};
+        const payload = await response.json();
+        return payload.connections || {};
+    } catch {
+        return {};
+    }
+}
+
 export async function getUserProfile(): Promise<User | null> {
     try {
         const token = localStorage.getItem('token');
