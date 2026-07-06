@@ -1529,14 +1529,20 @@ class GeminiService:
             last_message = "Hello"
 
         # --- Responsible-AI governance gate (flag-gated; no-op when disabled) ---
-        # Consent gate + PII redaction before anything can reach an LLM.
+        # Consent is required ONLY for requests that analyze the user's financial
+        # data — a greeting or a non-financial question is not gated. PII is
+        # redacted from all inbound content before it can reach an LLM.
         try:
             from services import governance_bridge as _gov
 
             if _gov.enabled():
-                if not _gov.has_consent(user_id):
+                financial = _gov.needs_financial_consent(last_message)
+                if financial and not _gov.has_consent(user_id):
                     _gov.log_decision(
-                        user_id, "ai_advisory", "DENY", "No consent on file."
+                        user_id,
+                        "ai_advisory",
+                        "DENY",
+                        "No consent for financial analysis.",
                     )
                     return json.dumps(
                         {
@@ -1549,9 +1555,13 @@ class GeminiService:
                 for _m in history or []:
                     if isinstance(_m, dict) and _m.get("content"):
                         _m["content"] = _gov.redact(_m["content"])
-                _gov.log_decision(
-                    user_id, "ai_advisory", "ALLOW", "Consent present; PII redacted."
-                )
+                if financial:
+                    _gov.log_decision(
+                        user_id,
+                        "ai_advisory",
+                        "ALLOW",
+                        "Consent present; PII redacted.",
+                    )
         except Exception as _ge:
             logger.error(f"[GOV] governance gate error (continuing): {_ge}")
 

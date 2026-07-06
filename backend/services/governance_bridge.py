@@ -6,9 +6,9 @@ nothing from this app). This bridge is the *only* place the app couples to it:
 it constructs the governance services on the app's database engine and exposes a
 small, safe surface to the pipeline.
 
-Everything here is gated by ``settings.RAI_GOVERNANCE_ENABLED`` (default OFF), so
-importing or calling the bridge is a no-op until an operator explicitly turns it
-on — nothing changes in production behavior by merging this.
+Everything here is gated by ``settings.RAI_GOVERNANCE_ENABLED``. When disabled,
+the bridge is a no-op (consent always granted, no redaction). It can be turned
+off at runtime by setting ``RAI_GOVERNANCE_ENABLED=false`` — no code change.
 
 Failure policy: if governance is enabled but the layer can't initialize, calls
 fail **closed** (consent denied, action denied) rather than silently skipping.
@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import functools
 import logging
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,8 +29,58 @@ import core.config
 logger = logging.getLogger("governance_bridge")
 
 
+# Whole-word triggers indicating the request needs the user's financial data —
+# only these require consent. A greeting ("Hi") or a health/time question does
+# not. Tuned to catch real financial questions without over-prompting.
+_FINANCIAL_TRIGGERS = [
+    "spend",
+    "spent",
+    "spending",
+    "budget",
+    "afford",
+    "affordability",
+    "balance",
+    "save",
+    "saving",
+    "savings",
+    "invest",
+    "investment",
+    "investments",
+    "debt",
+    "loan",
+    "loans",
+    "income",
+    "expense",
+    "expenses",
+    "mortgage",
+    "retirement",
+    "net worth",
+    "money",
+    "financial",
+    "finance",
+    "salary",
+    "wealth",
+    "portfolio",
+    "bill",
+    "bills",
+    "buy",
+    "purchase",
+    "cash flow",
+    "cashflow",
+]
+_FINANCIAL_RE = re.compile(
+    r"\b(?:" + "|".join(re.escape(k) for k in _FINANCIAL_TRIGGERS) + r")\b",
+    re.IGNORECASE,
+)
+
+
 def enabled() -> bool:
     return bool(getattr(core.config.get_settings(), "RAI_GOVERNANCE_ENABLED", False))
+
+
+def needs_financial_consent(text: str) -> bool:
+    """True when a message asks about the user's finances (consent-gated)."""
+    return bool(text) and bool(_FINANCIAL_RE.search(text))
 
 
 def _utc_now_iso() -> str:
@@ -165,9 +216,8 @@ def log_decision(user_id: str, action: str, decision: str, reason: str) -> None:
 
 
 def consent_required_message(purpose: Optional[str] = None) -> str:
-    purpose = purpose or core.config.get_settings().RAI_CONSENT_PURPOSE
     return (
-        "Before I can give you AI-assisted guidance, I need your consent to "
-        "analyze your financial data for this purpose. You can grant it in "
-        "Settings, and withdraw it at any time."
+        "To answer questions about your finances, I need your consent to "
+        "analyze your financial data. Tap **I consent** below to continue — "
+        "you can withdraw it at any time."
     )

@@ -90,9 +90,12 @@ interface ChatMessageProps {
     role: 'user' | 'assistant';
     content: string;
     onSend?: (message: string) => void;
+    consentRequired?: boolean;
+    onConsent?: () => void | Promise<void>;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend, consentRequired, onConsent }) => {
+    const [consenting, setConsenting] = useState(false);
     const [parsedContent, setParsedContent] = useState<any>(null);
 
     useEffect(() => {
@@ -433,6 +436,34 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend }) => {
                     {role === 'user' ? 'You' : 'HELM Assistant'}
                 </div>
                 {renderContent()}
+                {consentRequired && role === 'assistant' && (
+                    <div style={{ marginTop: 10 }}>
+                        <button
+                            onClick={async () => {
+                                if (!onConsent || consenting) return;
+                                setConsenting(true);
+                                try {
+                                    await onConsent();
+                                } finally {
+                                    setConsenting(false);
+                                }
+                            }}
+                            disabled={consenting}
+                            style={{
+                                padding: '9px 18px',
+                                borderRadius: 999,
+                                border: 'none',
+                                cursor: consenting ? 'default' : 'pointer',
+                                fontWeight: 600,
+                                fontSize: 14,
+                                color: '#fff',
+                                background: consenting ? '#8888aa' : '#5b5be6',
+                            }}
+                        >
+                            {consenting ? 'Saving…' : 'I consent'}
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

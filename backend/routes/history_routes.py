@@ -237,12 +237,14 @@ async def generate_history(
             response_data_parsed = json.loads(response_json)
             response_text = response_data_parsed.get("text", "")
             usage = response_data_parsed.get("usage", {})
+            consent_required = response_data_parsed.get("type") == "consent_required"
 
         except Exception as e:
             print(f"DEBUG: EXCEPTION IN HISTORY GEN: {e}")
             debug_logger.error(f"Gemini service error: {e}")
             response_text = f"I apologize, but I'm having trouble connecting to my AI services right now."
             usage = {"input_tokens": 0, "output_tokens": 0}
+            consent_required = False
 
         # Create and save AI response message
         response_message_id = str(uuid.uuid4())
@@ -283,6 +285,7 @@ async def generate_history(
                             "role": "assistant",
                             "content": response_text,
                             "date": datetime.utcnow().isoformat() + "Z",
+                            "consent_required": consent_required,
                         }
                     ]
                 }
