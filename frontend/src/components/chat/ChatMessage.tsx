@@ -94,7 +94,7 @@ interface ChatMessageProps {
     onConsent?: () => void | Promise<void>;
 }
 
-const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend, consentRequired, onConsent }) => {
+const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend, onConsent }) => {
     const [consenting, setConsenting] = useState(false);
     const [parsedContent, setParsedContent] = useState<any>(null);
 
@@ -197,6 +197,40 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend, consen
 
         if (parsedContent.type === 'text') {
             return renderText(parsedContent.text);
+        }
+
+        if (parsedContent.type === 'consent_required') {
+            return (
+                <div className={styles.messageWrapper}>
+                    {renderText(parsedContent.text)}
+                    <div style={{ marginTop: 10 }}>
+                        <button
+                            onClick={async () => {
+                                if (!onConsent || consenting) return;
+                                setConsenting(true);
+                                try {
+                                    await onConsent();
+                                } finally {
+                                    setConsenting(false);
+                                }
+                            }}
+                            disabled={consenting}
+                            style={{
+                                padding: '9px 18px',
+                                borderRadius: 999,
+                                border: 'none',
+                                cursor: consenting ? 'default' : 'pointer',
+                                fontWeight: 600,
+                                fontSize: 14,
+                                color: '#fff',
+                                background: consenting ? '#8888aa' : '#5b5be6',
+                            }}
+                        >
+                            {consenting ? 'Saving…' : 'I consent'}
+                        </button>
+                    </div>
+                </div>
+            );
         }
 
         if (parsedContent.type === 'mobility_options') {
@@ -436,34 +470,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend, consen
                     {role === 'user' ? 'You' : 'HELM Assistant'}
                 </div>
                 {renderContent()}
-                {consentRequired && role === 'assistant' && (
-                    <div style={{ marginTop: 10 }}>
-                        <button
-                            onClick={async () => {
-                                if (!onConsent || consenting) return;
-                                setConsenting(true);
-                                try {
-                                    await onConsent();
-                                } finally {
-                                    setConsenting(false);
-                                }
-                            }}
-                            disabled={consenting}
-                            style={{
-                                padding: '9px 18px',
-                                borderRadius: 999,
-                                border: 'none',
-                                cursor: consenting ? 'default' : 'pointer',
-                                fontWeight: 600,
-                                fontSize: 14,
-                                color: '#fff',
-                                background: consenting ? '#8888aa' : '#5b5be6',
-                            }}
-                        >
-                            {consenting ? 'Saving…' : 'I consent'}
-                        </button>
-                    </div>
-                )}
             </div>
         </div>
     );

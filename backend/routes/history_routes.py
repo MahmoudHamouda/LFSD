@@ -246,6 +246,14 @@ async def generate_history(
             usage = {"input_tokens": 0, "output_tokens": 0}
             consent_required = False
 
+        # Embed the consent signal INSIDE the message content as typed JSON so
+        # the frontend renders the inline "I consent" button, and so it survives
+        # being reloaded from history (the flag alone would be lost on reload).
+        if consent_required:
+            response_text = json.dumps(
+                {"type": "consent_required", "text": response_text}
+            )
+
         # Create and save AI response message
         response_message_id = str(uuid.uuid4())
         db_response = DBMessage(
