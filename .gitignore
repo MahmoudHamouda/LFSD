@@ -82,3 +82,6 @@ env_vars.yaml
 *.cert
 secrets.json
 credentials.json
+
+# Build-time vendored copy of the top-level responsible_ai package (see ci.yml)
+backend/responsible_ai/

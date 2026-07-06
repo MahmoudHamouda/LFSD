@@ -77,6 +77,11 @@ jobs:
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG -f docker/Dockerfile.lfsd .
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:$IMAGE_TAG
 
+          # Vendor the portable responsible_ai package into the backend build
+          # context so the app can import it (canonical copy stays top-level).
+          rm -rf backend/responsible_ai
+          cp -r responsible_ai backend/responsible_ai
+
           # Build and push Backend to Google Container Registry
           docker build -t gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:$IMAGE_TAG -f backend/Dockerfile backend
           docker push gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:$IMAGE_TAG
