@@ -21,6 +21,15 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# Seeded demo/persona accounts that ship with synthetic data and should always
+# bypass onboarding, regardless of how/when their DB row was created.
+DEMO_ACCOUNTS = {
+    "super@helm.com",
+    "finance@helm.com",
+    "health@helm.com",
+    "time@helm.com",
+}
+
 
 class Auth0CallbackPayload(BaseModel):
     """Payload from frontend after Auth0 authentication"""
@@ -114,8 +123,6 @@ async def auth0_callback(payload: Auth0CallbackPayload, db: Session = Depends(ge
             if user:
                 # Link existing user to Auth0 ID
                 user.auth0_id = auth0_id
-                if user.email == "finance@helm.com":
-                    user.onboarding_status = "COMPLETE"
                 user.updated_at = datetime.utcnow()
             else:
                 # Create new user
@@ -125,7 +132,7 @@ async def auth0_callback(payload: Auth0CallbackPayload, db: Session = Depends(ge
                     auth0_id=auth0_id,
                     profile_json={"name": name},
                     onboarding_status=(
-                        "COMPLETE" if email == "finance@helm.com" else "NOT_STARTED"
+                        "COMPLETE" if email in DEMO_ACCOUNTS else "NOT_STARTED"
                     ),
                     created_at=datetime.utcnow(),
                     updated_at=datetime.utcnow(),
@@ -142,6 +149,12 @@ async def auth0_callback(payload: Auth0CallbackPayload, db: Session = Depends(ge
                     updated_at=datetime.utcnow(),
                 )
                 db.add(new_sub)
+
+        # Demo/persona accounts always bypass onboarding. This runs for every
+        # resolution path (found by auth0_id, linked by email, or newly created)
+        # so returning demo logins are self-healed too.
+        if user.email in DEMO_ACCOUNTS and user.onboarding_status != "COMPLETE":
+            user.onboarding_status = "COMPLETE"
 
         db.commit()
         db.refresh(user)
@@ -188,6 +201,13 @@ async def get_current_user(
             raise HTTPException(
                 status_code=404, detail="User not found. Please complete signup."
             )
+
+        # Demo/persona accounts always bypass onboarding — self-heal on read so
+        # existing rows (created before this fix) are corrected on next load.
+        if user.email in DEMO_ACCOUNTS and user.onboarding_status != "COMPLETE":
+            user.onboarding_status = "COMPLETE"
+            db.commit()
+            db.refresh(user)
 
         # Universal JIT Auto-Seeding: Removed for Production
         # if settings.DEBUG:
