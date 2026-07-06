@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { historyGenerate } from '../../api/api';
+import { historyGenerate, setConsent } from '../../api/api';
 import { ChatMessage as ChatMessageType } from '../../api/models';
 import ChatMessage from '../../components/chat/ChatMessage';
 import ChatInput from '../../components/chat/ChatInput';
-import ConsentBanner from '../../components/chat/ConsentBanner';
 import styles from './Chat.module.css';
 
 
@@ -72,10 +71,11 @@ const Chat = () => {
 
   useEffect(scrollToBottom, [messages]);
 
-  const handleSend = useCallback(async (messageText: string) => {
+  const handleSend = useCallback(async (messageText: string, opts?: { silent?: boolean }) => {
     setIsLoading(true);
 
-    // Create optimistic user message
+    // Create optimistic user message (skipped when silently re-sending after
+    // consent, so the user's question isn't echoed twice).
     const userMessage: ChatMessageType = {
       id: Date.now().toString(),
       role: 'user',
@@ -83,13 +83,16 @@ const Chat = () => {
       date: new Date().toISOString()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    if (!opts?.silent) {
+      setMessages(prev => [...prev, userMessage]);
+    }
 
     try {
       // Call backend API
       // If we have existing messages, send them all for context, or just the new one depending on backend logic.
       // The generate endpoint usually expects the full history for context if not stateful, but here we pass full history.
-      const history = [...messages, userMessage];
+      // On a silent re-send the question is already in `messages`; don't add it twice.
+      const history = opts?.silent ? messages : [...messages, userMessage];
       const abortController = new AbortController();
 
       // Use the ID from URL if available, otherwise backend creates new.
@@ -135,6 +138,16 @@ const Chat = () => {
     }
   }, [messages, geoLoc, conversationId, navigate]);
 
+  // Grant consent inline, then silently re-send the user's last question so it
+  // is answered without them retyping it.
+  const handleConsent = useCallback(async () => {
+    const ok = await setConsent(true);
+    if (!ok) return;
+    const lastUser = [...messages].reverse().find(m => m.role === 'user');
+    const text = lastUser && typeof lastUser.content === 'string' ? lastUser.content : '';
+    if (text) await handleSend(text, { silent: true });
+  }, [messages, handleSend]);
+
   // Handle initial message from navigation state (New Chat + Initial Message)
   useEffect(() => {
     const state = location.state as { initialMessage?: string } | null;
@@ -150,7 +163,6 @@ const Chat = () => {
 
   return (
     <div className={styles.container}>
-      <ConsentBanner />
 
       <div className={styles.chatArea}>
         {messages.length === 0 ? (
@@ -166,6 +178,8 @@ const Chat = () => {
                 role={message.role as 'user' | 'assistant'}
                 content={typeof message.content === 'string' ? message.content : JSON.stringify(message.content)}
                 onSend={handleSend}
+                consentRequired={message.consent_required}
+                onConsent={handleConsent}
               />
             ))}
             {isLoading && (

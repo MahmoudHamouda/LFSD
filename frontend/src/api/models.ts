@@ -45,6 +45,7 @@ export type ChatMessage = {
   date: string
   feedback?: Feedback
   context?: string
+  consent_required?: boolean
 }
 
 export type ExecResults = {
