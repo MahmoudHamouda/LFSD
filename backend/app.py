@@ -222,6 +222,7 @@ def create_app() -> FastAPI:
         partner_routes,
         api_routes,
         api_routes_session,
+        consent_routes,
     )
 
     # Initialize Integration Registry (Domain Executors)
@@ -250,6 +251,7 @@ def create_app() -> FastAPI:
     app.include_router(growth_routes.router, prefix="/api")
     app.include_router(admin_routes.router, prefix="/api")
     app.include_router(api_routes_chat.router, prefix="/api")
+    app.include_router(consent_routes.router, prefix="/api")
     app.include_router(api_routes_goals.router, prefix="/api")
 
     # Recommendation & Partners
@@ -694,6 +696,17 @@ def create_app() -> FastAPI:
             )
         except Exception as e:
             logger.warning(f"FK migration failed: {e}")
+
+        # Responsible-AI governance: when enabled, provision its tables at
+        # startup so a misconfiguration fails fast rather than on first request.
+        try:
+            from services import governance_bridge as _gov
+
+            if _gov.enabled():
+                _gov._components()  # builds services + create_all(rai_* tables)
+                logger.info("Responsible-AI governance layer initialized.")
+        except Exception as gov_e:
+            logger.error(f"Responsible-AI governance init failed: {gov_e}")
 
     @app.on_event("shutdown")
     async def shutdown_event():

@@ -78,6 +78,14 @@ class Settings:
     AUTH0_CLIENT_ID = os.getenv("AUTH0_CLIENT_ID")
     AUTH0_CLIENT_SECRET = os.getenv("AUTH0_CLIENT_SECRET")
 
+    # Responsible-AI governance layer. OFF by default: turning it on enforces
+    # consent, PII redaction, and the policy gate on AI advisory requests.
+    RAI_GOVERNANCE_ENABLED = (
+        os.getenv("RAI_GOVERNANCE_ENABLED", "true").lower() == "true"
+    )
+    RAI_CONSENT_PURPOSE = os.getenv("RAI_CONSENT_PURPOSE", "ai_advisory")
+    RAI_CONSENT_POLICY_VERSION = os.getenv("RAI_CONSENT_POLICY_VERSION", "v1")
+
     def __init__(self):
         pass
 
