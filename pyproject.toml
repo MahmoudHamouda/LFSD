@@ -12,6 +12,7 @@ testpaths = [
 pythonpath = [
     "backend",
     ".",
+    "packages/responsible-ai",
 ]
 filterwarnings = [
     "ignore::DeprecationWarning",
