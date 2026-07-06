@@ -24,8 +24,33 @@ class SchedulerService:
             id="sync_health_data",
             replace_existing=True,
         )
+        # Keep demo/persona synthetic data current (rolls windows up to today).
+        self.scheduler.add_job(
+            self.refresh_demo_data,
+            trigger=IntervalTrigger(hours=6),
+            id="refresh_demo_data",
+            replace_existing=True,
+        )
         self.scheduler.start()
         logger.info("Scheduler started.")
+
+    async def refresh_demo_data(self):
+        """Job to roll the demo accounts' synthetic data forward to today."""
+        import asyncio
+
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._refresh_demo_data_impl)
+
+    def _refresh_demo_data_impl(self):
+        db = SessionLocal()
+        try:
+            from services.demo_seed import refresh_demo_accounts
+
+            refresh_demo_accounts(db)
+        except Exception as e:
+            logger.error(f"Scheduled demo refresh failed: {e}")
+        finally:
+            db.close()
 
     def stop(self):
         """Stop the scheduler."""
