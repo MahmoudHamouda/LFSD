@@ -215,6 +215,48 @@ def log_decision(user_id: str, action: str, decision: str, reason: str) -> None:
         logger.error("Decision log append failed (non-fatal): %s", e)
 
 
+def consent_history(user_id: str, purpose: Optional[str] = None) -> list:
+    """The user's consent records (grants/withdrawals) for a purpose."""
+    if not enabled():
+        return []
+    purpose = purpose or core.config.get_settings().RAI_CONSENT_PURPOSE
+    try:
+        recs = _components()["consent"].store.history(user_id, purpose)
+        return [
+            {
+                "granted": r.granted,
+                "timestamp": r.timestamp,
+                "source": r.source,
+                "policy_version": r.policy_version,
+            }
+            for r in recs
+        ]
+    except Exception as e:
+        logger.error("Consent history read failed: %s", e)
+        return []
+
+
+def decision_activity(user_id: str, limit: int = 20) -> list:
+    """Recent AI governance decisions logged for this user (transparency)."""
+    if not enabled():
+        return []
+    try:
+        rows = _components()["decisions"].recent(subject_id=user_id, limit=limit)
+        # Return only non-sensitive fields (no hashes / internal columns).
+        return [
+            {
+                "timestamp": r.get("timestamp"),
+                "action": r.get("action"),
+                "decision": r.get("decision"),
+                "reason": r.get("reason"),
+            }
+            for r in rows
+        ]
+    except Exception as e:
+        logger.error("Decision activity read failed: %s", e)
+        return []
+
+
 def consent_required_message(purpose: Optional[str] = None) -> str:
     return (
         "To answer questions about your finances, I need your consent to "

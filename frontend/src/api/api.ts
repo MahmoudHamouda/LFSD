@@ -34,6 +34,44 @@ export async function setConsent(granted: boolean, purpose = 'ai_advisory'): Pro
   return res.ok;
 }
 
+export interface ConsentHistoryItem {
+  granted: boolean;
+  timestamp: string;
+  source: string;
+  policy_version: string;
+}
+
+export async function getConsentHistory(purpose = 'ai_advisory'): Promise<ConsentHistoryItem[]> {
+  try {
+    const res = await fetch(`/api/consent/history?purpose=${encodeURIComponent(purpose)}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+    });
+    if (!res.ok) return [];
+    return (await res.json()).history ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export interface ConsentActivityItem {
+  timestamp: string;
+  action: string;
+  decision: string;
+  reason: string;
+}
+
+export async function getConsentActivity(limit = 20): Promise<ConsentActivityItem[]> {
+  try {
+    const res = await fetch(`/api/consent/activity?limit=${limit}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+    });
+    if (!res.ok) return [];
+    return (await res.json()).activity ?? [];
+  } catch {
+    return [];
+  }
+}
+
 export async function conversationApi(options: ConversationRequest, abortSignal: AbortSignal): Promise<Response> {
   const response = await fetch('/conversation', {
     method: 'POST',

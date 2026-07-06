@@ -61,3 +61,24 @@ async def set_consent(
         "granted": data.granted,
         "purpose": data.purpose or "ai_advisory",
     }
+
+
+@router.get("/history")
+async def consent_history(
+    purpose: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+):
+    """The current user's consent grant/withdrawal history for a purpose."""
+    return {
+        "purpose": purpose or "ai_advisory",
+        "history": gov.consent_history(current_user.id, purpose),
+    }
+
+
+@router.get("/activity")
+async def consent_activity(
+    limit: int = 20,
+    current_user: User = Depends(get_current_user),
+):
+    """Recent AI governance decisions logged for the current user."""
+    return {"activity": gov.decision_activity(current_user.id, min(limit, 100))}
