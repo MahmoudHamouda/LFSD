@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Trash2, Sun, Moon } from 'lucide-react';
 import { historyDeleteAll } from '../../api/api';
 import styles from './UserProfile.module.css';
-import { getUserProfile, updateUserProfile } from '../../api/userApi';
+import { getUserProfile, updateUserProfile, getUserConnections } from '../../api/userApi';
 import { getStoredTheme, setStoredTheme } from '../../utils/theme';
 import { User, UserIdentity, VivPreferences, OnboardingData } from '../../types/user';
 import { CurrencyInput, Pill, SectionCard } from '../onboarding/OnboardingSteps';
@@ -38,6 +38,7 @@ const CONNECTIONS_DATA: Connector[] = [
 const UserProfile: React.FC = () => {
     const { user: contextUser, status: authStatus, getAccessToken } = useAuth();
     const [user, setUser] = useState<User | null>(null);
+    const [connStatus, setConnStatus] = useState<Record<string, boolean> | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<Tab>('account');
@@ -104,6 +105,9 @@ const UserProfile: React.FC = () => {
                 const existingOnboarding = userData.identity.profile?.onboarding_data || {};
                 setOnboardingForm(existingOnboarding);
             }
+
+            // Real integration statuses (falls back to the static catalog if empty)
+            getUserConnections().then(setConnStatus).catch(() => setConnStatus(null));
 
             // Fetch entitlements
             try {
@@ -175,7 +179,12 @@ const UserProfile: React.FC = () => {
                 <SectionCard title="Integrations & Data Sources">
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
                         {items.map(item => {
-                            const isInactive = item.status === 'inactive';
+                            // Use the real backend status when available; fall back
+                            // to the static catalog only if the API returned nothing.
+                            const status = connStatus
+                                ? (connStatus[item.id] ? 'active' : 'inactive')
+                                : item.status;
+                            const isInactive = status === 'inactive';
                             return (
                                 <div
                                     key={item.id}
@@ -187,16 +196,16 @@ const UserProfile: React.FC = () => {
                                     </span>
                                     {isInactive ? (
                                         <span className={styles.soonBadge}>
-                                            Soon
+                                            Not connected
                                         </span>
                                     ) : (
                                         <span
                                             className={styles.statusDot}
                                             style={{
                                                 backgroundColor:
-                                                    item.status === 'active' ? 'var(--color-accent-blue)' :
-                                                        item.status === 'failed' ? 'var(--color-accent-red)' :
-                                                            item.status === 'pending' ? 'var(--status-warning)' : 'var(--text-secondary)'
+                                                    status === 'active' ? 'var(--color-accent-blue)' :
+                                                        status === 'failed' ? 'var(--color-accent-red)' :
+                                                            status === 'pending' ? 'var(--status-warning)' : 'var(--text-secondary)'
                                             }}
                                         />
                                     )}

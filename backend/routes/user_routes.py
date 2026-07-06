@@ -235,6 +235,51 @@ async def read_users_me(
     }
 
 
+@router.get("/connections", summary="Get the user's real integration statuses")
+@limiter.limit("60/minute")
+async def get_user_connections(
+    request: Request,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Report which integrations the current user actually has connected, derived
+    from real data (the Connection table + uploaded bank statements) rather than
+    a static list. Returns a {connector_id: bool} map the profile page renders.
+    """
+    from models.models import Connection, Statement
+
+    conns = db.query(Connection).filter(Connection.user_id == current_user.id).all()
+    active_providers = {
+        (c.provider or "").lower()
+        for c in conns
+        if str(c.status or "").lower() in ("connected", "active", "true", "linked")
+    }
+
+    def has(*providers) -> bool:
+        return any(p in active_providers for p in providers)
+
+    has_statements = (
+        db.query(Statement).filter(Statement.user_id == current_user.id).first()
+        is not None
+    )
+
+    return {
+        "connections": {
+            "plaid": has("plaid"),
+            "stripe": has("stripe"),
+            "statements": has_statements,
+            "apple_health": has("apple_health"),
+            "google_health": has("google_fit", "google_health", "android_health"),
+            "whoop": has("whoop"),
+            "google_calendar": has("google", "google_calendar"),
+            "outlook": has("outlook"),
+            "uber": has("uber"),
+            "talabaat": has("talabat", "talabaat"),
+        }
+    }
+
+
 @router.patch("/me", summary="Update current user profile")
 @limiter.limit("20/minute")
 async def update_user_me(

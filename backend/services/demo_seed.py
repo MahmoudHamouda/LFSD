@@ -34,6 +34,7 @@ def _seed_one(db: Session, user) -> bool:
         FinancialTransaction,
         HealthDailySummary,
         LifeGoal,
+        Statement,
         VivIndex,
     )
 
@@ -67,6 +68,18 @@ def _seed_one(db: Session, user) -> bool:
     )
     db.add_all([checking, savings, credit])
     db.flush()  # assign ids
+
+    # A processed bank statement (so the profile shows "Bank Statements: connected").
+    db.add(
+        Statement(
+            user_id=uid,
+            bank_name="Chase",
+            period_start=now - timedelta(days=30),
+            period_end=now,
+            total_credits=10000.0,
+            total_debits=6200.0,
+        )
+    )
 
     # --- Transactions (last ~30 days) ---------------------------------
     def _txn(acct, amt, desc, cat, when):
