@@ -655,6 +655,30 @@ def create_app() -> FastAPI:
             except Exception:
                 pass
 
+            # ----------------------------------------------------------------
+            # DATA NORMALIZATION: onboarding_status
+            # A seed script historically wrote the invalid value "COMPLETED",
+            # but every gate in the app checks for exactly "COMPLETE". Users
+            # seeded that way (e.g. super@helm.com) were wrongly forced back
+            # into onboarding despite having full data. Normalize idempotently.
+            # ----------------------------------------------------------------
+            try:
+                with engine.connect() as conn:
+                    result = conn.execute(
+                        text(
+                            "UPDATE users_v2 SET onboarding_status = 'COMPLETE' "
+                            "WHERE onboarding_status = 'COMPLETED'"
+                        )
+                    )
+                    conn.commit()
+                    if getattr(result, "rowcount", 0):
+                        logger.info(
+                            f"Normalized onboarding_status 'COMPLETED'->'COMPLETE' "
+                            f"for {result.rowcount} user(s)"
+                        )
+            except Exception as norm_e:
+                logger.debug(f"onboarding_status normalization skipped: {norm_e}")
+
             logger.info(
                 f"FK migration & schema sync completed: {fixed} tables fixed, {skipped} skipped"
             )
