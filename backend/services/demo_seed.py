@@ -40,6 +40,7 @@ def _clear_synthetic(db: Session, uid: str) -> None:
         FinancialTransaction,
         HealthDailySummary,
         LifeGoal,
+        RecurringBill,
         Statement,
         VivIndex,
     )
@@ -51,6 +52,7 @@ def _clear_synthetic(db: Session, uid: str) -> None:
         Statement,
         HealthDailySummary,
         LifeGoal,
+        RecurringBill,
         FinancialScore,
         VivIndex,
     ):
@@ -64,6 +66,7 @@ def _regenerate(db: Session, user) -> None:
         FinancialTransaction,
         HealthDailySummary,
         LifeGoal,
+        RecurringBill,
         Statement,
         VivIndex,
     )
@@ -167,16 +170,35 @@ def _regenerate(db: Session, user) -> None:
     db.add(
         LifeGoal(
             user_id=uid,
-            title="Dream Vacation",
-            target_amount=5000.0,
-            saved_amount=1800.0,
+            title="New Car Fund",
+            target_amount=40000.0,
+            saved_amount=12000.0,
             type="savings",
-            pillar="lifestyle",
-            monthly_contribution_target=300.0,
-            priority="medium",
-            target_date=now + timedelta(days=240),
+            pillar="wealth",
+            monthly_contribution_target=1500.0,
+            priority="high",
+            target_date=now + timedelta(days=300),
         )
     )
+
+    # --- Recurring commitments (memory for the decision engine) --------
+    for name, amount, category in (
+        ("Careem Plus", 49.0, "transport"),
+        ("du Home Internet", 359.0, "utilities"),
+        ("Fitness First Membership", 320.0, "health"),
+        ("Netflix", 56.0, "entertainment"),
+    ):
+        db.add(
+            RecurringBill(
+                user_id=uid,
+                name=name,
+                amount=amount,
+                cadence="monthly",
+                category=category,
+                status="active",
+                is_verified=True,
+            )
+        )
 
     # --- Financial score (current) ------------------------------------
     db.add(
