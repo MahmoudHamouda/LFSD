@@ -22,6 +22,16 @@ class ResponseComposer:
             return self._format_mobility_response(tool_data, context)
         return "I have received your request, but do not have a composer configuration for it."
 
+    @staticmethod
+    def _ride_handoff_links(deeplinks: Dict[str, str]) -> str:
+        """Render pre-filled hand-off links (Uber + universal Maps directions)."""
+        parts = []
+        if deeplinks.get("uber"):
+            parts.append(f"🚗 [Open in Uber →]({deeplinks['uber']})")
+        if deeplinks.get("maps"):
+            parts.append(f"🗺️ [Directions / other apps →]({deeplinks['maps']})")
+        return "  •  ".join(parts) if parts else ""
+
     def _format_mobility_response(
         self, data: Dict[str, Any], context: Dict[str, Any]
     ) -> str:
@@ -30,6 +40,8 @@ class ResponseComposer:
                 "message",
                 "An unknown error occurred while communicating with mobility providers.",
             )
+
+        deeplinks = data.get("deeplinks") or {}
 
         if data.get("status") == "booked":
             origin = data.get("origin", "your location").title()
@@ -41,32 +53,28 @@ class ResponseComposer:
 
             # Driving yourself isn't a booking at all — don't invent a fare/pickup.
             if "drive" in low or "self" in low or "own car" in low:
-                return (
+                msg = (
                     f"You'd be driving yourself from **{origin}** to "
-                    f"**{destination}** — no booking needed. Want directions, or "
-                    "should I compare ride options (Uber / Careem / taxi) instead?"
+                    f"**{destination}** — no booking needed."
                 )
-
-            # Real provider hand-off. We do NOT have a live ride-booking
-            # integration (Uber/Careem retired their public booking APIs), so we
-            # never fabricate a driver or claim a real reservation.
-            if "uber" in low:
-                app = "the **Uber** app"
-            elif "careem" in low:
-                app = "the **Careem** app"
-            elif "taxi" in low or "rta" in low:
-                app = (
-                    "the **Careem** or **S'hail (RTA)** app, or hail one on the street"
+                if deeplinks.get("maps"):
+                    msg += f" [Open directions →]({deeplinks['maps']})"
+                msg += (
+                    "\n\nWant me to compare ride options (Uber / Careem / taxi) "
+                    "instead?"
                 )
-            else:
-                app = "the provider's app"
+                return msg
 
+            # Real provider hand-off. We have no live ride-booking integration
+            # (Uber/Careem retired their public booking APIs), so we never
+            # fabricate a driver — we deep-link into the real app instead.
+            cta = self._ride_handoff_links(deeplinks)
             return (
                 f"Here's your **{label}** from **{origin}** to **{destination}** — "
                 f"estimated fare **AED {cost:.0f}**.\n\n"
                 "⚠️ I can't place a live ride booking from inside HELM yet, so this "
-                f"isn't a confirmed reservation. Book it for real in {app}. Want me "
-                "to keep comparing options meanwhile?"
+                "isn't a confirmed reservation — tap to book it for real:\n"
+                f"{cta}"
             )
 
         origin = data.get("origin", "your location")
@@ -102,11 +110,14 @@ class ResponseComposer:
                 )
             lines.append("")
 
-        # Call-to-action
-        if any(a["is_available"] for a in data.get("actions", [])):
+        # Call-to-action: hand off to the real apps via pre-filled deep links.
+        if deeplinks.get("uber") or deeplinks.get("maps"):
+            lines.append("Ready to go? Tap to book in the app:")
+            lines.append(self._ride_handoff_links(deeplinks))
+        elif any(a["is_available"] for a in data.get("actions", [])):
             lines.append(
-                "Would you like me to **book a ride** for you? "
-                'Just say *"yes, book it"* or choose a different option.'
+                "Would you like me to compare these further, "
+                "or shall I pull up directions?"
             )
 
         response = "\n".join(lines)
