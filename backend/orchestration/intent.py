@@ -88,9 +88,50 @@ class IntentClassifier:
         "steps",
     ]
 
+    # Wellbeing/exercise activities. "Should I go out to run, walk or do yoga?"
+    # is a wellbeing question, not a ride request — even though it contains
+    # "go" + "to". Only an EXPLICIT ride token overrides this guard.
+    _ACTIVITY_WORDS = [
+        "run",
+        "running",
+        "jog",
+        "jogging",
+        "walk",
+        "walking",
+        "yoga",
+        "swim",
+        "swimming",
+        "workout",
+        "exercise",
+        "hike",
+        "hiking",
+        "gym",
+        "stroll",
+        "stretch",
+        "meditate",
+        "pilates",
+        "cycle",
+        "cycling",
+    ]
+    # Explicit ride tokens (NOT "book" — "book a yoga class" is not a ride).
+    _EXPLICIT_RIDE_RE = re.compile(
+        r"\b(uber|careem|taxi|cab|ride|rides)\b", re.IGNORECASE
+    )
+
     def _has_mobility_signal(self, text: str) -> bool:
         """True when a message independently expresses a ride/commute request."""
         text_lower = (text or "").lower()
+
+        # Activity/wellbeing phrasing ("go out to run", "walk or do yoga") is not
+        # a ride request unless an explicit ride token (uber/taxi/ride/…) is
+        # present. This prevents "go" + "to" from hijacking wellbeing questions.
+        if not self._EXPLICIT_RIDE_RE.search(text_lower):
+            if any(
+                re.search(rf"\b{re.escape(w)}\b", text_lower)
+                for w in self._ACTIVITY_WORDS
+            ):
+                return False
+
         is_mobility = any(
             re.search(rf"\b{re.escape(k)}\b", text_lower)
             for k in self.MOBILITY_KEYWORDS
