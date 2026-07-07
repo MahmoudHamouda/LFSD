@@ -264,7 +264,9 @@ def create_app() -> FastAPI:
     app.include_router(api_routes_session.user_router, prefix="/api")
 
     # --- DEBUG ENDPOINT FOR DB PATCH ---
-    if settings.DEBUG:
+    # Never expose debug/seed tooling in production (DEBUG defaults to true, so
+    # gate on the environment, not the flag).
+    if settings.ENV != "prod":
 
         @app.get("/api/debug/patch_schema")
         async def debug_patch_schema(secret: str):
@@ -293,6 +295,8 @@ def create_app() -> FastAPI:
         """
         Seeds TierConfig and ensures the current user has a subscription.
         """
+        if settings.ENV == "prod":
+            raise HTTPException(status_code=404, detail="Not found")
         try:
             print(f"Seeding growth data for user: {current_user.id}")
             # 1. Seed Tier Configs
@@ -388,6 +392,8 @@ def create_app() -> FastAPI:
         Unauthenticated (Secret Protected) endpoint to Initialize DB + Seed Growth.
         Usage: POST /api/debug/seed_force?secret=...
         """
+        if settings.ENV == "prod":
+            raise HTTPException(status_code=404, detail="Not found")
         params = request.query_params
         secret = params.get("secret")
         if secret != settings.ADMIN_SECRET:

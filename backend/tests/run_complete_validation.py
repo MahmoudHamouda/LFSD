@@ -3,6 +3,7 @@ Complete E2E Testing & UI Validation Automation
 Waits for deployment → Seeds database → Runs E2E tests → Validates UI
 """
 
+import os
 import requests
 import time
 import sys
@@ -10,6 +11,7 @@ import subprocess
 
 BASE_URL = "https://lfsd-backend-692544481281.us-central1.run.app"
 FRONTEND_URL = "https://lfsd-frontend-692544481281.us-central1.run.app"
+SEED_SECRET = os.getenv("ADMIN_SECRET", "dev-seed-secret")
 
 print("=" * 80)
 print("COMPLETE E2E TESTING & UI VALIDATION")
@@ -27,7 +29,7 @@ for attempt in range(1, max_attempts + 1):
     try:
         response = requests.post(
             f"{BASE_URL}/api/debug/seed_force",
-            params={"secret": "lfsd_backup_2024"},
+            params={"secret": SEED_SECRET},
             timeout=10,
         )
         result = response.json()
