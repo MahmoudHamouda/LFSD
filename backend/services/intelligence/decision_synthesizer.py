@@ -245,6 +245,14 @@ ACTION_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "response_template_id": "car_purchase_analysis",
         "steps": [{"action_type": "respond_only"}],
     },
+    # --- Lifestyle / Local Search ---
+    # No template_id → goes through the LLM response path so the answer is
+    # topic-aware (resolves "some" from context) and honest about not having a
+    # live venue-data source. Never emits fabricated distances or prices.
+    "local_search": {
+        "response_template_id": None,
+        "steps": [{"action_type": "respond_only"}],
+    },
     # --- Cross-Domain ---
     "greeting": {
         "response_template_id": "greeting",

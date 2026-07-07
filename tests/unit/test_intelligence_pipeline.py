@@ -18,11 +18,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "backend"
 # Stage 1: Input Processing Tests
 # ============================================================================
 
+
 class TestInputProcessor:
     """Tests for Stage 1: Input Processing (fully deterministic)."""
 
     def _make_processor(self):
         from services.intelligence.input_processor import InputProcessor
+
         return InputProcessor()
 
     def test_basic_normalization(self):
@@ -99,11 +101,13 @@ class TestInputProcessor:
 # Stage 3: Intent Classification Tests (Deterministic Pass Only)
 # ============================================================================
 
+
 class TestIntentTaxonomy:
     """Tests for deterministic intent matching in the taxonomy."""
 
     def _match(self, text):
         from services.intelligence.intent_taxonomy import match_deterministic
+
         return match_deterministic(text)
 
     # --- Wealth Intents ---
@@ -185,6 +189,26 @@ class TestIntentTaxonomy:
         assert result is not None
         assert result[0] == "car_purchase"
 
+    # --- Lifestyle / Local Search ---
+    def test_local_search_find_near_me(self):
+        """A bare place-search reads as local_search, not a ride."""
+        result = self._match(
+            "Find some near me, tell me how far and how much they cost?"
+        )
+        assert result is not None
+        assert result[0] == "local_search"
+
+    def test_local_search_keyword(self):
+        result = self._match("gyms nearby")
+        assert result is not None
+        assert result[0] == "local_search"
+
+    def test_ride_still_wins_over_local_search(self):
+        """An explicit ride request is still mobility, not local_search."""
+        result = self._match("How much is an Uber to Dubai Marina?")
+        assert result is not None
+        assert result[0] == "mobility_price_check"
+
     # --- Cross-Domain ---
     def test_greeting(self):
         result = self._match("Hello!")
@@ -222,10 +246,12 @@ class TestIntentClassifier:
 
     def _make_classifier(self):
         from services.intelligence.intent_classifier import IntentClassifier
+
         return IntentClassifier(llm_model=None, llm_api_key=None)
 
     def _make_envelope(self, text):
         from services.intelligence.schemas import InputEnvelope
+
         return InputEnvelope(
             user_id="test-user",
             raw_text=text,
@@ -234,6 +260,7 @@ class TestIntentClassifier:
 
     def _make_context(self):
         from services.intelligence.schemas import ContextFrame
+
         return ContextFrame(user_id="test-user")
 
     @pytest.mark.asyncio
@@ -289,15 +316,18 @@ class TestIntentClassifier:
 # Stage 4: Score Evaluation Engine Tests
 # ============================================================================
 
+
 class TestScoreEngine:
     """Tests for Stage 4: Score Evaluation (fully deterministic)."""
 
     def _make_engine(self):
         from services.intelligence.score_engine import ScoreEvaluationEngine
+
         return ScoreEvaluationEngine()
 
     def _make_intent(self, intent_name, **entities):
         from services.intelligence.schemas import IntentResult
+
         return IntentResult(
             intent=intent_name,
             confidence=0.95,
@@ -312,6 +342,7 @@ class TestScoreEngine:
             HealthBaseline,
             HelmScores,
         )
+
         defaults = {
             "user_id": "test-user",
             "helm_scores": HelmScores(wealth=60, health=55, time=50),
@@ -438,6 +469,7 @@ class TestScoreEngine:
     def test_crisis_mode_amplification(self):
         """In crisis mode (wealth < 30), negative wealth deltas are amplified."""
         from services.intelligence.schemas import HelmScores
+
         engine = self._make_engine()
         intent = self._make_intent("financial_advisory", amount=2000)
         context = self._make_context(
@@ -456,7 +488,9 @@ class TestScoreEngine:
         engine = self._make_engine()
         intent = self._make_intent("financial_advisory", amount=3000)
         context = self._make_context(
-            life_goals=[{"title": "Emergency Fund", "priority": "high", "target_amount": 5000}]
+            life_goals=[
+                {"title": "Emergency Fund", "priority": "high", "target_amount": 5000}
+            ]
         )
         scores = engine.evaluate(intent, context)
 
@@ -466,6 +500,7 @@ class TestScoreEngine:
     def test_debt_guardrail(self):
         """Spending exceeding total balance triggers CRITICAL warning."""
         from services.intelligence.schemas import FinancialSnapshot
+
         engine = self._make_engine()
         intent = self._make_intent("financial_advisory", amount=15000)
         context = self._make_context(
@@ -501,15 +536,18 @@ class TestScoreEngine:
 # Stage 5: Decision Synthesis Tests (Template Path Only)
 # ============================================================================
 
+
 class TestDecisionSynthesizer:
     """Tests for Stage 5: Decision Synthesis (template path)."""
 
     def _make_synthesizer(self):
         from services.intelligence.decision_synthesizer import DecisionSynthesizer
+
         return DecisionSynthesizer(heavy_llm_model=None, llm_api_key=None)
 
     def _make_intent(self, intent_name, confidence=0.95, original_text="test"):
         from services.intelligence.schemas import IntentResult
+
         return IntentResult(
             intent=intent_name,
             confidence=confidence,
@@ -518,10 +556,12 @@ class TestDecisionSynthesizer:
 
     def _make_scores(self):
         from services.intelligence.schemas import ScoreDeltas
+
         return ScoreDeltas()
 
     def _make_context(self):
         from services.intelligence.schemas import ContextFrame
+
         return ContextFrame(user_id="test-user")
 
     @pytest.mark.asyncio
@@ -567,6 +607,7 @@ class TestDecisionSynthesizer:
     async def test_escalation_detection(self):
         """_should_escalate correctly identifies escalation triggers."""
         from services.intelligence.schemas import ScoreDeltas, DimensionDelta
+
         synth = self._make_synthesizer()
 
         # Always-escalate intent
@@ -587,15 +628,18 @@ class TestDecisionSynthesizer:
 # Stage 6: Response Generation Tests (Template Path Only)
 # ============================================================================
 
+
 class TestResponseGenerator:
     """Tests for Stage 6: Response Generation (template path)."""
 
     def _make_generator(self):
         from services.intelligence.response_generator import ResponseGenerator
+
         return ResponseGenerator(llm_model=None, llm_api_key=None)
 
     def _make_intent(self, intent_name, **entities):
         from services.intelligence.schemas import IntentResult
+
         return IntentResult(
             intent=intent_name,
             confidence=0.95,
@@ -610,6 +654,7 @@ class TestResponseGenerator:
             HealthBaseline,
             HelmScores,
         )
+
         return ContextFrame(
             user_id="test-user",
             user_name="Mahmoud",
@@ -625,10 +670,12 @@ class TestResponseGenerator:
 
     def _make_plan(self, template_id):
         from services.intelligence.schemas import ActionPlan
+
         return ActionPlan(response_template_id=template_id)
 
     def _make_scores(self, **kwargs):
         from services.intelligence.schemas import ScoreDeltas
+
         return ScoreDeltas(**kwargs)
 
     @pytest.mark.asyncio
@@ -689,16 +736,15 @@ class TestResponseGenerator:
     async def test_tradeoff_context_appended(self):
         """Trade-off context is appended when scores have tradeoff."""
         from services.intelligence.schemas import DimensionDelta
+
         gen = self._make_generator()
         plan = self._make_plan("ride_booked")
         scores = self._make_scores(
             wealth=DimensionDelta(
-                dimension="wealth", delta=-5, direction="down",
-                reasoning="Ride cost"
+                dimension="wealth", delta=-5, direction="down", reasoning="Ride cost"
             ),
             time=DimensionDelta(
-                dimension="time", delta=+5, direction="up",
-                reasoning="Time saved"
+                dimension="time", delta=+5, direction="up", reasoning="Time saved"
             ),
             has_tradeoff=True,
         )
@@ -713,11 +759,13 @@ class TestResponseGenerator:
 # Schema Tests
 # ============================================================================
 
+
 class TestSchemas:
     """Tests for pipeline schema contracts."""
 
     def test_input_envelope_defaults(self):
         from services.intelligence.schemas import InputEnvelope
+
         envelope = InputEnvelope(user_id="u1", raw_text="hi", normalized_text="hi")
         assert envelope.user_id == "u1"
         assert envelope.locale == "en"
@@ -725,6 +773,7 @@ class TestSchemas:
 
     def test_context_frame_defaults(self):
         from services.intelligence.schemas import ContextFrame
+
         ctx = ContextFrame(user_id="u1")
         assert ctx.helm_scores.wealth == 50.0
         assert ctx.crisis_mode is False
@@ -732,13 +781,19 @@ class TestSchemas:
     def test_score_deltas_serialization(self):
         """ScoreDeltas serializes cleanly to JSON."""
         from services.intelligence.schemas import ScoreDeltas
+
         scores = ScoreDeltas()
         data = scores.model_dump()
         json_str = json.dumps(data, default=str)
         assert len(json_str) > 0
 
     def test_pipeline_result_structure(self):
-        from services.intelligence.schemas import PipelineResult, ResponseEnvelope, PipelineTrace
+        from services.intelligence.schemas import (
+            PipelineResult,
+            ResponseEnvelope,
+            PipelineTrace,
+        )
+
         result = PipelineResult(
             response=ResponseEnvelope(text="Hello"),
             trace=PipelineTrace(user_id="u1"),
@@ -748,6 +803,7 @@ class TestSchemas:
 
     def test_request_tier_enum(self):
         from services.intelligence.schemas import RequestTier
+
         assert RequestTier.TIER_0 == 0
         assert RequestTier.TIER_3 == 3
 
@@ -756,48 +812,66 @@ class TestSchemas:
 # Intent Taxonomy Registry Tests
 # ============================================================================
 
+
 class TestTaxonomyRegistry:
     """Tests for the intent taxonomy registry."""
 
     def test_registry_has_expected_count(self):
         """Registry has at least 40 intents."""
         from services.intelligence.intent_taxonomy import ALL_INTENTS
+
         assert len(ALL_INTENTS) >= 40
 
     def test_all_intents_have_name(self):
         from services.intelligence.intent_taxonomy import ALL_INTENTS
+
         for entry in ALL_INTENTS:
             assert entry.name, f"Intent missing name: {entry}"
 
     def test_all_intents_have_category(self):
         from services.intelligence.intent_taxonomy import ALL_INTENTS
-        valid_categories = {"wealth", "health", "time", "mobility", "cross_domain"}
+
+        valid_categories = {
+            "wealth",
+            "health",
+            "time",
+            "mobility",
+            "lifestyle",
+            "cross_domain",
+        }
         for entry in ALL_INTENTS:
-            assert entry.category in valid_categories, f"Invalid category: {entry.category}"
+            assert (
+                entry.category in valid_categories
+            ), f"Invalid category: {entry.category}"
 
     def test_lookup_by_name(self):
         from services.intelligence.intent_taxonomy import get_intent_entry
+
         entry = get_intent_entry("balance_check")
         assert entry is not None
         assert entry.category == "wealth"
 
     def test_lookup_nonexistent(self):
         from services.intelligence.intent_taxonomy import get_intent_entry
+
         entry = get_intent_entry("nonexistent_intent")
         assert entry is None
 
     def test_get_all_names(self):
         from services.intelligence.intent_taxonomy import get_all_intent_names
+
         names = get_all_intent_names()
         assert "balance_check" in names
         assert "greeting" in names
 
     def test_get_by_category(self):
         from services.intelligence.intent_taxonomy import get_intents_by_category
+
         wealth = get_intents_by_category("wealth")
         assert len(wealth) >= 10
 
     def test_no_duplicate_names(self):
         from services.intelligence.intent_taxonomy import ALL_INTENTS
+
         names = [e.name for e in ALL_INTENTS]
         assert len(names) == len(set(names)), "Duplicate intent names found"

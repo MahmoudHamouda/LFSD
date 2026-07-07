@@ -633,6 +633,39 @@ MOBILITY_INTENTS = [
 
 
 # ============================================================================
+# Lifestyle / Local-Search Intents
+# ============================================================================
+
+LIFESTYLE_INTENTS = [
+    IntentEntry(
+        name="local_search",
+        category="lifestyle",
+        dimensions=("health", "time", "wealth"),
+        default_tier=1,
+        # Deliberately conservative: strong "find a place near me" phrasing only.
+        # A bare mention of a ride provider still wins (MOBILITY is matched first),
+        # and comparative "should I X or Y" still wins via the tradeoff regex.
+        keywords=(
+            "near me",
+            "nearby",
+            "closest",
+            "around me",
+            "close by",
+            "spots near",
+            "places near",
+            "somewhere nearby",
+        ),
+        regex_patterns=(r"\b(?:find|show|list|recommend|suggest)\b.*\bnear\s+me\b",),
+        required_entities=("place_type", "location"),
+        description=(
+            "Find nearby places / local options (gyms, parks, studios, cafes). "
+            "Fulfilled honestly — no fabricated distances or prices."
+        ),
+    ),
+]
+
+
+# ============================================================================
 # Cross-Domain Intents
 # ============================================================================
 
@@ -766,6 +799,7 @@ ALL_INTENTS: List[IntentEntry] = (
     + HEALTH_INTENTS
     + TIME_INTENTS
     + MOBILITY_INTENTS
+    + LIFESTYLE_INTENTS
     + CROSS_DOMAIN_INTENTS
 )
 

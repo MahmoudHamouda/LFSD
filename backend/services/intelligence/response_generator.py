@@ -407,6 +407,28 @@ class ResponseGenerator:
             f"(net:{scores.net_impact})"
         )
 
+        context_block = intent.conversation_context or "(no prior conversation)"
+
+        # Intent-specific guidance appended to the base persona prompt.
+        intent_guidance = (
+            "Generate a helpful, personalized response. If there are trade-offs, "
+            "explain them in plain language."
+        )
+        if intent.intent == "local_search":
+            # Honest fulfilment: we have no live venue-data source, so never
+            # invent distances or prices. Resolve what the user is looking for
+            # from CONTEXT, suggest concrete place TYPES, and offer next steps.
+            intent_guidance = (
+                "The user wants to find places near them. Use CONTEXT to resolve "
+                "vague references (e.g. 'some' -> the activities just discussed). "
+                "Suggest 2-4 concrete TYPES of places that fit, tailored to their "
+                "goals. CRITICAL: you do NOT have a live map/venue data source - do "
+                "NOT invent specific venue names, distances, or prices. Instead ask "
+                "for their area (or to share location), and offer that you can price "
+                "a ride to any specific place they choose. If the choice involves a "
+                "wealth/health/time trade-off, note it briefly."
+            )
+
         return f"""You are HELM, a personal life optimization assistant.
 Tone: warm, direct, not overly mathematical. Never show raw scores to the user.
 Respond in under 250 tokens.
@@ -417,11 +439,14 @@ Impact: {score_summary}
 Goals affected: {scores.goal_impacts[:2] if scores.goal_impacts else "None"}
 Crisis: {context.crisis_mode}
 
+CONTEXT (recent conversation, for resolving what the user means):
+{context_block}
+
 User asked: "{intent.original_text}"
 Intent: {intent.intent}
 Entities: {json.dumps(intent.entities, default=str)}
 
-Generate a helpful, personalized response. If there are trade-offs, explain them in plain language.
+{intent_guidance}
 Do NOT mention scores, deltas, or policies. Speak like a trusted advisor."""
 
     # ------------------------------------------------------------------
@@ -465,6 +490,14 @@ Do NOT mention scores, deltas, or policies. Speak like a trusted advisor."""
         self, intent: IntentResult, context: ContextFrame
     ) -> str:
         """Build a safe fallback response when templates and LLM fail."""
+        if intent.intent == "local_search":
+            # Honest even without an LLM: never fabricate venues/distances/prices.
+            return (
+                "I can help you find good spots for that. I can't pull live "
+                "distances or prices for venues yet — tell me your area (or share "
+                "your location) and I'll suggest options. If you pick a specific "
+                "place, I can price a ride there for you."
+            )
         return (
             f"I understand you're asking about {intent.intent.replace('_', ' ')}. "
             f"Let me look into this for you, {context.user_name}."
