@@ -177,14 +177,20 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ role, content, onSend, onCons
 
         // Helper for text with sanitization
         const renderText = (text: string = "") => {
-            // Tighten sanitization
+            // Minimal, safe markdown: bold, italic, and [text](http(s) link).
+            // Links are converted before the newline→<br/> pass; DOMPurify then
+            // enforces the tag/attr allow-list (and blocks non-http(s) schemes).
+            const withLinks = text.replace(
+                /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+                '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>'
+            );
             const sanitizedHtml = DOMPurify.sanitize(
-                text.replace(/\n/g, '<br/>')
+                withLinks.replace(/\n/g, '<br/>')
                     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                     .replace(/\*(.*?)\*/g, '<em>$1</em>'),
                 {
-                    ALLOWED_TAGS: ['br', 'strong', 'em', 'p', 'b', 'i'],
-                    ALLOWED_ATTR: []
+                    ALLOWED_TAGS: ['br', 'strong', 'em', 'p', 'b', 'i', 'a'],
+                    ALLOWED_ATTR: ['href', 'target', 'rel']
                 }
             );
 

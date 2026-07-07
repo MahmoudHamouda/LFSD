@@ -1,13 +1,52 @@
 import logging
 import math
 import random
-from typing import Dict, Any, List, Optional
+import urllib.parse
+from typing import Dict, Any, List, Optional, Tuple
 from pydantic import BaseModel
 from services.productivity.google_maps_service import GoogleMapsService
 from orchestration.base_executor import BaseExecutor
 from orchestration.registry import IntegrationRegistry
 
 logger = logging.getLogger("mobility.executor")
+
+
+def build_ride_deeplinks(
+    start: Optional[Tuple[float, float]],
+    end: Optional[Tuple[float, float]],
+    origin_name: str,
+    destination_name: str,
+) -> Dict[str, str]:
+    """
+    Build real, pre-filled hand-off links so the user can complete the ride in a
+    real app. Uber's universal link pre-fills pickup + dropoff; Google Maps
+    directions is a universal fallback (works everywhere, shows ride/transit).
+    Returns {} when coordinates are unavailable (stay honest — no broken links).
+    """
+    if not start or not end:
+        return {}
+    plat, plng = start
+    dlat, dlng = end
+    uber = "https://m.uber.com/ul/?" + urllib.parse.urlencode(
+        {
+            "action": "setPickup",
+            "pickup[latitude]": plat,
+            "pickup[longitude]": plng,
+            "pickup[nickname]": origin_name,
+            "dropoff[latitude]": dlat,
+            "dropoff[longitude]": dlng,
+            "dropoff[nickname]": destination_name,
+        }
+    )
+    maps = "https://www.google.com/maps/dir/?" + urllib.parse.urlencode(
+        {
+            "api": "1",
+            "origin": f"{plat},{plng}",
+            "destination": f"{dlat},{dlng}",
+            "travelmode": "driving",
+        }
+    )
+    return {"uber": uber, "maps": maps}
 
 
 class CommuteOption(BaseModel):
@@ -251,7 +290,10 @@ class MobilityExecutor(BaseExecutor):
             elif recommended.mode == "taxi":
                 rationale = "Easy to hail, no app needed."
 
-        # If user explicitly requested booking, return structural booking confirmation
+        deeplinks = build_ride_deeplinks(start_coords, end_coords, origin, destination)
+
+        # If user explicitly requested booking, hand off honestly (we have no live
+        # booking integration) — no fabricated driver; provide real deep links.
         if entities.get("action") == "book":
             return {
                 "status": "booked",
@@ -259,12 +301,7 @@ class MobilityExecutor(BaseExecutor):
                 "destination": destination,
                 "distance_km": round(distance_km, 1),
                 "recommended_option": recommended.model_dump() if recommended else None,
-                "booking_details": {
-                    "driver_name": "Tariq A.",
-                    "car_model": "Lexus ES300h",
-                    "license_plate": "D 58291",
-                    "pickup_eta_mins": random.randint(3, 7),
-                },
+                "deeplinks": deeplinks,
             }
 
         return {
@@ -274,6 +311,7 @@ class MobilityExecutor(BaseExecutor):
             "options": [o.model_dump() for o in options],
             "recommended_option": recommended.model_dump() if recommended else None,
             "rationale": rationale,
+            "deeplinks": deeplinks,
             "data_source": "google_maps_computed",
             "actions": [
                 {
