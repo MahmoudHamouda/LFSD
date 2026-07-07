@@ -1,6 +1,22 @@
-# Life Financial & Scoring Dashboard (LFSD)
+# Helmory (LFSD) — a policy-first life decision engine
 
-LFSD is a personal financial, health, and productivity dashboard built with FastAPI (backend) and React/TypeScript (frontend). It integrates with external calendar services, travel/hospitality APIs, and LLM (Gemini) intelligence to deliver unified dashboard scoring, insights, and recommendations.
+**Helmory** helps people make better everyday decisions by weighing every choice
+across the three things that actually trade off in a life: **Wealth, Health, and
+Time**. Instead of generic chat, it grounds each answer in the user's real data —
+scores, finances, health, recurring commitments, and goals — and is honest about
+what it doesn't know (it never fabricates numbers, venues, or bookings).
+
+Built with FastAPI (backend) and React/TypeScript (frontend), it pairs a
+deterministic, "policy-first, AI-assisted" decision engine with a tri-dimensional
+scoring model (the **HELM** score) and a portable Responsible-AI governance layer
+(consent + PII redaction). It integrates Google Maps (real local search),
+calendar, and mobility providers, with Gemini used only where nuance is needed.
+
+- **Decision engine** — binary or multi-option, scored on Wealth/Health/Time and
+  grounded in memory. See **[docs/DECISION_ENGINE.md](docs/DECISION_ENGINE.md)**.
+- **Responsible-AI** — a standalone, pip-installable package under
+  [`packages/responsible-ai/`](packages/responsible-ai/).
+- Live at **[app.helmory.com](https://app.helmory.com)**.
 
 ## Project Structure
 
