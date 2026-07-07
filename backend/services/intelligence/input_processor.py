@@ -73,6 +73,7 @@ class InputProcessor:
             conversation_history=metadata.get("conversation_history", []),
             device_type=metadata.get("device_type"),
             locale=metadata.get("locale", "en"),
+            location=self._parse_location(metadata.get("location")),
             attachments=self._parse_attachments(metadata.get("attachments", [])),
         )
 
@@ -115,6 +116,29 @@ class InputProcessor:
         result = _WHITESPACE_COLLAPSE.sub(" ", result).strip()
 
         return result
+
+    def _parse_location(
+        self, location: Optional[Dict[str, Any]]
+    ) -> Optional[Dict[str, float]]:
+        """
+        Validate browser-provided coordinates.
+
+        Accepts ``{"lat": .., "lng": ..}`` with finite, in-range values. Rejects
+        the ``(0, 0)`` null-island placeholder the client sends when geolocation
+        was denied. Returns None on anything invalid.
+        """
+        if not isinstance(location, dict):
+            return None
+        try:
+            lat = float(location.get("lat"))
+            lng = float(location.get("lng"))
+        except (TypeError, ValueError):
+            return None
+        if not (-90.0 <= lat <= 90.0 and -180.0 <= lng <= 180.0):
+            return None
+        if lat == 0.0 and lng == 0.0:  # denied-geolocation placeholder
+            return None
+        return {"lat": lat, "lng": lng}
 
     def _parse_attachments(
         self, attachments: List[Dict[str, Any]]

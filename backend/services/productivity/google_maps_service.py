@@ -8,7 +8,6 @@ Includes geocoding, reverse geocoding, and distance matrix calculations.
 import httpx
 import logging
 import asyncio
-import googlemaps
 import core.config
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
@@ -182,6 +181,71 @@ class GoogleMapsService:
             logger.error(f"Distance matrix exception: {type(e).__name__}")
 
         return None
+
+    async def places_search(
+        self,
+        query: str,
+        lat: float,
+        lng: float,
+        radius_m: int = 5000,
+        limit: int = 5,
+    ) -> Optional[List[Dict[str, Any]]]:
+        """
+        Find real places near a point via the Places Text Search API.
+
+        Honest by design: returns ``None`` when no live key is configured (so the
+        caller falls back to asking for the user's area rather than inventing
+        venues). Never returns mock data.
+
+        Returns a list of ``{name, address, price_level, rating, lat, lng}`` —
+        ``price_level`` is Google's coarse 0-4 bucket (may be absent), NOT a real
+        fee.
+        """
+        if not query or lat is None or lng is None:
+            return None
+        if not self.api_key or self.api_key == "mock":
+            # No live key → do not fabricate venues; let the caller be honest.
+            return None
+
+        params = {
+            "query": query.strip(),
+            "location": f"{lat},{lng}",
+            "radius": max(1, min(radius_m, 50000)),
+            "key": self.api_key,
+            "region": getattr(self, "region", "ae"),
+            "language": getattr(self, "language", "en"),
+        }
+
+        try:
+            client = await self.get_client()
+            response = await client.get(
+                f"{self.BASE_URL}/place/textsearch/json", params=params
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            status = data.get("status")
+            if status not in ("OK", "ZERO_RESULTS"):
+                logger.error("Places Text Search API error: %s", status)
+                return None
+
+            places: List[Dict[str, Any]] = []
+            for r in data.get("results", [])[: max(1, limit)]:
+                loc = (r.get("geometry", {}) or {}).get("location", {}) or {}
+                places.append(
+                    {
+                        "name": r.get("name"),
+                        "address": r.get("formatted_address") or r.get("vicinity"),
+                        "price_level": r.get("price_level"),  # 0-4 or None
+                        "rating": r.get("rating"),
+                        "lat": loc.get("lat"),
+                        "lng": loc.get("lng"),
+                    }
+                )
+            return places
+        except Exception as e:
+            logger.error("Places Text Search exception: %s", type(e).__name__)
+            return None
 
     def _get_mock_coordinates(self, address: str) -> Tuple[float, float]:
         """Return mock coordinates for common locations, avoiding Dubai default for everything."""

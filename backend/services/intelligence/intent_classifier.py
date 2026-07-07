@@ -88,6 +88,7 @@ class IntentClassifier:
         conversation_context = self._build_conversation_context(
             envelope.conversation_history
         )
+        request_location = envelope.location
 
         # ------------------------------------------------------------------
         # Pass 1: Deterministic Classification
@@ -114,6 +115,7 @@ class IntentClassifier:
                 original_text=envelope.raw_text,
                 llm_tokens_used=0,
                 conversation_context=conversation_context,
+                request_location=request_location,
             )
 
         # ------------------------------------------------------------------
@@ -129,10 +131,12 @@ class IntentClassifier:
                 classified_by="deterministic_fallback",
                 original_text=envelope.raw_text,
                 conversation_context=conversation_context,
+                request_location=request_location,
             )
 
         result = await self._classify_with_llm(envelope, context)
         result.conversation_context = conversation_context
+        result.request_location = request_location
         return result
 
     # ------------------------------------------------------------------
