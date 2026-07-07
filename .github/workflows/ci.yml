@@ -8,6 +8,13 @@ on:
     branches:
       - main
 
+# Serialize deploys to the same ref so two runs never update the Cloud Run
+# service concurrently (which aborts with a version conflict). Runs queue and
+# execute one at a time instead of racing.
+concurrency:
+  group: deploy-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-push-deploy:
     name: Build, Push, and Deploy to Cloud Run
