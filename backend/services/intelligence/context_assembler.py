@@ -131,6 +131,9 @@ class ContextAssembler:
                 for g in (user.life_goals or [])
             ]
 
+            # --- Memory: recurring commitments (subscriptions/bills) ---
+            commitments = self._load_commitments(user_id)
+
             # --- Crisis Detection ---
             crisis_dims = []
             if helm_scores.wealth < 30:
@@ -159,6 +162,7 @@ class ContextAssembler:
                 health=health,
                 time=time_baseline,
                 life_goals=life_goals,
+                commitments=commitments,
                 risk_tolerance=prefs.get("risk_tolerance", "medium"),
                 trade_off_rule=prefs.get("trade_off_rule", "balanced_living"),
                 crisis_mode=len(crisis_dims) > 0,
@@ -185,6 +189,28 @@ class ContextAssembler:
                 time=latest.time_score or 50.0,
             )
         return HelmScores()
+
+    def _load_commitments(self, user_id: str) -> list:
+        """Load verified recurring commitments (subscriptions/bills) for memory."""
+        try:
+            from models.models import RecurringBill
+
+            bills = (
+                self.db.query(RecurringBill)
+                .filter(RecurringBill.user_id == user_id)
+                .all()
+            )
+            return [
+                {
+                    "name": b.name,
+                    "amount": float(b.amount or 0.0),
+                    "cadence": b.cadence or "monthly",
+                }
+                for b in bills
+            ]
+        except Exception as e:
+            logger.debug("No commitments loaded for %s: %s", user_id, e)
+            return []
 
     def _load_financial_snapshot(self, user, user_id: str) -> FinancialSnapshot:
         """Build compressed financial context."""

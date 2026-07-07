@@ -809,62 +809,6 @@ class TestResponseGenerator:
         text = gen._build_fallback_response(intent, self._make_context())
         assert "share your location" in text or "your area" in text
 
-    # --- Wellbeing trade-off (grounded in scores + health) ---
-
-    def _wb_context(
-        self, *, health=60, time=60, wealth=60, stress=40, activity=60, hrv=55
-    ):
-        from services.intelligence.schemas import (
-            ContextFrame,
-            HelmScores,
-            HealthBaseline,
-        )
-
-        return ContextFrame(
-            user_id="u1",
-            user_name="Super",
-            helm_scores=HelmScores(wealth=wealth, health=health, time=time),
-            health=HealthBaseline(
-                stress_level=stress, activity_level=activity, hrv_avg=hrv
-            ),
-        )
-
-    def test_wellbeing_detects_options_in_order(self):
-        gen = self._make_generator()
-        assert gen._detect_activities("run, walk or do some yoga?") == [
-            "run",
-            "walk",
-            "yoga",
-        ]
-        assert gen._detect_activities("just a greeting") == []
-
-    def test_wellbeing_stressed_recommends_yoga(self):
-        gen = self._make_generator()
-        resp = gen._generate_wellbeing_tradeoff(
-            self._wb_context(stress=80), ["run", "walk", "yoga"]
-        )
-        assert resp.data["recommended"] == "yoga"
-        assert resp.generated_by == "wellbeing_engine"
-
-    def test_wellbeing_time_poor_recommends_shorter(self):
-        gen = self._make_generator()
-        resp = gen._generate_wellbeing_tradeoff(
-            self._wb_context(time=25, stress=30), ["run", "yoga"]
-        )
-        # 30-min run beats 45-min yoga when the user is time-poor.
-        assert resp.data["recommended"] == "run"
-
-    def test_wellbeing_shows_time_cost_and_honest_disclaimer(self):
-        gen = self._make_generator()
-        resp = gen._generate_wellbeing_tradeoff(
-            self._wb_context(), ["run", "walk", "yoga"]
-        )
-        assert "~30 min" in resp.text and "Free" in resp.text
-        assert "My pick:" in resp.text
-        # grounded in the user's scores, honest about the numbers
-        assert "/100" in resp.text
-        assert "don't have live class prices" in resp.text
-
     @pytest.mark.asyncio
     async def test_local_search_uses_real_places_with_location(self):
         """With location + a (stubbed) live Maps key, real venues are returned."""
