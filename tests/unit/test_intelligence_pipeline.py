@@ -809,6 +809,9 @@ class TestResponseGenerator:
         text = gen._build_fallback_response(intent, self._make_context())
         assert "share your location" in text or "your area" in text
 
+    # (Wellbeing trade-off logic now lives in the decision engine —
+    #  see tests/unit/test_decision_engine.py.)
+
     @pytest.mark.asyncio
     async def test_local_search_uses_real_places_with_location(self):
         """With location + a (stubbed) live Maps key, real venues are returned."""
