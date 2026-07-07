@@ -9,7 +9,7 @@ from typing import Dict, Any, List
 
 # --- CONFIG ---
 BASE_URL = "https://lfsd-backend-692544481281.us-central1.run.app"
-API_KEY = "lfsd_backup_2024" # For debug/seeding endpoints
+API_KEY = os.getenv("ADMIN_SECRET", "dev-seed-secret")  # For debug/seeding endpoints
 
 # --- TEST UTILS ---
 class TestResult:

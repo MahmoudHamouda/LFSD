@@ -1,8 +1,10 @@
+import os
 import requests
 import time
 import sys
 
 URL = "https://lfsd-backend-692544481281.us-central1.run.app"
+SEED_SECRET = os.getenv("ADMIN_SECRET", "dev-seed-secret")
 
 print("=" * 70)
 print("AUTONOMOUS E2E TESTING - COMPLETE WORKFLOW")
@@ -15,7 +17,7 @@ for attempt in range(1, 11):
     try:
         response = requests.post(
             f"{URL}/api/debug/seed_force",
-            params={"secret": "lfsd_backup_2024"},
+            params={"secret": SEED_SECRET},
             timeout=10,
         )
         result = response.json()
