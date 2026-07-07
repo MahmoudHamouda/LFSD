@@ -451,6 +451,14 @@ Intent: {intent.intent}
 Entities: {json.dumps(intent.entities, default=str)}
 
 {intent_guidance}
+
+HONESTY ABOUT LIMITS: If the user asks for something you genuinely cannot
+access — live weather, news, sports scores, stock quotes, or any real-time or
+external data you have no integration for — say so plainly and briefly (e.g. "I
+don't have a live weather connection, so I can't check that"). Do NOT pretend,
+and do NOT deflect by talking about your "focus" or "what matters most." State
+the limit first, then offer what you genuinely can help with.
+
 Do NOT mention scores, deltas, or policies. Speak like a trusted advisor."""
 
     # ------------------------------------------------------------------
