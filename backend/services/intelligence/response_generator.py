@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from typing import Any, Dict, Optional
 
 from .schemas import (
@@ -163,128 +162,6 @@ _STRESS_ADVICE = {
 }
 
 
-# ============================================================================
-# Wellbeing activity model (for grounded "run vs walk vs yoga" trade-offs)
-# ============================================================================
-# Values are typical, honest defaults — NOT fabricated precision. time_min is a
-# typical session length; cost is a category (outdoor/home = free vs a
-# studio/pool/gym fee). The benefit fields are 0-1 relative weights.
-
-_ACTIVITY_PROFILES: Dict[str, Dict[str, Any]] = {
-    "run": {
-        "label": "Running",
-        "time_min": 30,
-        "cost": "Free (outdoors)",
-        "free": True,
-        "cardio": 0.9,
-        "strength": 0.3,
-        "flexibility": 0.1,
-        "stress_relief": 0.5,
-        "intensity": 0.9,
-        "low_impact": False,
-        "best_for": "cardio & endurance",
-    },
-    "jog": {
-        "label": "Jogging",
-        "time_min": 30,
-        "cost": "Free (outdoors)",
-        "free": True,
-        "cardio": 0.7,
-        "strength": 0.3,
-        "flexibility": 0.1,
-        "stress_relief": 0.6,
-        "intensity": 0.7,
-        "low_impact": False,
-        "best_for": "a moderate cardio boost",
-    },
-    "walk": {
-        "label": "Walking",
-        "time_min": 30,
-        "cost": "Free (outdoors)",
-        "free": True,
-        "cardio": 0.4,
-        "strength": 0.2,
-        "flexibility": 0.1,
-        "stress_relief": 0.8,
-        "intensity": 0.3,
-        "low_impact": True,
-        "best_for": "low-impact movement & de-stressing",
-    },
-    "yoga": {
-        "label": "Yoga",
-        "time_min": 45,
-        "cost": "Free at home (studio fees vary)",
-        "free": True,
-        "cardio": 0.2,
-        "strength": 0.5,
-        "flexibility": 0.9,
-        "stress_relief": 0.9,
-        "intensity": 0.4,
-        "low_impact": True,
-        "best_for": "flexibility, strength & calm",
-    },
-    "swim": {
-        "label": "Swimming",
-        "time_min": 45,
-        "cost": "Pool fee",
-        "free": False,
-        "cardio": 0.8,
-        "strength": 0.6,
-        "flexibility": 0.4,
-        "stress_relief": 0.6,
-        "intensity": 0.7,
-        "low_impact": True,
-        "best_for": "full-body, low-impact cardio",
-    },
-    "gym": {
-        "label": "Gym workout",
-        "time_min": 60,
-        "cost": "Membership",
-        "free": False,
-        "cardio": 0.6,
-        "strength": 0.9,
-        "flexibility": 0.2,
-        "stress_relief": 0.4,
-        "intensity": 0.8,
-        "low_impact": False,
-        "best_for": "building strength",
-    },
-    "cycle": {
-        "label": "Cycling",
-        "time_min": 45,
-        "cost": "Free (own bike)",
-        "free": True,
-        "cardio": 0.8,
-        "strength": 0.4,
-        "flexibility": 0.1,
-        "stress_relief": 0.6,
-        "intensity": 0.7,
-        "low_impact": True,
-        "best_for": "low-impact cardio",
-    },
-}
-
-# Message words → activity key.
-_ACTIVITY_ALIASES: Dict[str, str] = {
-    "run": "run",
-    "running": "run",
-    "jog": "jog",
-    "jogging": "jog",
-    "walk": "walk",
-    "walking": "walk",
-    "stroll": "walk",
-    "yoga": "yoga",
-    "swim": "swim",
-    "swimming": "swim",
-    "gym": "gym",
-    "workout": "gym",
-    "cycle": "cycle",
-    "cycling": "cycle",
-    "bike": "cycle",
-    "biking": "cycle",
-}
-
-
 class ResponseGenerator:
     """
     Stage 6 of the HELM Intelligence Pipeline.
@@ -322,13 +199,30 @@ class ResponseGenerator:
         if intent.intent == "local_search":
             return await self._generate_local_search(scores, context, intent)
 
-        # --- Grounded wellbeing trade-off (run vs walk vs yoga, using scores) ---
-        if intent.intent in ("tradeoff_analysis", "general_conversation"):
-            options = self._detect_activities(
-                f"{intent.original_text} {intent.conversation_context}"
+        # --- Grounded decision engine (every choice scored on W/H/T + memory) ---
+        if intent.intent in (
+            "tradeoff_analysis",
+            "financial_advisory",
+            "car_purchase",
+            "general_conversation",
+        ):
+            from . import decision_engine
+
+            decision = decision_engine.evaluate(
+                f"{intent.original_text} {intent.conversation_context}".strip(),
+                context,
             )
-            if len(options) >= 2:
-                return self._generate_wellbeing_tradeoff(context, options)
+            if decision is not None:
+                return ResponseEnvelope(
+                    text=decision_engine.render(decision, context),
+                    response_type="decision",
+                    data={
+                        "family": decision.family,
+                        "recommended": decision.recommended_key,
+                        "options": [o.key for o in decision.options],
+                    },
+                    generated_by="decision_engine",
+                )
 
         # --- Template path (Tier 0) ---
         if template_id and template_id in RESPONSE_TEMPLATES:
@@ -790,121 +684,6 @@ Do NOT mention scores, deltas, or policies. Speak like a trusted advisor."""
         )
         lines.append("Want me to price a ride to any of these?")
         return "\n".join(lines)
-
-    # ------------------------------------------------------------------
-    # Wellbeing trade-off (grounded in the user's scores + health state)
-    # ------------------------------------------------------------------
-
-    def _detect_activities(self, text: str) -> list:
-        """Return the distinct known activity keys mentioned, in first-seen order."""
-        blob = (text or "").lower()
-        seen = []
-        for word, key in _ACTIVITY_ALIASES.items():
-            if re.search(rf"\b{re.escape(word)}\b", blob) and key not in seen:
-                # keep first-seen order by position of the word
-                seen.append((blob.find(word), key))
-        return [k for _, k in sorted(seen)]
-
-    def _generate_wellbeing_tradeoff(
-        self, context: ContextFrame, options: list
-    ) -> ResponseEnvelope:
-        """
-        Recommend among run/walk/yoga/… grounded in the user's HELM scores,
-        the time each takes, its cost, and their current health state.
-        Deterministic and honest — the recommendation traces to real signals.
-        """
-        h = context.helm_scores.health
-        t = context.helm_scores.time
-        w = context.helm_scores.wealth
-        stress = context.health.stress_level
-        activity = context.health.activity_level
-        recovery = context.health.hrv_avg if context.health.hrv_avg else 50.0
-
-        signals = {
-            "time_poor": t < 50,
-            "stressed": stress >= 55,
-            "low_activity": activity < 50 or h < 50,
-            "low_recovery": recovery < 40,
-            "wealth_low": w < 45,
-        }
-
-        def suitability(key: str) -> float:
-            p = _ACTIVITY_PROFILES[key]
-            s = p["cardio"] * 0.5 + p["strength"] * 0.3 + p["flexibility"] * 0.2
-            if signals["low_activity"]:
-                s += p["cardio"] * 0.6
-            if signals["stressed"]:
-                s += p["stress_relief"] * 0.9
-            elif stress >= 40:
-                s += p["stress_relief"] * 0.4
-            if signals["time_poor"]:
-                s += (60 - p["time_min"]) / 60 * 0.7  # shorter → better
-            if signals["low_recovery"]:
-                s += 0.5 if p["low_impact"] else -0.3
-                s -= p["intensity"] * 0.4
-            if signals["wealth_low"] and p["free"]:
-                s += 0.3
-            return s
-
-        ranked = sorted(options, key=suitability, reverse=True)
-        winner = ranked[0]
-        wp = _ACTIVITY_PROFILES[winner]
-
-        # Build a grounded reason from the signals the winner satisfies.
-        reasons = []
-        if signals["stressed"] and wp["stress_relief"] >= 0.7:
-            reasons.append(
-                f"your stress is elevated ({stress:.0f}/100) and {wp['label'].lower()} "
-                "is one of the calmest options"
-            )
-        if signals["time_poor"]:
-            reasons.append(
-                f"you're short on time (Time {t:.0f}/100) and it fits in ~{wp['time_min']} min"
-            )
-        if signals["low_activity"] and wp["cardio"] >= 0.7:
-            reasons.append(
-                "your recent activity is on the low side, so the cardio boost helps most"
-            )
-        if signals["low_recovery"] and wp["low_impact"]:
-            reasons.append(
-                "your recovery is low, so a gentle, low-impact session protects it"
-            )
-        if signals["wealth_low"] and wp["free"]:
-            reasons.append("it's free, which fits your budget right now")
-        if not reasons:
-            reasons.append(
-                "your Health, Time and Wealth are all in good shape, so this is the "
-                "best all-round benefit for the time it takes"
-            )
-
-        lines = [
-            f"Here's how they stack up for **you** right now "
-            f"— Health {h:.0f}/100, Time {t:.0f}/100, stress {stress:.0f}/100:\n"
-        ]
-        for key in options:
-            p = _ACTIVITY_PROFILES[key]
-            lines.append(
-                f"- **{p['label']}** — ~{p['time_min']} min · {p['cost']} · {p['best_for']}"
-            )
-        lines.append(
-            f"\n**My pick: {wp['label']}.** Because " + "; ".join(reasons) + "."
-        )
-        lines.append(
-            "\n_Times are typical session lengths; costs are outdoor/home (free) vs "
-            "studio/pool/gym fees — I don't have live class prices. Want me to find "
-            "options near you?_"
-        )
-
-        return ResponseEnvelope(
-            text="\n".join(lines),
-            response_type="wellbeing_tradeoff",
-            data={
-                "recommended": winner,
-                "options": options,
-                "signals": {k: bool(v) for k, v in signals.items()},
-            },
-            generated_by="wellbeing_engine",
-        )
 
     def _build_fallback_response(
         self, intent: IntentResult, context: ContextFrame

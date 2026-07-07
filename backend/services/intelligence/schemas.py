@@ -162,6 +162,11 @@ class ContextFrame(BaseModel):
     # Goals
     life_goals: List[Dict[str, Any]] = Field(default_factory=list)
 
+    # Memory: verified recurring commitments (subscriptions/bills), e.g.
+    # [{"name": "Careem Plus", "amount": 49.0, "cadence": "monthly"}]. Used by
+    # the decision engine to ground recommendations ("you already pay for X").
+    commitments: List[Dict[str, Any]] = Field(default_factory=list)
+
     # Preferences
     risk_tolerance: str = "medium"  # low, medium, high
     trade_off_rule: str = "balanced_living"
