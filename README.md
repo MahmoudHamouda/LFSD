@@ -30,6 +30,27 @@ LFSD is a personal financial, health, and productivity dashboard built with Fast
 
 ---
 
+## Decision-making architecture
+
+HELM answers with a **policy-first, AI-assisted** engine: it *weighs* choices
+rather than describing them, and never fabricates data. A message runs through a
+tool-first **Orchestrator** (mobility) and a 7-stage **Intelligence Pipeline**,
+with a universal **Decision Engine** that scores every decision on
+Wealth / Health / Time and grounds it in the user's memory (finances, recurring
+commitments, goals). Local search returns real Google Maps places; ride requests
+hand off with pre-filled Uber/Maps deep links (no fabricated bookings).
+
+See **[docs/DECISION_ENGINE.md](docs/DECISION_ENGINE.md)** for the full reference,
+and [SYSTEM.md](SYSTEM.md) for the orchestrator. Key configuration:
+
+| Env var | Effect |
+|---------|--------|
+| `GEMINI_API_KEY` | LLM for classification/synthesis/response (`mock` disables LLM paths). |
+| `USE_LEGACY_PIPELINE` | `true` bypasses the intelligence pipeline. |
+| `RAI_GOVERNANCE_ENABLED` | `true` (default) enables consent + PII governance. |
+| `GOOGLE_MAPS_API_KEY` | Enables real local search + geocoding/distance. |
+| `UBER_SERVER_TOKEN` | Enables real Uber price estimates (booking is always a hand-off). |
+
 ## Security
 
 Security is integrated into our engineering practices and automated pipelines:
