@@ -96,6 +96,33 @@ class TestInputProcessor:
         assert len(envelope.attachments) == 1
         assert envelope.attachments[0]["type"] == "transaction_receipt"
 
+    def test_location_valid_is_captured(self):
+        """Valid browser coordinates flow onto the envelope."""
+        proc = self._make_processor()
+        envelope = proc.process(
+            "find a gym near me",
+            user_id="u1",
+            session_metadata={"location": {"lat": 25.2, "lng": 55.27}},
+        )
+        assert envelope.location == {"lat": 25.2, "lng": 55.27}
+
+    def test_location_null_island_and_garbage_rejected(self):
+        """(0,0) placeholder and malformed coords are dropped, not passed on."""
+        proc = self._make_processor()
+        assert (
+            proc.process(
+                "hi", user_id="u1", session_metadata={"location": {"lat": 0, "lng": 0}}
+            ).location
+            is None
+        )
+        assert (
+            proc.process(
+                "hi", user_id="u1", session_metadata={"location": {"lat": "x"}}
+            ).location
+            is None
+        )
+        assert proc.process("hi", user_id="u1").location is None
+
 
 # ============================================================================
 # Stage 3: Intent Classification Tests (Deterministic Pass Only)
@@ -753,6 +780,95 @@ class TestResponseGenerator:
         resp = await gen.generate(plan, scores, context, intent)
 
         assert "Trade-off" in resp.text
+
+    def test_local_search_format_is_honest(self):
+        """Rendered places show the disclaimer and never bare 'price' as fact."""
+        gen = self._make_generator()
+        places = [
+            {
+                "name": "Zabeel Park",
+                "address": "Gate 4",
+                "price_level": 0,
+                "rating": 4.6,
+                "distance_text": "1.2 km",
+                "duration_text": "15 mins",
+            },
+            {"name": "Fitness First", "address": "Marina", "price_level": 3},
+        ]
+        text = gen._format_local_search("yoga studio", places)
+        assert "Zabeel Park" in text and "Fitness First" in text
+        assert "1.2 km" in text and "Free" in text and "$$$" in text
+        # Honest about what the numbers are, and offers the ride hand-off.
+        assert "not exact fees" in text
+        assert "price a ride" in text
+
+    def test_local_search_fallback_never_fabricates(self):
+        """No location → honest fallback, no invented venues/numbers."""
+        gen = self._make_generator()
+        intent = self._make_intent("local_search")
+        text = gen._build_fallback_response(intent, self._make_context())
+        assert "share your location" in text or "your area" in text
+
+    @pytest.mark.asyncio
+    async def test_local_search_uses_real_places_with_location(self):
+        """With location + a (stubbed) live Maps key, real venues are returned."""
+        import services.productivity.google_maps_service as maps_mod
+        from services.intelligence.schemas import IntentResult
+
+        class _StubMaps:
+            api_key = "real"
+
+            async def places_search(self, query, lat, lng, radius_m=6000, limit=5):
+                return [
+                    {
+                        "name": "Zabeel Park",
+                        "address": "Gate 4",
+                        "price_level": 0,
+                        "rating": 4.6,
+                        "lat": 25.23,
+                        "lng": 55.30,
+                    }
+                ]
+
+            async def get_distance_matrix(self, origins, destinations, mode="walking"):
+                return {
+                    "status": "OK",
+                    "origin_addresses": ["You"],
+                    "destination_addresses": destinations,
+                    "rows": [
+                        {
+                            "elements": [
+                                {
+                                    "status": "OK",
+                                    "distance": {"text": "1.2 km", "value": 1200},
+                                    "duration": {"text": "15 mins", "value": 900},
+                                }
+                            ]
+                        }
+                    ],
+                }
+
+        original = maps_mod.get_google_maps_service
+        maps_mod.get_google_maps_service = lambda: _StubMaps()
+        try:
+            gen = self._make_generator()
+            intent = IntentResult(
+                intent="local_search",
+                confidence=0.85,
+                original_text="find some near me",
+                entities={"resolved_topic": "yoga studio"},
+                request_location={"lat": 25.2, "lng": 55.27},
+            )
+            resp = await gen.generate(
+                self._make_plan(None), self._make_scores(), self._make_context(), intent
+            )
+        finally:
+            maps_mod.get_google_maps_service = original
+
+        assert resp.generated_by == "maps"
+        assert "Zabeel Park" in resp.text
+        assert "1.2 km" in resp.text
+        assert len(resp.data["places"]) == 1
 
 
 # ============================================================================

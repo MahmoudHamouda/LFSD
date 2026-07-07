@@ -1626,6 +1626,9 @@ class GeminiService:
                     "conversation_history": history,
                     "device_type": context.get("device_type"),
                     "locale": context.get("locale", "en"),
+                    # Browser-provided coordinates for location-aware intents
+                    # (e.g. local_search). None when the client didn't share it.
+                    "location": context.get("location"),
                 }
 
                 # Instantiate pipeline with current models

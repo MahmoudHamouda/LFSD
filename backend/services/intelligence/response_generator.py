@@ -195,6 +195,10 @@ class ResponseGenerator:
         """
         template_id = action_plan.response_template_id
 
+        # --- Location-aware local search (real places, honest about numbers) ---
+        if intent.intent == "local_search":
+            return await self._generate_local_search(scores, context, intent)
+
         # --- Template path (Tier 0) ---
         if template_id and template_id in RESPONSE_TEMPLATES:
             # Check for crisis-mode override
@@ -485,6 +489,168 @@ Do NOT mention scores, deltas, or policies. Speak like a trusted advisor."""
             }
 
         return data
+
+    # ------------------------------------------------------------------
+    # Local search (real places via Google Maps; honest about "numbers")
+    # ------------------------------------------------------------------
+
+    # Fallback keyword → Maps search-term map, used only when no LLM is available
+    # to extract the topic. Ordered; first matches win.
+    _ACTIVITY_PLACE_MAP = (
+        (("yoga",), "yoga studio"),
+        (("run", "running", "jog", "jogging"), "running track"),
+        (("walk", "walking", "hike", "hiking", "stroll"), "park walking trail"),
+        (("gym", "workout", "exercise", "fitness", "strength"), "gym"),
+        (("swim", "swimming", "pool"), "swimming pool"),
+        (("coffee", "cafe", "café"), "cafe"),
+        (("eat", "restaurant", "dining", "dinner", "lunch", "food"), "restaurant"),
+        (("cowork", "coworking", "study", "focus"), "coworking space"),
+    )
+
+    async def _generate_local_search(
+        self,
+        scores: ScoreDeltas,
+        context: ContextFrame,
+        intent: IntentResult,
+    ) -> ResponseEnvelope:
+        """
+        Answer "find X near me / how far / how much" with REAL places.
+
+        Uses the user's browser location + Google Places. If either the location
+        or a live Maps key is missing, falls back to an honest prompt for the
+        user's area — it never fabricates venues, distances, or prices.
+        """
+        loc = intent.request_location
+        query = await self._resolve_place_query(intent)
+
+        if not loc or not query:
+            return ResponseEnvelope(
+                text=self._build_fallback_response(intent, context),
+                response_type="local_search",
+                generated_by="fallback",
+            )
+
+        places = None
+        try:
+            from services.productivity.google_maps_service import (
+                get_google_maps_service,
+            )
+
+            svc = get_google_maps_service()
+            places = await svc.places_search(
+                query, loc["lat"], loc["lng"], radius_m=6000, limit=5
+            )
+            if places:
+                await self._attach_walking_distances(svc, loc, places)
+        except Exception as e:  # never fabricate on failure
+            logger.error("local_search lookup failed: %s", e)
+            places = None
+
+        if not places:
+            return ResponseEnvelope(
+                text=self._build_fallback_response(intent, context),
+                response_type="local_search",
+                generated_by="fallback",
+            )
+
+        return ResponseEnvelope(
+            text=self._format_local_search(query, places),
+            response_type="local_search_results",
+            data={"query": query, "places": places},
+            generated_by="maps",
+        )
+
+    async def _resolve_place_query(self, intent: IntentResult) -> str:
+        """Determine what kind of place to search for (resolving referents)."""
+        resolved = (intent.entities or {}).get("resolved_topic")
+        if isinstance(resolved, str) and resolved.strip():
+            return resolved.strip()[:60]
+
+        # Prefer an LLM extraction (best at resolving "some" → the real topic).
+        if self.llm_model and self.llm_api_key != "mock":
+            try:
+                import asyncio
+
+                prompt = (
+                    "From this conversation, output a short (2-4 word) Google Maps "
+                    "search term for the kind of place the user wants near them. "
+                    "Output ONLY the term.\n\n"
+                    f"Context:\n{intent.conversation_context or '(none)'}\n"
+                    f"User: {intent.original_text}\nSearch term:"
+                )
+                resp = await asyncio.to_thread(self.llm_model.generate_content, prompt)
+                term = (getattr(resp, "text", "") or "").strip()
+                term = term.splitlines()[0].strip("\"'.` ")[:60] if term else ""
+                if term:
+                    return term
+            except Exception as e:
+                logger.warning("place-query extraction failed: %s", e)
+
+        # Heuristic fallback from the conversation topic.
+        blob = f"{intent.conversation_context} {intent.original_text}".lower()
+        terms = []
+        for keys, term in self._ACTIVITY_PLACE_MAP:
+            if any(k in blob for k in keys):
+                terms.append(term)
+        return " ".join(terms[:3]) if terms else ""
+
+    async def _attach_walking_distances(self, svc, loc, places) -> None:
+        """Attach real walking distance/ETA to each place (best-effort)."""
+        indexed = [
+            (i, p)
+            for i, p in enumerate(places)
+            if p.get("lat") is not None and p.get("lng") is not None
+        ]
+        if not indexed:
+            return
+        dests = [f"{p['lat']},{p['lng']}" for _, p in indexed]
+        try:
+            matrix = await svc.get_distance_matrix(
+                origins=[f"{loc['lat']},{loc['lng']}"],
+                destinations=dests,
+                mode="walking",
+            )
+        except Exception:
+            return
+        if not matrix or matrix.get("status") != "OK":
+            return
+        # Guard against the service's mock mode (should not occur here, since
+        # real place results imply a live key, but stay defensive).
+        if any("MOCK" in a for a in matrix.get("origin_addresses", [])):
+            return
+        rows = matrix.get("rows") or []
+        elements = rows[0].get("elements") if rows else []
+        for (_, place), el in zip(indexed, elements or []):
+            if el.get("status") == "OK":
+                place["distance_text"] = (el.get("distance") or {}).get("text")
+                place["duration_text"] = (el.get("duration") or {}).get("text")
+
+    def _format_local_search(self, query: str, places: list) -> str:
+        """Render real places as markdown — honest about what the numbers are."""
+        lines = [f"Here are some **{query}** options near you:\n"]
+        for p in places:
+            bits = []
+            if p.get("distance_text"):
+                walk = f" ({p['duration_text']} walk)" if p.get("duration_text") else ""
+                bits.append(f"{p['distance_text']} away{walk}")
+            if p.get("rating"):
+                bits.append(f"⭐ {p['rating']}")
+            pl = p.get("price_level")
+            if isinstance(pl, int):
+                bits.append("Free" if pl == 0 else "$" * pl)
+            detail = " · ".join(bits)
+            line = f"- **{p.get('name')}**"
+            if detail:
+                line += f" — {detail}"
+            if p.get("address"):
+                line += f"\n  {p['address']}"
+            lines.append(line)
+        lines.append(
+            "\n_Distances are walking estimates from Google Maps; any price shown "
+            "is Google's $–$$$$ guide, not exact fees._"
+        )
+        lines.append("Want me to price a ride to any of these?")
+        return "\n".join(lines)
 
     def _build_fallback_response(
         self, intent: IntentResult, context: ContextFrame

@@ -231,6 +231,11 @@ async def generate_history(
                 for msg in messages_data
             ]
             context = {"user_id": current_user.id, "conversation_id": conversation_id}
+            # Forward the browser-provided location (if any) so location-aware
+            # intents (e.g. local_search) can return real nearby places.
+            req_ctx = body.get("context") or {}
+            if isinstance(req_ctx, dict) and req_ctx.get("location"):
+                context["location"] = req_ctx.get("location")
 
             # Get response from Gemini (Returns JSON string now with usage)
             response_json = await gemini_service.generate_response(history, context)

@@ -81,6 +81,9 @@ class InputEnvelope(BaseModel):
     conversation_history: List[Dict[str, str]] = Field(default_factory=list)
     device_type: Optional[str] = None
     locale: str = "en"
+    # Browser-provided coordinates for the current request, e.g.
+    # {"lat": 25.2, "lng": 55.27}. Present only when the client shares location.
+    location: Optional[Dict[str, float]] = None
 
     class Config:
         use_enum_values = True
@@ -208,6 +211,10 @@ class IntentResult(BaseModel):
     # generation can resolve referents ("some", "them", "those") and stay on
     # topic. Kept short (~a few hundred chars) to bound token cost.
     conversation_context: str = ""
+
+    # Browser-provided coordinates for this request (if shared). Used by
+    # location-aware intents such as local_search to return real nearby places.
+    request_location: Optional[Dict[str, float]] = None
 
     class Config:
         use_enum_values = True
