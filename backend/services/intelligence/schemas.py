@@ -203,6 +203,12 @@ class IntentResult(BaseModel):
     original_text: str = ""
     llm_tokens_used: int = 0
 
+    # Compact, resolved view of the recent conversation (last substantive
+    # assistant turn + recent user turns). Threaded to later stages so response
+    # generation can resolve referents ("some", "them", "those") and stay on
+    # topic. Kept short (~a few hundred chars) to bound token cost.
+    conversation_context: str = ""
+
     class Config:
         use_enum_values = True
 

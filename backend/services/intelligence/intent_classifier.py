@@ -82,6 +82,13 @@ class IntentClassifier:
         """
         text = envelope.normalized_text
 
+        # Compact, resolved view of the recent conversation. Threaded onto every
+        # IntentResult so downstream stages (esp. response generation) can
+        # resolve referents like "some"/"them"/"those" and stay on topic.
+        conversation_context = self._build_conversation_context(
+            envelope.conversation_history
+        )
+
         # ------------------------------------------------------------------
         # Pass 1: Deterministic Classification
         # ------------------------------------------------------------------
@@ -106,6 +113,7 @@ class IntentClassifier:
                 classified_by="deterministic",
                 original_text=envelope.raw_text,
                 llm_tokens_used=0,
+                conversation_context=conversation_context,
             )
 
         # ------------------------------------------------------------------
@@ -120,9 +128,12 @@ class IntentClassifier:
                 tier=RequestTier.TIER_1,
                 classified_by="deterministic_fallback",
                 original_text=envelope.raw_text,
+                conversation_context=conversation_context,
             )
 
-        return await self._classify_with_llm(envelope, context)
+        result = await self._classify_with_llm(envelope, context)
+        result.conversation_context = conversation_context
+        return result
 
     # ------------------------------------------------------------------
     # LLM Classification
@@ -139,10 +150,12 @@ class IntentClassifier:
 
             all_intents = get_all_intent_names()
 
-            # Build compact prompt (minimizing tokens)
+            # Build compact prompt. Pass the resolved conversation context so the
+            # model can anchor referents ("some", "those") to the prior topic
+            # instead of latching onto generic phrasing ("near me", "how much").
             prompt = self._build_classification_prompt(
                 envelope.normalized_text,
-                envelope.conversation_history[-3:],  # Last 3 messages only
+                self._build_conversation_context(envelope.conversation_history),
                 all_intents,
             )
 
@@ -225,39 +238,79 @@ class IntentClassifier:
                 original_text=envelope.raw_text,
             )
 
+    def _build_conversation_context(self, history: List[Dict[str, str]]) -> str:
+        """
+        Build a compact, referent-resolvable view of the recent conversation.
+
+        Includes the last substantive assistant turn (the topic the user is most
+        likely referring back to) plus the last couple of user turns. The
+        assistant turn gets a larger budget than the old 100-char snippet so a
+        follow-up like "find some near me" can be resolved to what "some" means.
+        """
+        if not history:
+            return ""
+
+        lines: List[str] = []
+        # Last substantive assistant turn (skip trivial acks), up to ~400 chars.
+        for msg in reversed(history):
+            if not isinstance(msg, dict) or msg.get("role") != "assistant":
+                continue
+            content = (msg.get("content") or "").strip()
+            if len(content) < 15:  # skip one-word acks
+                continue
+            lines.append(f"Assistant (previous topic): {content[:400]}")
+            break
+
+        # Last two user turns for immediate context, most recent last.
+        user_turns = [
+            (m.get("content") or "").strip()
+            for m in history
+            if isinstance(m, dict) and m.get("role") == "user"
+        ]
+        for turn in user_turns[-2:]:
+            if turn:
+                lines.append(f"User: {turn[:200]}")
+
+        return "\n".join(lines)
+
     def _build_classification_prompt(
         self,
         text: str,
-        history: List[Dict[str, str]],
+        conversation_context: str,
         all_intents: List[str],
     ) -> str:
-        """Build a compact classification prompt. Target: <300 input tokens."""
-        history_str = ""
-        if history:
-            recent = history[-3:]
-            for msg in recent:
-                role = "U" if msg.get("role") == "user" else "A"
-                content = msg.get("content", "")[:100]
-                history_str += f"{role}: {content}\n"
+        """Build a compact classification prompt. Target: <350 input tokens."""
+        context_block = conversation_context or "(no prior conversation)"
 
         intent_list = ", ".join(all_intents)
 
-        return f"""Classify the user message into one intent. Return JSON only.
+        return f"""Classify the user's LATEST message into exactly one intent. Return JSON only.
 
 INTENTS: [{intent_list}]
 
-RULES:
+RESOLVE REFERENTS FIRST: If the latest message refers back to something with a
+pronoun or vague noun ("some", "them", "those", "it", "that one", "any of them",
+"find some"), resolve it using the CONTEXT below, then classify by the RESOLVED
+topic — never by generic phrasing. For example, after the assistant lists
+walking / running / yoga options, "find some near me, how far, how much?" is
+about those activities (local_search), NOT a taxi/ride request.
+
+ROUTING RULES:
+- Comparing options or weighing dimensions ("should I X or Y?", "run or relax?",
+  anything spanning wealth+health+time) → tradeoff_analysis
+- "Find / where's a <place or activity> near me" → local_search
 - "Can I afford X?" → financial_advisory
-- "How much did I spend?" → spending_report  
-- "Should I X or Y?" → tradeoff_analysis
-- Ambiguous across domains → needs_clarification
+- "How much did I spend?" → spending_report
+- Ride/taxi/uber with a destination → mobility_price_check / mobility_booking
+- Genuinely ambiguous across domains → needs_clarification
 - Greetings/social → greeting
 
-History:
-{history_str}
-User: "{text}"
+CONTEXT (for referent resolution — do not classify this, only the latest message):
+{context_block}
 
-Return: {{"intent": "...", "confidence": 0.0-1.0, "entities": {{}}}}"""
+LATEST message: "{text}"
+
+Return: {{"intent": "...", "confidence": 0.0-1.0, "entities": {{"resolved_topic": "..."}}}}"""
 
     # ------------------------------------------------------------------
     # Deterministic Entity Extraction
