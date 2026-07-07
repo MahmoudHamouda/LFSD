@@ -32,16 +32,41 @@ class ResponseComposer:
             )
 
         if data.get("status") == "booked":
-            details = data.get("booking_details", {})
-            origin = data.get("origin", "your location")
-            destination = data.get("destination", "your destination")
+            origin = data.get("origin", "your location").title()
+            destination = data.get("destination", "your destination").title()
             rec = data.get("recommended_option", {})
+            label = rec.get("label", "ride")
+            cost = rec.get("estimated_cost", 0) or 0
+            low = label.lower()
+
+            # Driving yourself isn't a booking at all — don't invent a fare/pickup.
+            if "drive" in low or "self" in low or "own car" in low:
+                return (
+                    f"You'd be driving yourself from **{origin}** to "
+                    f"**{destination}** — no booking needed. Want directions, or "
+                    "should I compare ride options (Uber / Careem / taxi) instead?"
+                )
+
+            # Real provider hand-off. We do NOT have a live ride-booking
+            # integration (Uber/Careem retired their public booking APIs), so we
+            # never fabricate a driver or claim a real reservation.
+            if "uber" in low:
+                app = "the **Uber** app"
+            elif "careem" in low:
+                app = "the **Careem** app"
+            elif "taxi" in low or "rta" in low:
+                app = (
+                    "the **Careem** or **S'hail (RTA)** app, or hail one on the street"
+                )
+            else:
+                app = "the provider's app"
+
             return (
-                f"✅ **Ride Booked!**\n\n"
-                f"Your {rec.get('label', 'ride')} is on the way to take you from **{origin.title()}** to **{destination.title()}**.\n\n"
-                f"🚘 **Driver:** {details.get('driver_name', 'System')} ({details.get('car_model', 'Sedan')} - {details.get('license_plate', 'XXX')})\n"
-                f"⏱ **Arriving in:** {details.get('pickup_eta_mins', 5)} minutes\n"
-                f"💰 **Estimated Fare:** AED {rec.get('estimated_cost', 0):.0f}"
+                f"Here's your **{label}** from **{origin}** to **{destination}** — "
+                f"estimated fare **AED {cost:.0f}**.\n\n"
+                "⚠️ I can't place a live ride booking from inside HELM yet, so this "
+                f"isn't a confirmed reservation. Book it for real in {app}. Want me "
+                "to keep comparing options meanwhile?"
             )
 
         origin = data.get("origin", "your location")
@@ -63,7 +88,7 @@ class ResponseComposer:
         lines.append(
             f"⭐ **Recommended: {rec_label}**  \n"
             f"   ⏱ {rec['eta_minutes']} min  •  💰 AED {rec['estimated_cost']:.0f}  \n"
-            f"   _{data.get('rationale', '')}_\n"
+            f"   *{data.get('rationale', '')}*\n"
         )
 
         # Alternatives

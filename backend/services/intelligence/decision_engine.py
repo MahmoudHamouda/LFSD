@@ -551,7 +551,8 @@ def render(result: DecisionResult, context) -> str:
         lines.append(f"- **{o.label}** — {dims}")
 
     if result.memory_notes:
-        lines.append("\n_From your records: " + "; ".join(result.memory_notes) + "._")
+        # Use *italic* (the chat renderer supports * but not _ emphasis).
+        lines.append("\n*From your records: " + "; ".join(result.memory_notes) + ".*")
 
     if result.recommended_key:
         rec = next((o for o in result.options if o.key == result.recommended_key), None)
