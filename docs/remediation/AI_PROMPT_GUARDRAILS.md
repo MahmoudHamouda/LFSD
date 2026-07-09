@@ -19,8 +19,8 @@ You are an intelligent agent working on the LFSD system. Before generating any c
 *   If you replace a file, **Delete the old one**. Do not leave `file_v2.py`.
 
 ## 4. Documentation
-*   If you change the architecture, update `GOVERNANCE/SYSTEM.md`.
-*   If you delete a core component, log it in `GOVERNANCE/DELETE_FIRST.md`.
+*   If you change the architecture, update `docs/remediation/SYSTEM.md`.
+*   If you delete a core component, log it in `docs/remediation/DELETE_FIRST.md`.
 
 ## 5. Failure Protocol
 *   If the app crashes, check `backend/app.py` imports first.
