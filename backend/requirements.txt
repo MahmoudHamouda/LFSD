@@ -13,7 +13,7 @@ loguru==0.7.3
 httpx==0.28.1
 requests==2.32.3
 python-dateutil==2.9.0.post0
-dateparser==1.2.2
+dateparser==1.4.1
 python-multipart==0.0.32
 APScheduler==3.11.2
 
@@ -32,7 +32,7 @@ google-auth-oauthlib==1.2.3
 googlemaps==4.10.0
 
 # File Processing
-PyMuPDF==1.26.6
+PyMuPDF==1.27.2.3
 pdf2image==1.17.0
 pytesseract==0.3.13
 Pillow==12.2.0
