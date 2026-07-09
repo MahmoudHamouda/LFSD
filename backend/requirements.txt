@@ -38,7 +38,7 @@ pytesseract==0.3.13
 Pillow==12.2.0
 
 # Data Validation (Intelligence Layer)
-pydantic==2.10.6
+pydantic==2.13.4
 
 # Testing
 pytest==9.0.1
