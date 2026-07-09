@@ -12,9 +12,9 @@
 *   **Consolidated** `backend/app.py` imports, removing fragility and debug spam.
 
 ## 2. 🛡️ Invariants Locked
-*   **Single Source of Truth**: `GOVERNANCE/SYSTEM.md` now defines the architecture.
-*   **Kill List**: `GOVERNANCE/GCP_KILL_LIST.md` defines what lives and dies.
-*   **Guardrails**: `GOVERNANCE/AI_PROMPT_GUARDRAILS.md` prevents future agents from creating "drift" folders.
+*   **Single Source of Truth**: `docs/remediation/SYSTEM.md` now defines the architecture.
+*   **Kill List**: `docs/remediation/GCP_KILL_LIST.md` defines what lives and dies.
+*   **Guardrails**: `docs/remediation/AI_PROMPT_GUARDRAILS.md` prevents future agents from creating "drift" folders.
 
 ## 3. 📉 Complexity Reduction
 *   **Before**: ~70 files in services, duplicate "app.py" factories, fragmented logic.
@@ -22,8 +22,8 @@
 *   **Outcome**: The system is now structurally incapable of "Microservice Drift" regressions unless explicitly forced.
 
 ## 4. 📄 New Artifacts
-*   `GOVERNANCE/LEGACY_LEDGER.md`: The status of every component.
-*   `GOVERNANCE/FAILURE_ELIMINATION_MATRIX.md`: How we prevent recurring bugs.
+*   `docs/remediation/LEGACY_LEDGER.md`: The status of every component.
+*   `docs/remediation/FAILURE_ELIMINATION_MATRIX.md`: How we prevent recurring bugs.
 
 **The system is stable, simplified, and governed.**
 *Constraint Check:* The system is simpler than before. Deletion was successful.

@@ -1,7 +1,7 @@
-# HELM Orchestration System
+# LFSD Orchestration System
 
 ## Overview
-The HELM Orchestration Layer is a deterministic, tool-first wrapper that evaluates user intent and executes system commands *before* delegating responses to an LLM. It transforms the AI from a conversational commentator into an autonomous 'race engineer' capable of fetching data, triggering services, and returning concrete options.
+The LFSD Orchestration Layer is a deterministic, tool-first wrapper that evaluates user intent and executes system commands *before* delegating responses to an LLM. It transforms the AI from a conversational commentator into an autonomous 'race engineer' capable of fetching data, triggering services, and returning concrete options.
 
 > **Scope note.** This document covers the **Orchestrator**, which owns the
 > `MOBILITY` domain. Everything else (finance, health, time, local search,
@@ -24,7 +24,7 @@ The HELM Orchestration Layer is a deterministic, tool-first wrapper that evaluat
 5. **LLM-last Response Composition** (`orchestration/response.py`):
    - Takes the structured data output from the executor and optionally uses an LLM solely to formulate a concise, human-readable response.
    - Proposes one recommended action and one alternative.
-   - **Honest booking hand-off**: HELM has no live ride-booking integration (Uber/Careem retired their public booking APIs), so the composer never fabricates a driver, plate, or "Ride Booked!" confirmation. It surfaces the real fare *estimate* and hands off with pre-filled deep links — an Uber universal link (`m.uber.com/ul`, pickup+dropoff coords) and a Google Maps directions link (`mobility/executor.build_ride_deeplinks`). "Drive Yourself" is not treated as a booking.
+   - **Honest booking hand-off**: LFSD has no live ride-booking integration (Uber/Careem retired their public booking APIs), so the composer never fabricates a driver, plate, or "Ride Booked!" confirmation. It surfaces the real fare *estimate* and hands off with pre-filled deep links — an Uber universal link (`m.uber.com/ul`, pickup+dropoff coords) and a Google Maps directions link (`mobility/executor.build_ride_deeplinks`). "Drive Yourself" is not treated as a booking.
 6. **Audit & Activity Logging**:
    - Every tool call generates immutable `AuditLog` records.
    - Successful actions drop trace records into the user's `ActivityFeed`.

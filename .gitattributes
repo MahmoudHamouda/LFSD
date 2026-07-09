@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Exclude the vendored poppler library from language statistics so the
+# reported language breakdown reflects project code, not the dependency.
+poppler/** linguist-vendored
