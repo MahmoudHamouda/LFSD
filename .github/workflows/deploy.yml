@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
@@ -36,14 +36,14 @@ jobs:
           echo "sha8=$(echo ${GITHUB_SHA} | cut -c1-8)" >> $GITHUB_OUTPUT
 
       - name: Deploy Backend to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
+        uses: google-github-actions/deploy-cloudrun@v3
         with:
           service: lfsd-backend
           image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/backend:${{ steps.latest.outputs.sha8 }}
           region: us-central1
 
       - name: Deploy Frontend to Cloud Run
-        uses: google-github-actions/deploy-cloudrun@v2
+        uses: google-github-actions/deploy-cloudrun@v3
         with:
           service: lfsd-frontend
           image: gcr.io/${{ secrets.GCP_PROJECT_ID }}/frontend:${{ steps.latest.outputs.sha8 }}
