@@ -1,6 +1,6 @@
 # Architectural Boundaries
 
-To prevent AI hallucination and logical drift, HELM enforces strict separation of concerns across its Orchestration layer.
+To prevent AI hallucination and logical drift, LFSD enforces strict separation of concerns across its Orchestration layer.
 
 ## 1. Orchestrator (`orchestration/master.py`)
 - **Role**: Coordinates the overall pipeline. It invokes the classifier, router, and response composer. 

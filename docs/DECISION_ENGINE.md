@@ -1,11 +1,11 @@
-# HELM Decision Engine & Intelligence Pipeline
+# LFSD Decision Engine & Intelligence Pipeline
 
-This document describes how HELM turns a user message into a grounded,
+This document describes how LFSD turns a user message into a grounded,
 deterministic answer — the "policy-first, AI-assisted" decision path. It is the
 authoritative reference for the intelligence pipeline, the intent taxonomy, the
-universal decision engine, and the honesty rules the product commits to.
+universal decision engine, and the honesty rules the framework commits to.
 
-> **Guiding principle — no mock data, ever.** HELM never fabricates numbers,
+> **Guiding principle — no mock data, ever.** LFSD never fabricates numbers,
 > venues, drivers, fares, or capabilities. When it lacks a data source it says
 > so plainly and offers what it genuinely can do. Every recommendation traces
 > back to real signals (the user's scores, finances, health, and memory).
@@ -37,7 +37,7 @@ still runs for mobility.
 | Stage | Module | Job |
 |-------|--------|-----|
 | 1. Input | `input_processor.py` | Normalize/sanitize; validate browser `location` (rejects the `(0,0)` "geolocation denied" placeholder). |
-| 2. Context | `context_assembler.py` | Assemble the `ContextFrame` — HELM scores, financial snapshot, health/time baselines, goals, and **commitments** (recurring bills). Cached per user. |
+| 2. Context | `context_assembler.py` | Assemble the `ContextFrame` — LFSD scores, financial snapshot, health/time baselines, goals, and **commitments** (recurring bills). Cached per user. |
 | 3. Intent | `intent_classifier.py` + `intent_taxonomy.py` | Deterministic keyword/regex first; LLM fallback with **referent resolution** (see §3). |
 | 4. Score | `score_engine.py` | Deterministic W/H/T deltas per scoring policy. |
 | 4.5 Trade-off | `tradeoff_validator.py` | Clarify / safe-minimal / escalate. |
@@ -72,7 +72,7 @@ Key behaviours added for correctness:
 
 ## 4. The Decision Engine (`decision_engine.py`)
 
-Every decision — **binary or multi-option** — is weighed on the three HELM
+Every decision — **binary or multi-option** — is weighed on the three LFSD
 dimensions and grounded in the user's memory. `response_generator` delegates
 `tradeoff_analysis` / `financial_advisory` / `car_purchase` /
 `general_conversation` to it.
@@ -126,7 +126,7 @@ Requires `GOOGLE_MAPS_API_KEY`.
 
 ## 6. Mobility: honest booking + deep links
 
-HELM has **no live ride-booking integration** — Uber and Careem retired their
+LFSD has **no live ride-booking integration** — Uber and Careem retired their
 public booking APIs, and `uber_service.book_ride` is always mock. So:
 
 - The composer (`orchestration/response.py`) **never fabricates a driver, plate,

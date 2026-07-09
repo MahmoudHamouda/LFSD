@@ -1,4 +1,4 @@
-# HELM Integration & E2E Test Plan
+# LFSD Integration & E2E Test Plan
 
 This document outlines the testing strategy, test suites, and instructions for executing local unit/integration tests and production-level UI/UX browser tests.
 
