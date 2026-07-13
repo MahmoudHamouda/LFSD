@@ -6,13 +6,13 @@
     "dev": "vite"
   },
   "dependencies": {
-    "@auth0/auth0-react": "^2.20.0",
+    "@auth0/auth0-react": "^2.21.0",
     "@fluentui/react": "^8.125.7",
-    "@fluentui/react-icons": "^2.0.331",
+    "@fluentui/react-icons": "^2.0.333",
     "@tanstack/react-query": "^5.101.2",
     "@types/dompurify": "^3.2.0",
-    "dompurify": "^3.3.1",
-    "lucide-react": "^1.23.0",
+    "dompurify": "^3.4.12",
+    "lucide-react": "^1.24.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router-dom": "^7.18.1",
