@@ -28,7 +28,7 @@ Authlib==1.6.9
 google-generativeai==0.8.6
 google-api-python-client==2.187.0
 google-auth-httplib2==0.2.1
-google-auth-oauthlib==1.2.3
+google-auth-oauthlib==1.4.0
 googlemaps==4.10.0
 
 # File Processing
