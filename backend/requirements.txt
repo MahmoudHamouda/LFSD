@@ -4,7 +4,7 @@ uvicorn[standard]==0.38.0
 SQLAlchemy==2.0.51
 psycopg2-binary==2.9.12
 cloud-sql-python-connector[pg8000]==1.19.0
-pydantic-settings==2.12.0
+pydantic-settings==2.14.2
 alembic==1.17.2
 
 # Utilities
