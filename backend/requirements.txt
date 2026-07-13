@@ -21,7 +21,7 @@ APScheduler==3.11.2
 PyJWT==2.13.0
 bcrypt==5.0.0
 slowapi==0.1.10
-redis==7.1.0
+redis==8.0.1
 Authlib==1.6.9
 
 # AI & Google Integration
