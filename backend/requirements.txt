@@ -11,7 +11,7 @@ alembic==1.17.2
 python-dotenv==1.2.2
 loguru==0.7.3
 httpx==0.28.1
-requests==2.32.3
+requests==2.34.2
 python-dateutil==2.9.0.post0
 dateparser==1.4.1
 python-multipart==0.0.32
